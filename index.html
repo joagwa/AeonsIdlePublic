@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aeons: The Grand Unfolding</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>✦</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <div id="canvas-wrapper">
+      <canvas id="main-canvas"></canvas>
+      <canvas id="glow-canvas"></canvas>
+      <div id="minimap-overlay"></div>
+    </div>
+
+    <div id="ui-layer">
+      <!-- Stats Panel -->
+      <div id="stats-panel" class="panel collapsible-panel">
+        <div id="stats-panel-header" class="panel-header-collapsible">
+          <h2 class="panel-title">📊 Stats</h2>
+          <span class="collapse-icon">▲</span>
+        </div>
+        <div id="stats-body" class="panel-body-collapsible"></div>
+      </div>
+
+      <div id="resource-panel" class="panel">
+        <h2 class="panel-title">Resources</h2>
+        <div id="resource-list"></div>
+      </div>
+
+      <div id="upgrade-panel" class="panel">
+        <h2 class="panel-title">Upgrades</h2>
+        <div id="upgrade-list"></div>
+      </div>
+
+      <div id="chronicle-panel" class="panel hidden">
+        <h2 class="panel-title">Chronicle</h2>
+        <div id="chronicle-list"></div>
+      </div>
+
+      <div id="residual-bonus-panel" class="panel">
+        <h2 class="panel-title">Cosmic Legacy</h2>
+        <div id="bonus-list"></div>
+      </div>
+    </div>
+
+    <div id="toolbar">
+      <button id="chronicle-toggle" class="toolbar-btn" title="Chronicle">📜</button>
+      <button id="settings-toggle" class="toolbar-btn" title="Settings">⚙️</button>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Settings</h2>
+        <div id="settings-body"></div>
+        <button id="settings-close" class="modal-close">✕</button>
+      </div>
+    </div>
+
+    <div id="milestone-notification-area"></div>
+    <div id="offline-progress-modal" class="modal hidden"></div>
+    <div id="epoch-transition-overlay" class="overlay hidden"></div>
+    <div id="tab-conflict-banner" class="banner hidden"></div>
+    <div id="save-error-banner" class="banner hidden"></div>
+  </div>
+
+  <script type="module" src="js/main.js?v=6"></script>
+</body>
+</html>

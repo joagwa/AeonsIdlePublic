@@ -1,0 +1,703 @@
+/**
+ * CanvasRenderer — Master renderer orchestrating all sub-renderers.
+ * Owns the main and glow canvas contexts and drives per-frame updates.
+ */
+
+import { SpriteManager } from './SpriteManager.js';
+import { Camera } from './Camera.js';
+import { ParticleSystem } from './ParticleSystem.js';
+import { RegionManager } from './RegionManager.js';
+import { Minimap } from './Minimap.js';
+import { FloatingNumbers } from './FloatingNumbers.js';
+
+// Star visual definitions by stage
+const STAR_VISUALS = {
+  main_sequence: { color: '#ffffff', size: 4, glow: false },
+  red_giant:     { color: '#ff6030', size: 6, glow: true },
+  supernova:     { color: '#ffffff', size: 8, glow: true },
+  neutron_star:  { color: '#8090c0', size: 2, glow: false },
+};
+
+export class CanvasRenderer {
+  constructor(EventBus) {
+    this.bus = EventBus;
+
+    this.mainCanvas = null;
+    this.glowCanvas = null;
+    this.mainCtx = null;
+    this.glowCtx = null;
+    this.dpr = 1;
+
+    this.camera = null;
+    this.spriteManager = null;
+    this.particleSystem = null;
+    this.regionManager = null;
+    this.minimap = null;
+    this.floatingNumbers = null;
+
+    this.glowEnabled = true;
+    this.canvasConfig = null;
+    this.lastFrameTime = 0;
+
+    // Stars registered via events
+    this._stars = new Map();
+
+    // Directional indicators for off-screen region activations
+    this._indicators = [];
+
+    // Home object absorption pulse (0 = idle, >0 = pulsing)
+    this._homeObjectPulse = 0;
+
+    // Mote controller reference (set via setMoteController)
+    this._moteController = null;
+    this._gravityBaseRadius = 0; // set when upg_gravitationalPull purchased
+
+    // Visual threshold state (home object evolves with mass)
+    this._thresholdLevel = 0;
+    this._visualSize = 4;
+    this._visualTargetSize = 4;
+    this._visualGlow = 3;
+    this._visualTargetGlow = 3;
+    this._visualColor = '#c8e0ff';
+    this._visualFlash = 0; // 0..1, fades out
+    this._visualThresholds = null; // loaded from epoch config
+
+    this._resizeObserver = null;
+  }
+
+  // ---------------------------------------------------------------
+  // Initialization
+  // ---------------------------------------------------------------
+
+  /**
+   * Set up canvases, sub-systems, and event subscriptions.
+   * @param {HTMLCanvasElement} mainCanvas
+   * @param {HTMLCanvasElement} glowCanvas
+   */
+  init(mainCanvas, glowCanvas) {
+    this.mainCanvas = mainCanvas;
+    this.glowCanvas = glowCanvas;
+    this.mainCtx = mainCanvas.getContext('2d');
+    this.glowCtx = glowCanvas.getContext('2d');
+
+    this.dpr = window.devicePixelRatio || 1;
+    this._resizeCanvases();
+
+    // Sub-systems
+    this.spriteManager = new SpriteManager();
+    this.camera = new Camera(this.bus);
+    this.particleSystem = new ParticleSystem(this.spriteManager);
+    this.regionManager = new RegionManager(this.bus, this.particleSystem);
+    this.minimap = new Minimap(this.bus);
+    this.floatingNumbers = new FloatingNumbers();
+
+    this.camera.attach(mainCanvas);
+    this.particleSystem.setGlowCtx(this.glowCtx);
+
+    // Resize on viewport change
+    this._resizeObserver = new ResizeObserver(() => this._resizeCanvases());
+    this._resizeObserver.observe(mainCanvas);
+
+    // --- EventBus subscriptions ---
+    this.bus.on('resource:updated', (data) => this._onResourceUpdated(data));
+    this.bus.on('star:created', (data) => this._onStarCreated(data));
+    this.bus.on('star:stage:changed', (data) => this._onStarStageChanged(data));
+    this.bus.on('region:activated', (data) => this._onRegionActivated(data));
+    this.bus.on('upgrade:purchased', (data) => this._onUpgradePurchased(data));
+    this.bus.on('visual:threshold:changed', (data) => {
+      this._visualFlash = 1.0;
+      if (this.canvasConfig?.homeObject) {
+        this.canvasConfig.homeObject.baseColor = data.color;
+      }
+      this._visualTargetSize = data.size;
+      this._visualTargetGlow = data.glowRadius;
+      this._visualColor = data.color;
+      if (data.particleBoost && this.particleSystem) {
+        this.particleSystem.spawnInitialParticles('void', data.particleBoost);
+      }
+    });
+    this.bus.on('settings:changed', (data) => {
+      if (data.key === 'glowEnabled') this.setGlowEnabled(data.value);
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Canvas sizing
+  // ---------------------------------------------------------------
+
+  _resizeCanvases() {
+    const w = this.mainCanvas.clientWidth;
+    const h = this.mainCanvas.clientHeight;
+    if (w === 0 || h === 0) return;
+
+    for (const canvas of [this.mainCanvas, this.glowCanvas]) {
+      canvas.width = w * this.dpr;
+      canvas.height = h * this.dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+    }
+
+    if (this.camera) this.camera.setViewSize(w, h);
+  }
+
+  // ---------------------------------------------------------------
+  // Epoch config loading
+  // ---------------------------------------------------------------
+
+  /** Load a full epoch canvas config (regions, sprites, home object, etc). */
+  loadEpochConfig(config) {
+    this.canvasConfig = config;
+
+    this.camera.setUniverseSize(config.universeWidth, config.universeHeight);
+    this.spriteManager.loadEpochSprites(config);
+    this.particleSystem.loadRegions(config.regions);
+    this.regionManager.loadRegions(config.regions);
+    this.minimap.loadConfig(config);
+
+    // Center camera on home object
+    if (config.homeObject) {
+      this.camera.x = config.homeObject.worldX - this.camera.viewW / 2;
+      this.camera.y = config.homeObject.worldY - this.camera.viewH / 2;
+      this.camera.clamp();
+    }
+
+    // Spawn particles in initially active regions
+    for (const region of config.regions) {
+      if (region.initiallyActive) {
+        this.particleSystem.spawnInitialParticles(region.regionId, 250);
+      }
+    }
+
+    this._stars.clear();
+    this._indicators = [];
+
+    // Load visual thresholds from canvas config module (imported by caller)
+    this._visualThresholds = config.visualThresholds || null;
+    // Set initial visual state from threshold level 0
+    if (this._visualThresholds && this._visualThresholds.length > 0) {
+      const t = this._visualThresholds[0];
+      this._visualSize = t.size;
+      this._visualTargetSize = t.size;
+      this._visualGlow = t.glowRadius;
+      this._visualTargetGlow = t.glowRadius;
+      this._visualColor = t.color;
+      if (config.homeObject) {
+        config.homeObject.baseColor = t.color;
+        config.homeObject.baseSize = t.size;
+        config.homeObject.glowRadius = t.glowRadius;
+      }
+    }
+    this._thresholdLevel = 0;
+  }
+
+  // ---------------------------------------------------------------
+  // Frame rendering (called by GameLoop)
+  // ---------------------------------------------------------------
+
+  /** Main render loop entry point. */
+  onFrame(ts) {
+    const dt = this.lastFrameTime ? (ts - this.lastFrameTime) / 1000 : 0.016;
+    this.lastFrameTime = ts;
+    const clampedDt = Math.min(dt, 0.1);
+
+    const viewW = this.mainCanvas.clientWidth;
+    const viewH = this.mainCanvas.clientHeight;
+
+    // Clear
+    this.mainCtx.clearRect(0, 0, viewW, viewH);
+    if (this.glowEnabled) this.glowCtx.clearRect(0, 0, viewW, viewH);
+
+    if (!this.canvasConfig) return;
+
+    // Sync home object position from mote controller
+    if (this._moteController && this.canvasConfig.homeObject) {
+      this.canvasConfig.homeObject.worldX = this._moteController.worldX;
+      this.canvasConfig.homeObject.worldY = this._moteController.worldY;
+      // Update particle attraction target in ALL regions to follow the mote
+      if (this._moteController.enabled) {
+        const baseRadius = this._gravityBaseRadius || 100;
+        const tractorRange = this._moteController.tractorBeamRange || 0;
+        const effectiveRadius = baseRadius + tractorRange;
+        this.particleSystem.updateAttractionTargetAll(
+          this._moteController.worldX,
+          this._moteController.worldY,
+          effectiveRadius
+        );
+        // Apply tractor beam speed/conversion params to all regions
+        if (tractorRange > 0) {
+          for (const region of this.canvasConfig.regions) {
+            this.particleSystem.setAttractionParams(region.regionId, {
+              conversionRate: this._moteController.tractorBeamStrength,
+              speedMultiplier: this._moteController.tractorBeamStrength,
+            });
+          }
+        }
+      }
+    }
+
+    // Update
+    this.regionManager.update(clampedDt);
+    this.particleSystem.update(clampedDt);
+    this.floatingNumbers.update(clampedDt);
+
+    // Decay absorption pulse
+    if (this._homeObjectPulse > 0) {
+      this._homeObjectPulse = Math.max(0, this._homeObjectPulse - clampedDt * 4);
+    }
+
+    // Lerp visual size and glow toward targets
+    const lerpSpeed = 2.0;
+    this._visualSize += (this._visualTargetSize - this._visualSize) * Math.min(1, lerpSpeed * clampedDt);
+    this._visualGlow += (this._visualTargetGlow - this._visualGlow) * Math.min(1, lerpSpeed * clampedDt);
+    // Decay threshold flash
+    if (this._visualFlash > 0) {
+      this._visualFlash = Math.max(0, this._visualFlash - clampedDt * 1.5);
+    }
+
+    // Draw region backgrounds
+    this.regionManager.draw(this.mainCtx, this.camera, viewW, viewH);
+
+    // Draw particles
+    this.particleSystem.draw(this.mainCtx, this.camera, viewW, viewH);
+
+    // Draw home object
+    this._drawHomeObject(this.mainCtx);
+
+    // Draw stars
+    this._drawStars(this.mainCtx);
+
+    // Draw minimap
+    this.minimap.draw(
+      this.mainCtx,
+      this.camera,
+      viewW,
+      viewH,
+      this.regionManager.getRegions()
+    );
+
+    // Draw floating numbers (screen-space)
+    this.floatingNumbers.draw(this.mainCtx);
+
+    // Draw directional indicators
+    this._drawIndicators(this.mainCtx, viewW, viewH);
+
+    // Draw controls hint overlay (bottom-left of canvas)
+    this._drawControlsHint(this.mainCtx, viewW, viewH);
+  }
+
+  // ---------------------------------------------------------------
+  // Home object
+  // ---------------------------------------------------------------
+
+  _drawHomeObject(ctx) {
+    const ho = this.canvasConfig?.homeObject;
+    if (!ho) {
+      if (window.AEONS_DEBUG) console.warn('[CanvasRenderer] Home object not found in config');
+      return;
+    }
+
+    const visible = this.camera.isVisible(ho.worldX - ho.hitRadius, ho.worldY - ho.hitRadius, ho.hitRadius * 2, ho.hitRadius * 2);
+    if (!visible) {
+      if (window.AEONS_DEBUG && Math.random() < 0.01) {
+        console.warn(`[CanvasRenderer] Home object outside viewport. HO: (${ho.worldX}, ${ho.worldY}), Camera: (${this.camera.x}, ${this.camera.y}), View: ${this.camera.viewW}x${this.camera.viewH}`);
+      }
+      return;
+    }
+
+    const { sx, sy } = this.camera.worldToScreen(ho.worldX, ho.worldY);
+    const pulse = this._homeObjectPulse;
+    const s = this._visualSize + pulse * 3;
+    const color = this._visualColor || ho.baseColor;
+
+    // Draw threshold flash overlay (before home object, full viewport)
+    if (this._visualFlash > 0.01) {
+      const viewW = this.mainCanvas.clientWidth;
+      const viewH = this.mainCanvas.clientHeight;
+      ctx.save();
+      ctx.globalAlpha = this._visualFlash * 0.35;
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, viewW, viewH);
+      ctx.restore();
+    }
+
+    // Bright core cluster
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 1;
+    ctx.fillRect(Math.round(sx - s), Math.round(sy - s), s * 2, s * 2);
+
+    // Cross-hair glow pixels
+    ctx.globalAlpha = 0.5 + pulse * 0.4;
+    ctx.fillRect(Math.round(sx - s - 2), Math.round(sy), 2, 1);
+    ctx.fillRect(Math.round(sx + s + 1), Math.round(sy), 2, 1);
+    ctx.fillRect(Math.round(sx), Math.round(sy - s - 2), 1, 2);
+    ctx.fillRect(Math.round(sx), Math.round(sy + s + 1), 1, 2);
+
+    // Pulse ring
+    if (pulse > 0.05) {
+      const ringR = (s + 6) + pulse * 12;
+      ctx.globalAlpha = pulse * 0.5;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Glow on glow canvas
+    if (this.glowEnabled) {
+      const gr = this._visualGlow + pulse * 6;
+      this.glowCtx.globalAlpha = 0.4 + pulse * 0.4;
+      this.glowCtx.fillStyle = color;
+      this.glowCtx.fillRect(
+        Math.round(sx - s - gr),
+        Math.round(sy - s - gr),
+        s * 2 + gr * 2,
+        s * 2 + gr * 2
+      );
+      this.glowCtx.globalAlpha = 1;
+    }
+
+    // Direction indicator (small line showing facing angle)
+    if (this._moteController?.enabled) {
+      const mc = this._moteController;
+      const dirLen = s + 10;
+      const dx = Math.cos(mc.angle) * dirLen;
+      const dy = Math.sin(mc.angle) * dirLen;
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.7;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + dx, sy + dy);
+      ctx.stroke();
+
+      // Small arrowhead
+      const aLen = 4;
+      const aAngle = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + dx, sy + dy);
+      ctx.lineTo(
+        sx + dx - Math.cos(mc.angle - aAngle) * aLen,
+        sy + dy - Math.sin(mc.angle - aAngle) * aLen
+      );
+      ctx.moveTo(sx + dx, sy + dy);
+      ctx.lineTo(
+        sx + dx - Math.cos(mc.angle + aAngle) * aLen,
+        sy + dy - Math.sin(mc.angle + aAngle) * aLen
+      );
+      ctx.stroke();
+    }
+
+    // Tractor beam visual (pulsing dashed circle)
+    if (this._moteController?.tractorBeamRange > 0) {
+      const range = this._moteController.tractorBeamRange;
+      const now = performance.now();
+      const breathe = Math.sin(now * 0.003) * 0.04 + 0.16;
+      const radiusOsc = range + Math.sin(now * 0.002) * 4;
+
+      ctx.save();
+      ctx.globalAlpha = breathe;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(sx, sy, radiusOsc, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  /** Returns screen position of the home object. */
+  getHomeObjectScreenPos() {
+    const ho = this.canvasConfig?.homeObject;
+    if (!ho) return { x: 0, y: 0 };
+    const { sx, sy } = this.camera.worldToScreen(ho.worldX, ho.worldY);
+    return { x: sx, y: sy };
+  }
+
+  // ---------------------------------------------------------------
+  // Stars
+  // ---------------------------------------------------------------
+
+  _onStarCreated(data) {
+    this._stars.set(data.starId, {
+      starId: data.starId,
+      slot: data.slot || 0,
+      stage: 'main_sequence',
+      stageProgress: 0,
+    });
+  }
+
+  _onStarStageChanged(data) {
+    const star = this._stars.get(data.starId);
+    if (star) {
+      star.stage = data.newStage;
+      star.stageProgress = data.stageProgress || 0;
+    }
+  }
+
+  _drawStars(ctx) {
+    if (this._stars.size === 0 || !this.canvasConfig) return;
+
+    // Place stars in the Stellar Forge region
+    const forgeRegion = this.canvasConfig.regions.find(
+      (r) => r.regionId === 'stellarForge'
+    );
+    if (!forgeRegion) return;
+
+    const bounds = forgeRegion.worldBounds;
+    let idx = 0;
+
+    for (const [, star] of this._stars) {
+      const vis = STAR_VISUALS[star.stage] || STAR_VISUALS.main_sequence;
+      // Distribute stars in a grid within the forge region
+      const col = idx % 5;
+      const row = Math.floor(idx / 5);
+      const starX = bounds.x + 80 + col * 120;
+      const starY = bounds.y + 200 + row * 200;
+      idx++;
+
+      if (!this.camera.isVisible(starX - vis.size, starY - vis.size, vis.size * 2, vis.size * 2)) continue;
+
+      const { sx, sy } = this.camera.worldToScreen(starX, starY);
+
+      // Star body
+      ctx.fillStyle = vis.color;
+      ctx.globalAlpha = 1;
+      ctx.fillRect(
+        Math.round(sx - vis.size / 2),
+        Math.round(sy - vis.size / 2),
+        vis.size,
+        vis.size
+      );
+
+      // Progress arc
+      const progress = star.stageProgress || 0;
+      if (progress > 0 && progress < 1) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, vis.size + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
+        ctx.strokeStyle = vis.color;
+        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Glow on glow canvas
+      if (vis.glow && this.glowEnabled) {
+        this.glowCtx.globalAlpha = 0.5;
+        this.glowCtx.fillStyle = vis.color;
+        this.glowCtx.fillRect(
+          Math.round(sx - vis.size),
+          Math.round(sy - vis.size),
+          vis.size * 2,
+          vis.size * 2
+        );
+        this.glowCtx.globalAlpha = 1;
+      }
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------------------------------------------------------------
+  // Directional indicators
+  // ---------------------------------------------------------------
+
+  _onRegionActivated(data) {
+    if (!this.canvasConfig) return;
+    const region = this.canvasConfig.regions.find(
+      (r) => r.regionId === data.regionId
+    );
+    if (!region) return;
+
+    // If gravitational pull is active, enable attraction in the new region too
+    if (this._gravityBaseRadius > 0 && this.canvasConfig.homeObject) {
+      const ho = this.canvasConfig.homeObject;
+      const tractorRange = this._moteController?.tractorBeamRange || 0;
+      this.particleSystem.enableAttraction(
+        data.regionId, ho.worldX, ho.worldY,
+        this._gravityBaseRadius + tractorRange
+      );
+    }
+
+    const cx = region.worldBounds.x + region.worldBounds.w / 2;
+    const cy = region.worldBounds.y + region.worldBounds.h / 2;
+
+    if (!this.camera.isVisible(cx - 1, cy - 1, 2, 2)) {
+      this._indicators.push({
+        regionName: data.regionName || region.name,
+        worldX: cx,
+        worldY: cy,
+        createdAt: performance.now(),
+        duration: 3000,
+      });
+    }
+  }
+
+  _drawIndicators(ctx, viewW, viewH) {
+    const now = performance.now();
+    for (let i = this._indicators.length - 1; i >= 0; i--) {
+      const ind = this._indicators[i];
+      const elapsed = now - ind.createdAt;
+      if (elapsed > ind.duration) {
+        this._indicators.splice(i, 1);
+        continue;
+      }
+
+      const alpha = 1 - elapsed / ind.duration;
+      const { sx, sy } = this.camera.worldToScreen(ind.worldX, ind.worldY);
+
+      // Clamp to screen edge
+      const pad = 30;
+      const edgeX = Math.max(pad, Math.min(viewW - pad, sx));
+      const edgeY = Math.max(pad, Math.min(viewH - pad, sy));
+
+      // Arrow direction
+      const angle = Math.atan2(sy - edgeY, sx - edgeX);
+
+      ctx.save();
+      ctx.translate(edgeX, edgeY);
+      ctx.rotate(angle);
+      ctx.globalAlpha = alpha * 0.8;
+
+      // Draw arrow
+      ctx.fillStyle = '#a0c4ff';
+      ctx.beginPath();
+      ctx.moveTo(10, 0);
+      ctx.lineTo(-4, -5);
+      ctx.lineTo(-4, 5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+
+      // Label
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.fillStyle = '#a0c4ff';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(ind.regionName, edgeX, edgeY - 12);
+      ctx.textAlign = 'start';
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  _drawControlsHint(ctx, viewW, viewH) {
+    if (!this._moteController) return;
+    const hint = this._moteController.getHintState();
+    if (!hint.visible || hint.alpha <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha = hint.alpha;
+    ctx.fillStyle = '#a0c4ff';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('WASD / \u2191\u2193\u2190\u2192 to move', 14, viewH - 18);
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------
+  // Resource-driven visual updates
+  // ---------------------------------------------------------------
+
+  _onResourceUpdated(data) {
+    // Modulate particle behavior based on resource rates
+    if (!this.canvasConfig) return;
+
+    if (data.resourceId === 'energy' && data.ratePerSec != null) {
+      const intensity = Math.min(2, 0.5 + data.ratePerSec * 0.05);
+      this.particleSystem.setRegionParams('void', {
+        motionSpeed: intensity,
+        brightness: Math.min(1.5, 0.6 + data.ratePerSec * 0.02),
+      });
+    }
+
+    if (data.resourceId === 'mass' && this._visualThresholds) {
+      const mass = data.currentValue || 0;
+      let newLevel = 0;
+      for (let i = this._visualThresholds.length - 1; i >= 0; i--) {
+        if (mass >= this._visualThresholds[i].minMass) {
+          newLevel = i;
+          break;
+        }
+      }
+      if (newLevel !== this._thresholdLevel) {
+        this._thresholdLevel = newLevel;
+        const threshold = this._visualThresholds[newLevel];
+        this.bus.emit('visual:threshold:changed', threshold);
+      }
+    }
+  }
+
+  _onUpgradePurchased(data) {
+    if (data.upgradeId === 'upg_gravitationalPull') {
+      const ho = this.canvasConfig?.homeObject;
+      if (!ho) {
+        console.warn('[CanvasRenderer] Gravitational Pull purchased but home object not ready yet');
+        return;
+      }
+      try {
+        console.log(`[CanvasRenderer] Setting up gravity attraction at (${ho.worldX}, ${ho.worldY})`);
+        // Enable attraction in ALL active regions so particles everywhere can be absorbed
+        this.particleSystem.enableAttractionAll(ho.worldX, ho.worldY, 100);
+        this._gravityBaseRadius = 100;
+        this.particleSystem.setAbsorptionCallback((wx, wy, quality) => {
+          this._homeObjectPulse = 1;
+          // Get value multiplier from quality tier (0=1x, 1=1.5x, 2=2.5x, 3=5x, 4=10x)
+          const qualityMultipliers = [1.0, 1.5, 2.5, 5, 10];
+          const multiplier = qualityMultipliers[Math.min(quality, 4)] || 1.0;
+          const value = Math.round(multiplier);
+          const { sx, sy } = this.camera.worldToScreen(wx, wy);
+          const floatingText = value > 1 ? `+${value}` : '+1';
+          this.floatingNumbers.spawn(floatingText, sx, sy - 8, false);
+          this.bus.emit('particle:absorbed', { resourceId: 'energy', amount: value, quality });
+        });
+        console.log('[CanvasRenderer] Gravity attraction set up successfully');
+      } catch (err) {
+        console.error('[CanvasRenderer] Error setting up gravity:', err);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Public API
+  // ---------------------------------------------------------------
+
+  /** Spawn a floating number at a screen position. */
+  spawnFloatingNumber(text, sx, sy, combo = false) {
+    this.floatingNumbers.spawn(text, sx, sy, combo);
+  }
+
+  /** Toggle glow canvas rendering. */
+  setGlowEnabled(enabled) {
+    this.glowEnabled = !!enabled;
+    if (this.glowCanvas) {
+      this.glowCanvas.style.display = this.glowEnabled ? '' : 'none';
+    }
+  }
+
+  /**
+   * Store a reference to the MoteController so the renderer can read
+   * the mote's live position, angle, and tractor beam state each frame.
+   */
+  setMoteController(mc) {
+    this._moteController = mc;
+  }
+
+  /** Handle epoch change by loading the new epoch's canvas config. */
+  async onEpochChange(epochId) {
+    try {
+      const module = await import(`../data/${epochId}-canvas.js`);
+      const configKey = Object.keys(module).find((k) => k.endsWith('CanvasConfig'));
+      if (configKey) {
+        this.loadEpochConfig(module[configKey]);
+      }
+    } catch (err) {
+      console.error(`[CanvasRenderer] Failed to load canvas config for ${epochId}:`, err);
+    }
+  }
+}
