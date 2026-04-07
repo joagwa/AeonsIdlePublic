@@ -771,15 +771,66 @@ html, body {
   display: none !important;
 }
 
-/* --- Responsive: Mobile (<768px) --- */
-@media (max-width: 768px) {
+/* --- Responsive: Tablet (481px–768px) --- */
+@media (max-width: 768px) and (min-width: 481px) {
+  :root {
+    --panel-width: 260px;
+  }
+
   #game-container {
     flex-direction: column;
   }
 
   #canvas-wrapper {
     flex: none;
-    height: min(50vh, 360px);
+    height: 45vh;
+    width: 100%;
+  }
+
+  #ui-layer {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  #ui-layer > .panel {
+    flex: 1 1 45%;
+    min-width: 200px;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  #upgrade-panel {
+    flex: 1 1 100%;
+    max-height: 35vh;
+  }
+
+  #toolbar {
+    right: 8px;
+    top: 8px;
+  }
+
+  #milestone-notification-area {
+    bottom: calc(55vh + 16px);
+  }
+}
+
+/* --- Responsive: Phone (<481px) --- */
+@media (max-width: 480px) {
+  #game-container {
+    flex-direction: column;
+  }
+
+  #canvas-wrapper {
+    flex: none;
+    height: 40vh;
+    min-height: 200px;
     width: 100%;
   }
 
@@ -799,21 +850,80 @@ html, body {
   }
 
   #upgrade-panel {
-    max-height: 40vh;
+    max-height: none;
   }
 
   #chronicle-panel {
-    max-height: 40vh;
+    max-height: none;
   }
 
   #milestone-notification-area {
     bottom: auto;
-    top: auto;
-    bottom: calc(50vh + 20px);
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    transform: none;
   }
 
   .milestone-popup {
-    max-width: 90vw;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .panel {
+    padding: 10px;
+  }
+
+  .panel-title {
+    font-size: 12px;
+  }
+
+  .resource-row {
+    font-size: 12px;
+  }
+
+  .resource-value {
+    font-size: 11px;
+  }
+
+  .upgrade-card {
+    padding: 10px;
+  }
+
+  .upgrade-name {
+    font-size: 12px;
+  }
+
+  .upgrade-desc {
+    font-size: 10px;
+  }
+
+  .upgrade-cost {
+    font-size: 11px;
+  }
+
+  .upgrade-btn {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 16px;
+    max-height: 85vh;
+  }
+
+  .settings-btn {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .toolbar-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 
   body {
@@ -821,19 +931,24 @@ html, body {
   }
 }
 
-/* --- Very small screens --- */
+/* --- Very small screens (<320px) --- */
 @media (max-width: 320px) {
-  :root {
-    --panel-width: 100%;
+  #canvas-wrapper {
+    height: 35vh;
+    min-height: 160px;
   }
 
   .modal-content {
-    width: 95%;
-    padding: 16px;
+    width: 98%;
+    padding: 12px;
   }
 
   .milestone-popup {
-    padding: 12px 14px;
+    padding: 10px 12px;
+  }
+
+  .panel {
+    padding: 8px;
   }
 }
 
