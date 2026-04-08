@@ -4,36 +4,36 @@
  */
 
 // === Core Imports ===
-import { EventBus } from './core/EventBus.js?v=fc017ad';
-import { GameLoop } from './core/GameLoop.js?v=fc017ad';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=fc017ad';
-import { SaveSystem } from './core/SaveSystem.js?v=fc017ad';
-import { UpdateChecker } from './core/UpdateChecker.js?v=fc017ad';
+import { EventBus } from './core/EventBus.js?v=6bd7aef';
+import { GameLoop } from './core/GameLoop.js?v=6bd7aef';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=6bd7aef';
+import { SaveSystem } from './core/SaveSystem.js?v=6bd7aef';
+import { UpdateChecker } from './core/UpdateChecker.js?v=6bd7aef';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=fc017ad';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=fc017ad';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=fc017ad';
-import { StarManager } from './engine/StarManager.js?v=fc017ad';
-import { EpochSystem } from './engine/EpochSystem.js?v=fc017ad';
-import { MoteController } from './engine/MoteController.js?v=fc017ad';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=fc017ad';
+import { ResourceManager } from './engine/ResourceManager.js?v=6bd7aef';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=6bd7aef';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=6bd7aef';
+import { StarManager } from './engine/StarManager.js?v=6bd7aef';
+import { EpochSystem } from './engine/EpochSystem.js?v=6bd7aef';
+import { MoteController } from './engine/MoteController.js?v=6bd7aef';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=6bd7aef';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=fc017ad';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=6bd7aef';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=fc017ad';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=fc017ad';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=fc017ad';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=fc017ad';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=fc017ad';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=fc017ad';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=fc017ad';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=fc017ad';
-import { StatsPanel } from './ui/StatsPanel.js?v=fc017ad';
-import { GoalWidget } from './ui/GoalWidget.js?v=fc017ad';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=fc017ad';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=6bd7aef';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=6bd7aef';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=6bd7aef';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=6bd7aef';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=6bd7aef';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=6bd7aef';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=6bd7aef';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=6bd7aef';
+import { StatsPanel } from './ui/StatsPanel.js?v=6bd7aef';
+import { GoalWidget } from './ui/GoalWidget.js?v=6bd7aef';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=6bd7aef';
 
 // === Game State ===
 let gameState = {
@@ -304,9 +304,10 @@ async function bootstrap() {
         // Advance accumulator proportional to slider rate
         _conversionAccumulator += dt * conversionRate;
 
-        // Base pulse interval 2s; Rapid Accretion shrinks it by ×0.8 per level
+        // Base pulse interval 2s; Rapid Accretion shrinks it ×0.8/level, Singularity Engine ×0.7/level
         const rapidLevel = upgradeSystem.getLevel('upg_rapidAccretion') || 0;
-        const pulseInterval = 2.0 * Math.pow(0.8, rapidLevel);
+        const singularityLevel = upgradeSystem.getLevel('upg_singularityEngine') || 0;
+        const pulseInterval = Math.max(0.05, 2.0 * Math.pow(0.8, rapidLevel) * Math.pow(0.7, singularityLevel));
 
         while (_conversionAccumulator >= pulseInterval) {
           _conversionAccumulator -= pulseInterval;
@@ -321,9 +322,10 @@ async function bootstrap() {
             const fraction = Math.min(1, energyAvailable / energyCost);
             const energyToDrain = energyCost * fraction;
 
-            // Mass per pulse = accretionLevel × efficiency
+            // Mass per pulse = accretionLevel × efficiency (primalSynthesis) × bulk multiplier (massForge)
             const synthLevel = upgradeSystem.getLevel('upg_primalSynthesis') || 0;
-            const efficiencyMult = synthLevel > 0 ? Math.pow(1.4, synthLevel) : 1;
+            const forgeLevel = upgradeSystem.getLevel('upg_massForge') || 0;
+            const efficiencyMult = Math.pow(1.4, synthLevel) * Math.pow(1.5, forgeLevel);
             const massGained = accretionLevel * efficiencyMult * fraction;
 
             resourceManager.spend('energy', energyToDrain);
