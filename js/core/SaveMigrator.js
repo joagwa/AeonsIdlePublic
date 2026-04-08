@@ -3,6 +3,29 @@
  *
  * Each migration function transforms data from version N-1 → N.
  * Add new migration functions to the `migrations` map as the schema evolves.
+ *
+ * HOW TO ADD A NEW MIGRATION:
+ * ─────────────────────────────────────────────────────────────────────
+ * 1. Bump CURRENT_VERSION (e.g. 1 → 2).
+ * 2. Add a new entry in the `migrations` map keyed by the NEW version:
+ *
+ *      2(data) {
+ *        // v1 → v2: describe what changed
+ *        data.newField = data.newField ?? 'defaultValue';
+ *        // Rename: data.newName = data.oldName; delete data.oldName;
+ *        // Restructure: data.nested = { foo: data.flatFoo }; delete data.flatFoo;
+ *        return data;
+ *      },
+ *
+ * 3. The migrate() function automatically chains: v0→v1→v2→...→current.
+ *    Old saves at ANY prior version will be stepped through each migration
+ *    in order, so each function only needs to handle one version jump.
+ *
+ * 4. Test by exporting a save BEFORE the change, then importing it after.
+ *
+ * IMPORTANT: Never remove old migrations — a user could have a v0 save
+ * and needs the full chain to reach the current version.
+ * ─────────────────────────────────────────────────────────────────────
  */
 
 const CURRENT_VERSION = 1;

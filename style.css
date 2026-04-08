@@ -115,6 +115,62 @@ html, body {
   flex-shrink: 0;
 }
 
+/* --- Conversion Slider --- */
+#conversion-slider-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.conversion-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.conversion-label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.conversion-pct {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--warning);
+  font-family: var(--font-mono);
+}
+
+.conversion-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.conversion-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--warning);
+  border: 2px solid var(--bg-panel);
+  cursor: pointer;
+}
+
+.conversion-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--warning);
+  border: 2px solid var(--bg-panel);
+  cursor: pointer;
+}
+
 .resource-row {
   display: flex;
   justify-content: space-between;
@@ -671,6 +727,29 @@ html, body {
 .banner.error {
   background: var(--danger);
   color: #000;
+}
+
+.banner.info {
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  color: #fff;
+}
+
+.banner .refresh-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 44px;
+  min-height: 32px;
+  transition: background 0.2s;
+}
+
+.banner .refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .banner .dismiss-btn {

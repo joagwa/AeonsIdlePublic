@@ -52,6 +52,12 @@ export class CanvasRenderer {
     this._moteController = null;
     this._gravityBaseRadius = 0; // set when upg_gravitationalPull purchased
 
+    // Mass-based gravity scaling state
+    this._currentMass = 0;
+
+    // Conversion rate slider (0..1, default 1 = 100%)
+    this._conversionRate = 1;
+
     // Visual threshold state (home object evolves with mass)
     this._thresholdLevel = 0;
     this._visualSize = 4;
@@ -238,12 +244,17 @@ export class CanvasRenderer {
       if (this._moteController.enabled) {
         const baseRadius = this._gravityBaseRadius || 100;
         const tractorRange = this._moteController.tractorBeamRange || 0;
-        const effectiveRadius = baseRadius + tractorRange;
+        // Mass-based radius expansion: +50% radius per 100 mass, logarithmic scaling
+        const massBonus = this._currentMass > 0 ? Math.log10(1 + this._currentMass) * 0.4 : 0;
+        const effectiveRadius = (baseRadius + tractorRange) * (1 + massBonus);
         this.particleSystem.updateAttractionTargetAll(
           this._moteController.worldX,
           this._moteController.worldY,
           effectiveRadius
         );
+        // Mass-based speed multiplier: 1.0 base, +10% per log10(mass)
+        const massSpeedMult = 1 + (this._currentMass > 0 ? Math.log10(1 + this._currentMass) * 0.1 : 0);
+        this.particleSystem.setMassGravityMultiplier(massSpeedMult);
         // Apply tractor beam speed/conversion params to all regions
         if (tractorRange > 0) {
           for (const region of this.canvasConfig.regions) {
@@ -676,6 +687,7 @@ export class CanvasRenderer {
 
     if (data.resourceId === 'mass' && this._visualThresholds) {
       const mass = data.currentValue || 0;
+      this._currentMass = mass; // Track mass for gravity scaling
       let newLevel = 0;
       for (let i = this._visualThresholds.length - 1; i >= 0; i--) {
         if (mass >= this._visualThresholds[i].minMass) {
@@ -699,8 +711,8 @@ export class CanvasRenderer {
         return;
       }
       try {
-        // Gravity radius scales with upgrade level
-        const gravityRadiusByLevel = [0, 100, 200, 300, 450, 600];
+        // Gravity radius scales with upgrade level — much larger with steep falloff
+        const gravityRadiusByLevel = [0, 200, 400, 700, 1000, 1400];
         const level = data.level || 1;
         const radius = gravityRadiusByLevel[Math.min(level, gravityRadiusByLevel.length - 1)];
 
@@ -734,6 +746,16 @@ export class CanvasRenderer {
     if (this.glowCanvas) {
       this.glowCanvas.style.display = this.glowEnabled ? '' : 'none';
     }
+  }
+
+  /** Set the energy→mass conversion rate (0..1). Used by the slider UI. */
+  setConversionRate(rate) {
+    this._conversionRate = Math.max(0, Math.min(1, rate));
+  }
+
+  /** Get the current conversion rate (0..1). */
+  getConversionRate() {
+    return this._conversionRate;
   }
 
   /**

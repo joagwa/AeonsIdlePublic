@@ -14,6 +14,10 @@ export class ParticleSystem {
     this._glowCtx = null;
     /** @type {((worldX: number, worldY: number) => void)|null} */
     this._onAbsorb = null;
+    // Mass-based gravity multiplier (set externally each frame)
+    this._massGravityMult = 1;
+    // Spawn flash tracking: [{x, y, age, maxAge}]
+    this._spawnFlashes = [];
   }
 
   /** Initialize particle arrays for each region. */
@@ -31,7 +35,7 @@ export class ParticleSystem {
     }
   }
 
-  /** Spawn a single particle of the given type in the given region. */
+  /** Spawn a single particle, biased toward gravity center when attraction is active. */
   spawnParticle(regionId, type) {
     const entry = this.regions.get(regionId);
     if (!entry || entry.particles.length >= MAX_PER_REGION) return;
@@ -42,9 +46,25 @@ export class ParticleSystem {
 
     const size = sprite.minSize + Math.random() * (sprite.maxSize - sprite.minSize);
 
+    let x, y;
+    const attraction = entry.attraction;
+    // 60% chance to spawn within ~2× gravity radius of attraction center
+    if (attraction && Math.random() < 0.6) {
+      const spawnRadius = (attraction.gravityRadius || 300) * 2;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.sqrt(Math.random()) * spawnRadius; // sqrt for uniform area distribution
+      x = attraction.targetX + Math.cos(angle) * dist;
+      y = attraction.targetY + Math.sin(angle) * dist;
+      // Clamp within region bounds
+      x = Math.max(bounds.x, Math.min(bounds.x + bounds.w, x));
+      y = Math.max(bounds.y, Math.min(bounds.y + bounds.h, y));
+    } else {
+      x = bounds.x + Math.random() * bounds.w;
+      y = bounds.y + Math.random() * bounds.h;
+    }
+
     entry.particles.push({
-      x: bounds.x + Math.random() * bounds.w,
-      y: bounds.y + Math.random() * bounds.h,
+      x, y,
       vx: (Math.random() - 0.5) * 2 * 1.5 + 0.5 * Math.sign(Math.random() - 0.5),
       vy: (Math.random() - 0.5) * 2 * 1.5 + 0.5 * Math.sign(Math.random() - 0.5),
       size,
@@ -53,11 +73,13 @@ export class ParticleSystem {
       sprite,
       attracted: false,
     });
+
+    // Tiny spawn flash
+    this._spawnFlashes.push({ x, y, age: 0, maxAge: 0.3 });
   }
 
   /**
-   * Spawn a replacement particle at a random edge of the region
-   * (used after an attracted particle is absorbed).
+   * Spawn a replacement particle — biased toward gravity zone, with edge fallback.
    */
   _spawnEdgeParticle(entry) {
     if (entry.particles.length >= MAX_PER_REGION) return;
@@ -71,19 +93,43 @@ export class ParticleSystem {
     const size = sprite.minSize + Math.random() * (sprite.maxSize - sprite.minSize);
 
     let x, y;
-    const edge = Math.floor(Math.random() * 4);
-    switch (edge) {
-      case 0: x = bounds.x + Math.random() * bounds.w; y = bounds.y + 2; break;
-      case 1: x = bounds.x + Math.random() * bounds.w; y = bounds.y + bounds.h - 2; break;
-      case 2: x = bounds.x + 2;                         y = bounds.y + Math.random() * bounds.h; break;
-      default: x = bounds.x + bounds.w - 2;             y = bounds.y + Math.random() * bounds.h; break;
+    const attraction = entry.attraction;
+    // 50% chance to spawn near gravity zone (but outside the tight pull radius)
+    if (attraction && Math.random() < 0.5) {
+      const innerR = (attraction.gravityRadius || 300) * 0.8;
+      const outerR = (attraction.gravityRadius || 300) * 2.5;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = innerR + Math.random() * (outerR - innerR);
+      x = attraction.targetX + Math.cos(angle) * dist;
+      y = attraction.targetY + Math.sin(angle) * dist;
+      x = Math.max(bounds.x, Math.min(bounds.x + bounds.w, x));
+      y = Math.max(bounds.y, Math.min(bounds.y + bounds.h, y));
+    } else {
+      const edge = Math.floor(Math.random() * 4);
+      switch (edge) {
+        case 0: x = bounds.x + Math.random() * bounds.w; y = bounds.y + 2; break;
+        case 1: x = bounds.x + Math.random() * bounds.w; y = bounds.y + bounds.h - 2; break;
+        case 2: x = bounds.x + 2;                         y = bounds.y + Math.random() * bounds.h; break;
+        default: x = bounds.x + bounds.w - 2;             y = bounds.y + Math.random() * bounds.h; break;
+      }
     }
 
     entry.particles.push({ x, y, vx: 0, vy: 0, size, brightness: 0.4 + Math.random() * 0.4, type, sprite, attracted: false });
+
+    // Tiny spawn flash
+    this._spawnFlashes.push({ x, y, age: 0, maxAge: 0.25 });
   }
 
   /** Update all particles: position, wrapping, flicker, attraction homing, absorption. */
   update(dt) {
+    // Age and prune spawn flashes
+    for (let i = this._spawnFlashes.length - 1; i >= 0; i--) {
+      this._spawnFlashes[i].age += dt;
+      if (this._spawnFlashes[i].age >= this._spawnFlashes[i].maxAge) {
+        this._spawnFlashes.splice(i, 1);
+      }
+    }
+
     for (const [, entry] of this.regions) {
       const bounds = entry.config.worldBounds;
       const speed = entry.params.motionSpeed;
@@ -92,18 +138,20 @@ export class ParticleSystem {
 
       // --- Move particles ---
       const gravRadius = attraction ? (attraction.gravityRadius || 600) : 0;
+      const massMult = this._massGravityMult;
 
       for (const p of entry.particles) {
         if (p.attracted && attraction) {
-          // Quadratic distance-based speed: slow at edge, fast near center
+          // Cubic distance-based speed with mass scaling: strong core, steep dropoff
           const dx = attraction.targetX - p.x;
           const dy = attraction.targetY - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist > 0) {
             const t = Math.max(0, 1 - dist / gravRadius); // 0 at edge, 1 at center
-            const minSpd = 3;
-            const maxSpd = 150;
-            const moveSpeed = (minSpd + (maxSpd - minSpd) * t * t) * aParms.speedMultiplier;
+            const minSpd = 2;
+            const maxSpd = 180;
+            // Cubic falloff: t³ creates a strong inner zone with steep outer dropoff
+            const moveSpeed = (minSpd + (maxSpd - minSpd) * t * t * t) * aParms.speedMultiplier * massMult;
             p.x += (dx / dist) * moveSpeed * dt;
             p.y += (dy / dist) * moveSpeed * dt;
             // Brighten and grow as approaching
@@ -145,7 +193,7 @@ export class ParticleSystem {
           const particle = entry.particles[absorbed[i]];
           const quality = particle.quality || 0;
           entry.particles.splice(absorbed[i], 1);
-          this._spawnEdgeParticle(entry); // replace at edge to maintain density
+          this._spawnEdgeParticle(entry); // replace to maintain density
           if (this._onAbsorb) {
             this._onAbsorb(attraction.targetX, attraction.targetY, quality);
           }
@@ -204,6 +252,18 @@ export class ParticleSystem {
         }
       }
     }
+
+    // Draw spawn flashes
+    for (const flash of this._spawnFlashes) {
+      if (!camera.isVisible(flash.x, flash.y, 6, 6)) continue;
+      const { sx, sy } = camera.worldToScreen(flash.x, flash.y);
+      const t = 1 - flash.age / flash.maxAge; // 1→0 over lifetime
+      ctx.globalAlpha = t * 0.6;
+      ctx.fillStyle = '#ffffff';
+      const r = 1 + t * 2;
+      ctx.fillRect(Math.round(sx - r), Math.round(sy - r), Math.ceil(r * 2), Math.ceil(r * 2));
+    }
+
     ctx.globalAlpha = 1;
     if (this._glowCtx) this._glowCtx.globalAlpha = 1;
   }
@@ -294,6 +354,14 @@ export class ParticleSystem {
       entry.attraction = null;
       for (const p of entry.particles) p.attracted = false;
     }
+  }
+
+  /**
+   * Set the mass-based gravity multiplier (called each frame from renderer).
+   * Scales pull speed: 1.0 = base, higher = stronger pull.
+   */
+  setMassGravityMultiplier(mult) {
+    this._massGravityMult = mult;
   }
 
   /**

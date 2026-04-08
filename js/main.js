@@ -8,6 +8,7 @@ import { EventBus } from './core/EventBus.js';
 import { GameLoop } from './core/GameLoop.js';
 import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js';
 import { SaveSystem } from './core/SaveSystem.js';
+import { UpdateChecker } from './core/UpdateChecker.js';
 
 // === Engine Imports ===
 import { ResourceManager } from './engine/ResourceManager.js';
@@ -210,6 +211,12 @@ async function bootstrap() {
       const level = upgradeSystem.getLevel('upg_moteQuality');
       proceduralMoteGenerator.setQualityLevel(level);
     }
+
+    // Show conversion slider when Mass Accretion is unlocked
+    if (data.upgradeId === 'upg_massAccretion') {
+      const sliderRow = document.getElementById('conversion-slider-row');
+      if (sliderRow) sliderRow.classList.remove('hidden');
+    }
   });
 
   // --- Settings changes ---
@@ -236,6 +243,18 @@ async function bootstrap() {
   });
 
   // --- Register game loop tick callbacks ---
+
+  // --- Conversion slider wiring ---
+  const convSlider = document.getElementById('conversion-slider');
+  const convPct = document.getElementById('conversion-pct');
+  if (convSlider) {
+    convSlider.addEventListener('input', () => {
+      const val = parseInt(convSlider.value, 10) / 100;
+      canvasRenderer.setConversionRate(val);
+      if (convPct) convPct.textContent = `${convSlider.value}%`;
+    });
+  }
+
   GameLoop.onTick((dt) => {
     resourceManager.tick(dt);
     milestoneSystem.check();
@@ -246,26 +265,30 @@ async function bootstrap() {
     // --- Energy → Mass auto-conversion (Mass Accretion mechanic) ---
     const accretionLevel = upgradeSystem.getLevel('upg_massAccretion') || 0;
     if (accretionLevel > 0) {
-      // Base: drain 10 energy/s, produce 1 mass/s per level
-      const energyDrainPerSec = 10 * accretionLevel;
-      const baseMassPerSec = 1 * accretionLevel;
+      // Conversion rate from slider (0..1)
+      const conversionRate = canvasRenderer.getConversionRate();
+      if (conversionRate > 0) {
+        // Base: drain 10 energy/s, produce 1 mass/s per level
+        const energyDrainPerSec = 10 * accretionLevel * conversionRate;
+        const baseMassPerSec = 1 * accretionLevel * conversionRate;
 
-      // Primal Synthesis efficiency boost (×1.4^level)
-      const synthLevel = upgradeSystem.getLevel('upg_primalSynthesis') || 0;
-      const efficiencyMult = synthLevel > 0 ? Math.pow(1.4, synthLevel) : 1;
-      const massPerSec = baseMassPerSec * efficiencyMult;
+        // Primal Synthesis efficiency boost (×1.4^level)
+        const synthLevel = upgradeSystem.getLevel('upg_primalSynthesis') || 0;
+        const efficiencyMult = synthLevel > 0 ? Math.pow(1.4, synthLevel) : 1;
+        const massPerSec = baseMassPerSec * efficiencyMult;
 
-      const energyState = resourceManager.get('energy');
-      if (energyState && energyState.currentValue > 0) {
-        const energyAvailable = energyState.currentValue;
-        const energyToDrain = Math.min(energyAvailable, energyDrainPerSec * dt);
-        const fraction = energyToDrain / (energyDrainPerSec * dt);
-        const massProduced = massPerSec * dt * fraction;
+        const energyState = resourceManager.get('energy');
+        if (energyState && energyState.currentValue > 0) {
+          const energyAvailable = energyState.currentValue;
+          const energyToDrain = Math.min(energyAvailable, energyDrainPerSec * dt);
+          const fraction = energyToDrain / (energyDrainPerSec * dt);
+          const massProduced = massPerSec * dt * fraction;
 
-        if (energyToDrain > 0.001) {
-          resourceManager.spend('energy', energyToDrain);
-          resourceManager.add('mass', massProduced);
-          EventBus.emit('mass:converted', { energySpent: energyToDrain, massGained: massProduced });
+          if (energyToDrain > 0.001) {
+            resourceManager.spend('energy', energyToDrain);
+            resourceManager.add('mass', massProduced);
+            EventBus.emit('mass:converted', { energySpent: energyToDrain, massGained: massProduced });
+          }
         }
       }
     }
@@ -316,6 +339,12 @@ async function bootstrap() {
   // Apply saved settings
   setNotationMode(gameState.settings.notationMode);
 
+  // Show conversion slider if Mass Accretion was already purchased
+  if (upgradeSystem.getLevel('upg_massAccretion') > 0) {
+    const sliderRow = document.getElementById('conversion-slider-row');
+    if (sliderRow) sliderRow.classList.remove('hidden');
+  }
+
   // Dev mode: boost initial resources for faster iteration
   if (window.AEONS_DEBUG) {
     resourceManager.add('energy', 50);    // 50 initial energy
@@ -334,6 +363,14 @@ async function bootstrap() {
     saveSystem.startAutoSave();
   }
   GameLoop.start();
+
+  // --- Update Checker ---
+  const gameVersion = document.querySelector('meta[name="game-version"]')?.content || 'dev';
+  const updateChecker = new UpdateChecker(EventBus, gameVersion);
+  EventBus.on('update:available', (data) => {
+    showUpdateBanner(data.newVersion);
+  });
+  updateChecker.start();
 
   // Tab conflict detection
   if (localStorageAvailable) {
@@ -370,6 +407,18 @@ function showBanner(id, message, type) {
   if (!banner) return;
   banner.className = `banner ${type}`;
   banner.innerHTML = `<span>${message}</span><button class="dismiss-btn" onclick="this.parentElement.classList.add('hidden')">Dismiss</button>`;
+  banner.classList.remove('hidden');
+}
+
+function showUpdateBanner(newVersion) {
+  const banner = document.getElementById('update-banner');
+  if (!banner) return;
+  banner.className = 'banner info';
+  banner.innerHTML = `
+    <span>🔄 A new version of Aeons is available!</span>
+    <button class="refresh-btn" onclick="window.location.reload()">Refresh Now</button>
+    <button class="dismiss-btn" onclick="this.parentElement.classList.add('hidden')">Later</button>
+  `;
   banner.classList.remove('hidden');
 }
 

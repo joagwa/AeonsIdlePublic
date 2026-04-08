@@ -90,7 +90,7 @@ const tier1Upgrades = [
     effectTarget: 'gravity',
     effectMagnitude: 1,
     requiresMilestone: null,
-    mechanic: '⚙ Gravity range increases each level (100 → 200 → 300 → 450 → 600)',
+    mechanic: '⚙ Gravity range increases each level (200 → 400 → 700 → 1000 → 1400)',
   },
   {
     id: 'upg_quantumFluctuation',
