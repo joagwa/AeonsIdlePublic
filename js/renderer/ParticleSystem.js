@@ -59,9 +59,10 @@ export class ParticleSystem {
       const dist = Math.sqrt(Math.random()) * spawnRadius; // sqrt for uniform area distribution
       x = attraction.targetX + Math.cos(angle) * dist;
       y = attraction.targetY + Math.sin(angle) * dist;
-      // Clamp within region bounds
-      x = Math.max(bounds.x, Math.min(bounds.x + bounds.w, x));
-      y = Math.max(bounds.y, Math.min(bounds.y + bounds.h, y));
+      // Clamp within region bounds with a small margin to avoid edge clustering
+      const margin = 50;
+      x = Math.max(bounds.x + margin, Math.min(bounds.x + bounds.w - margin, x));
+      y = Math.max(bounds.y + margin, Math.min(bounds.y + bounds.h - margin, y));
     } else {
       x = bounds.x + Math.random() * bounds.w;
       y = bounds.y + Math.random() * bounds.h;
@@ -109,15 +110,27 @@ export class ParticleSystem {
       const dist = innerR + Math.random() * (outerR - innerR);
       x = attraction.targetX + Math.cos(angle) * dist;
       y = attraction.targetY + Math.sin(angle) * dist;
-      x = Math.max(bounds.x, Math.min(bounds.x + bounds.w, x));
-      y = Math.max(bounds.y, Math.min(bounds.y + bounds.h, y));
+      const margin = 50;
+      x = Math.max(bounds.x + margin, Math.min(bounds.x + bounds.w - margin, x));
+      y = Math.max(bounds.y + margin, Math.min(bounds.y + bounds.h - margin, y));
     } else {
-      const edge = Math.floor(Math.random() * 4);
-      switch (edge) {
-        case 0: x = bounds.x + Math.random() * bounds.w; y = bounds.y + 2; break;
-        case 1: x = bounds.x + Math.random() * bounds.w; y = bounds.y + bounds.h - 2; break;
-        case 2: x = bounds.x + 2;                         y = bounds.y + Math.random() * bounds.h; break;
-        default: x = bounds.x + bounds.w - 2;             y = bounds.y + Math.random() * bounds.h; break;
+      // Spawn in outer ring (15% margin from each edge), distributed proportionally by perimeter
+      const marginX = bounds.w * 0.15;
+      const marginY = bounds.h * 0.15;
+      const perimeter = 2 * (bounds.w + bounds.h);
+      const r = Math.random() * perimeter;
+      if (r < bounds.w) {
+        x = bounds.x + Math.random() * bounds.w;
+        y = bounds.y + Math.random() * marginY;
+      } else if (r < 2 * bounds.w) {
+        x = bounds.x + Math.random() * bounds.w;
+        y = bounds.y + bounds.h - Math.random() * marginY;
+      } else if (r < 2 * bounds.w + bounds.h) {
+        x = bounds.x + Math.random() * marginX;
+        y = bounds.y + Math.random() * bounds.h;
+      } else {
+        x = bounds.x + bounds.w - Math.random() * marginX;
+        y = bounds.y + Math.random() * bounds.h;
       }
     }
 
@@ -285,7 +298,7 @@ export class ParticleSystem {
 
   /** Set the quality level for mote spawning (0 = base only, up to 5 = all tiers). */
   setQualityLevel(level) {
-    this._qualityLevel = Math.max(0, Math.min(5, level));
+    this._qualityLevel = Math.max(0, Math.min(8, level));
   }
 
   /**
@@ -294,14 +307,17 @@ export class ParticleSystem {
    */
   _selectQualityType() {
     const distributions = [
-      [1.00, 0.00, 0.00, 0.00, 0.00],
-      [0.70, 0.30, 0.00, 0.00, 0.00],
-      [0.50, 0.30, 0.20, 0.00, 0.00],
-      [0.30, 0.25, 0.25, 0.20, 0.00],
-      [0.20, 0.20, 0.20, 0.20, 0.20],
-      [0.10, 0.15, 0.25, 0.25, 0.25],
+      [1.00, 0.00, 0.00, 0.00, 0.00],  // Lv0: all base
+      [0.70, 0.30, 0.00, 0.00, 0.00],  // Lv1
+      [0.50, 0.30, 0.20, 0.00, 0.00],  // Lv2
+      [0.30, 0.25, 0.25, 0.20, 0.00],  // Lv3
+      [0.20, 0.20, 0.20, 0.20, 0.20],  // Lv4
+      [0.10, 0.15, 0.25, 0.25, 0.25],  // Lv5
+      [0.05, 0.10, 0.25, 0.30, 0.30],  // Lv6
+      [0.03, 0.07, 0.20, 0.30, 0.40],  // Lv7
+      [0.02, 0.05, 0.13, 0.30, 0.50],  // Lv8: half legendary
     ];
-    const dist = distributions[Math.min(this._qualityLevel, 5)];
+    const dist = distributions[Math.min(this._qualityLevel, 8)];
     const r = Math.random();
     let cumulative = 0;
     const types = ['mote_base', 'mote_common', 'mote_rare', 'mote_epic', 'mote_legendary'];

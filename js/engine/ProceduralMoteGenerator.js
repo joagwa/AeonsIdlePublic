@@ -8,11 +8,12 @@ export class ProceduralMoteGenerator {
   constructor(EventBus) {
     this.bus = EventBus;
     this.generationRate = 5;          // motes per second (base)
-    this.qualityLevel = 0;             // quality upgrade level (0-5)
+    this.qualityLevel = 0;             // quality upgrade level (0-8)
     this.loadedChunks = new Set();     // track which chunks have been generated
     this.chunkSize = 1000;             // pixels per chunk
     this.motesByChunk = new Map();     // chunk key -> array of motes
     this.nextChunkCheckTime = 0;       // throttle chunk loading
+    this._validRegions = null;         // array of {x, y, w, h} bounding boxes for defined regions
   }
 
   /**
@@ -101,13 +102,16 @@ export class ProceduralMoteGenerator {
     // Lv5: 30% base, 25% common, 20% rare, 15% epic, 10% legendary
 
     const thresholds = [
-      [1.0, 0, 0, 0, 0],           // Lv0: all base
-      [0.8, 0.2, 0, 0, 0],         // Lv1
-      [0.6, 0.25, 0.15, 0, 0],     // Lv2
-      [0.5, 0.25, 0.15, 0.1, 0],   // Lv3
-      [0.4, 0.25, 0.15, 0.1, 0.1], // Lv4
-      [0.3, 0.25, 0.2, 0.15, 0.1], // Lv5
-    ][Math.min(this.qualityLevel, 5)];
+      [1.0, 0, 0, 0, 0],                    // Lv0: all base
+      [0.8, 0.2, 0, 0, 0],                  // Lv1
+      [0.6, 0.25, 0.15, 0, 0],              // Lv2
+      [0.5, 0.25, 0.15, 0.1, 0],            // Lv3
+      [0.4, 0.25, 0.15, 0.1, 0.1],          // Lv4
+      [0.3, 0.25, 0.2, 0.15, 0.1],          // Lv5
+      [0.1, 0.2, 0.25, 0.25, 0.2],          // Lv6
+      [0.05, 0.15, 0.25, 0.30, 0.25],       // Lv7
+      [0.02, 0.08, 0.20, 0.30, 0.40],       // Lv8: rare-dominant
+    ][Math.min(this.qualityLevel, 8)];
 
     let cumulative = 0;
     for (let i = 0; i < thresholds.length; i++) {
@@ -132,12 +136,37 @@ export class ProceduralMoteGenerator {
 
     for (let cx = minChunkX; cx <= maxChunkX; cx++) {
       for (let cy = minChunkY; cy <= maxChunkY; cy++) {
+        if (!this._chunkOverlapsAnyRegion(cx, cy)) continue;
         const motes = this.generateChunkMotes(cx, cy);
         visibleMotes.push(...motes);
       }
     }
 
     return visibleMotes;
+  }
+
+  /**
+   * Set valid spawn regions. Only chunks overlapping these bounds will be generated.
+   * @param {Array<{worldBounds: {x, y, w, h}}>} regions
+   */
+  setValidRegions(regions) {
+    this._validRegions = regions.map(r => r.worldBounds);
+    this.clearChunks(); // clear cached chunks since valid bounds changed
+  }
+
+  /**
+   * Check if a chunk overlaps any valid region.
+   */
+  _chunkOverlapsAnyRegion(cx, cy) {
+    if (!this._validRegions || this._validRegions.length === 0) return true;
+    const cxMin = cx * this.chunkSize;
+    const cxMax = cxMin + this.chunkSize;
+    const cyMin = cy * this.chunkSize;
+    const cyMax = cyMin + this.chunkSize;
+    for (const r of this._validRegions) {
+      if (cxMax > r.x && cxMin < r.x + r.w && cyMax > r.y && cyMin < r.y + r.h) return true;
+    }
+    return false;
   }
 
   /**
@@ -151,7 +180,7 @@ export class ProceduralMoteGenerator {
    * Update quality level based on upgrades.
    */
   setQualityLevel(level) {
-    this.qualityLevel = Math.min(level, 5);
+    this.qualityLevel = Math.min(level, 8);
   }
 
   /**

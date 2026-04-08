@@ -4,36 +4,36 @@
  */
 
 // === Core Imports ===
-import { EventBus } from './core/EventBus.js?v=6bd7aef';
-import { GameLoop } from './core/GameLoop.js?v=6bd7aef';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=6bd7aef';
-import { SaveSystem } from './core/SaveSystem.js?v=6bd7aef';
-import { UpdateChecker } from './core/UpdateChecker.js?v=6bd7aef';
+import { EventBus } from './core/EventBus.js?v=bcdc1f8';
+import { GameLoop } from './core/GameLoop.js?v=bcdc1f8';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=bcdc1f8';
+import { SaveSystem } from './core/SaveSystem.js?v=bcdc1f8';
+import { UpdateChecker } from './core/UpdateChecker.js?v=bcdc1f8';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=6bd7aef';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=6bd7aef';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=6bd7aef';
-import { StarManager } from './engine/StarManager.js?v=6bd7aef';
-import { EpochSystem } from './engine/EpochSystem.js?v=6bd7aef';
-import { MoteController } from './engine/MoteController.js?v=6bd7aef';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=6bd7aef';
+import { ResourceManager } from './engine/ResourceManager.js?v=bcdc1f8';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=bcdc1f8';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=bcdc1f8';
+import { StarManager } from './engine/StarManager.js?v=bcdc1f8';
+import { EpochSystem } from './engine/EpochSystem.js?v=bcdc1f8';
+import { MoteController } from './engine/MoteController.js?v=bcdc1f8';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=bcdc1f8';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=6bd7aef';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=bcdc1f8';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=6bd7aef';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=6bd7aef';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=6bd7aef';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=6bd7aef';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=6bd7aef';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=6bd7aef';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=6bd7aef';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=6bd7aef';
-import { StatsPanel } from './ui/StatsPanel.js?v=6bd7aef';
-import { GoalWidget } from './ui/GoalWidget.js?v=6bd7aef';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=6bd7aef';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=bcdc1f8';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=bcdc1f8';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=bcdc1f8';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=bcdc1f8';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=bcdc1f8';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=bcdc1f8';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=bcdc1f8';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=bcdc1f8';
+import { StatsPanel } from './ui/StatsPanel.js?v=bcdc1f8';
+import { GoalWidget } from './ui/GoalWidget.js?v=bcdc1f8';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=bcdc1f8';
 
 // === Game State ===
 let gameState = {
@@ -230,11 +230,16 @@ async function bootstrap() {
     }
     
     // Mote generation upgrades
-    if (data.upgradeId === 'upg_moteGeneration') {
-      // Calculate generation rate: base 5, multiplied by 1.5^level
-      const level = upgradeSystem.getLevel('upg_moteGeneration');
-      const rate = 5 * Math.pow(1.5, level);
+    if (data.upgradeId === 'upg_moteGeneration' || data.upgradeId === 'upg_moteFlood') {
+      const genLevel = upgradeSystem.getLevel('upg_moteGeneration');
+      const floodLevel = upgradeSystem.getLevel('upg_moteFlood');
+      const rate = 5 * Math.pow(1.5, genLevel) * Math.pow(2.0, floodLevel);
       proceduralMoteGenerator.setGenerationRate(rate);
+      // Increase void particle density proportional to generation rate
+      const voidCount = Math.min(500, Math.floor(80 + rate));
+      if (canvasRenderer.particleSystem) {
+        canvasRenderer.particleSystem.spawnInitialParticles('void', voidCount);
+      }
     }
     if (data.upgradeId === 'upg_moteQuality') {
       const level = upgradeSystem.getLevel('upg_moteQuality');
@@ -267,6 +272,8 @@ async function bootstrap() {
       canvasRenderer.loadEpochConfig(data.canvasConfig);
       // Set mote controller bounds from canvas config
       moteController.setBounds(data.canvasConfig.universeWidth, data.canvasConfig.universeHeight);
+      // Restrict procedural mote generation to defined regions
+      proceduralMoteGenerator.setValidRegions(data.canvasConfig.regions);
     } else {
       canvasRenderer.onEpochChange(data.epochId);
     }
@@ -375,8 +382,8 @@ async function bootstrap() {
   // Initialise mote controller with home object position from canvas config
   {
     const ho = canvasRenderer.canvasConfig?.homeObject;
-    const initX = ho?.worldX ?? 600;
-    const initY = ho?.worldY ?? 1500;
+    const initX = ho?.worldX ?? 2000;
+    const initY = ho?.worldY ?? 2500;
     console.log(`[Bootstrap] MoteController init at (${initX}, ${initY})`);
     moteController.init(initX, initY, mainCanvas);
     if (canvasRenderer.canvasConfig) {
@@ -384,6 +391,8 @@ async function bootstrap() {
         canvasRenderer.canvasConfig.universeWidth,
         canvasRenderer.canvasConfig.universeHeight
       );
+      // Restrict procedural mote generation to defined regions
+      proceduralMoteGenerator.setValidRegions(canvasRenderer.canvasConfig.regions);
     }
   }
 

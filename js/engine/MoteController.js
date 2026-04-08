@@ -7,8 +7,8 @@
 export class MoteController {
   constructor(EventBus) {
     this.bus = EventBus;
-    this.worldX = 600;
-    this.worldY = 1500;
+    this.worldX = 2000;
+    this.worldY = 2500;
     this.angle = -Math.PI / 2; // visual facing angle, derived from velocity
     this.maxSpeed = 0;
     this.tractorBeamRange = 0;

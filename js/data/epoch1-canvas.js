@@ -15,7 +15,7 @@ export const epoch1CanvasConfig = {
     {
       regionId: 'void',
       name: 'The Void',
-      worldBounds: { x: 0, y: 0, w: 1200, h: 3000 },
+      worldBounds: { x: 0, y: 0, w: 4000, h: 5000 },
       activationMilestone: null, // always active
       regionBand: 1,
       baseColor: '#050510',
@@ -27,7 +27,7 @@ export const epoch1CanvasConfig = {
     {
       regionId: 'atomicNursery',
       name: 'The Atomic Nursery',
-      worldBounds: { x: 1200, y: 0, w: 800, h: 3000 },
+      worldBounds: { x: 4000, y: 0, w: 2500, h: 5000 },
       activationMilestone: 'ms_firstAtom',
       regionBand: 2,
       baseColor: '#08081a',
@@ -39,7 +39,7 @@ export const epoch1CanvasConfig = {
     {
       regionId: 'nebula',
       name: 'The Nebula',
-      worldBounds: { x: 2000, y: 0, w: 600, h: 3000 },
+      worldBounds: { x: 6500, y: 0, w: 2000, h: 5000 },
       activationMilestone: 'ms_nebulaCondenses',
       regionBand: 3,
       baseColor: '#100820',
@@ -51,7 +51,7 @@ export const epoch1CanvasConfig = {
     {
       regionId: 'stellarForge',
       name: 'The Stellar Forge',
-      worldBounds: { x: 2600, y: 0, w: 700, h: 3000 },
+      worldBounds: { x: 8500, y: 0, w: 2500, h: 5000 },
       activationMilestone: 'ms_mainSequenceStar',
       regionBand: 4,
       baseColor: '#181020',
@@ -63,7 +63,7 @@ export const epoch1CanvasConfig = {
     {
       regionId: 'planetaryCradle',
       name: 'The Planetary Cradle',
-      worldBounds: { x: 3300, y: 0, w: 700, h: 3000 },
+      worldBounds: { x: 11000, y: 0, w: 2500, h: 5000 },
       activationMilestone: 'ms_planetaryDisc',
       regionBand: 5,
       baseColor: '#101018',
@@ -96,8 +96,8 @@ export const epoch1CanvasConfig = {
   // --- Home object: the player's anchor point in The Void ---
   homeObject: {
     regionId: 'void',
-    worldX: 600,
-    worldY: 1500,
+    worldX: 2000,
+    worldY: 2500,
     hitRadius: 44,
     baseSize: 4,
     baseColor: '#c8e0ff',
@@ -108,9 +108,9 @@ export const epoch1CanvasConfig = {
 // Visual thresholds — home object changes appearance as mass grows.
 // CanvasRenderer subscribes to resource:updated for mass and checks these.
 export const visualThresholds = [
-  { minMass: 0,       size: 4,  color: '#c8e0ff', glowRadius: 3,  particleBoost: 250, label: 'Quantum Mote' },
-  { minMass: 50,      size: 5,  color: '#d0e8ff', glowRadius: 5,  particleBoost: 320, label: 'Energy Cluster' },
-  { minMass: 500,     size: 7,  color: '#90b8ff', glowRadius: 8,  particleBoost: 420, label: 'Proto-Cloud' },
+  { minMass: 0,       size: 4,  color: '#c8e0ff', glowRadius: 3,  particleBoost: 300, label: 'Quantum Mote' },
+  { minMass: 50,      size: 5,  color: '#d0e8ff', glowRadius: 5,  particleBoost: 380, label: 'Energy Cluster' },
+  { minMass: 500,     size: 7,  color: '#90b8ff', glowRadius: 8,  particleBoost: 460, label: 'Proto-Cloud' },
   { minMass: 5000,    size: 10, color: '#ffe080', glowRadius: 12, particleBoost: 550, label: 'Gas Cloud' },
   { minMass: 50000,   size: 14, color: '#ffb030', glowRadius: 18, particleBoost: 700, label: 'Protostar' },
   { minMass: 500000,  size: 18, color: '#ff6820', glowRadius: 26, particleBoost: 900, label: 'Young Star' },
