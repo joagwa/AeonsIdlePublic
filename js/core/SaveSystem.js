@@ -3,7 +3,7 @@
  * handling for Aeons save data.
  */
 
-import { SaveMigrator } from './SaveMigrator.js?v=03e91e7';
+import { SaveMigrator } from './SaveMigrator.js?v=fc017ad';
 
 const STORAGE_KEY = 'aeons_save_v1';
 const AUTO_SAVE_INTERVAL_MS = 60_000;
@@ -15,7 +15,7 @@ export class SaveSystem {
   #autoSaveTimer = null;
 
   /**
-   * @param {import('./EventBus.js?v=03e91e7').EventBus} eventBus
+   * @param {import('./EventBus.js?v=fc017ad').EventBus} eventBus
    * @param {*} resourceManager
    * @param {*} upgradeSystem
    * @param {*} milestoneSystem
@@ -105,6 +105,9 @@ export class SaveSystem {
       this.resourceManager.loadStates(data.resourceStates);
       this.resourceManager.loadRateBonuses(data.rateBonuses);
       this.resourceManager.loadCapBonuses(data.capBonuses);
+      // Load canvas config BEFORE upgrades so that the renderer's canvasConfig.homeObject
+      // is already set when upgrade:purchased fires for upg_gravitationalPull.
+      await this.epochSystem.loadEpoch(this.gameState.epochId);
       this.upgradeSystem.loadStates(data.upgradeStates);
       this.milestoneSystem.loadStates(data.milestoneStates);
       this.starManager.loadStates(data.starStates);
@@ -112,7 +115,6 @@ export class SaveSystem {
       if (this.moteController && data.moteState) {
         this.moteController.loadState(data.moteState);
       }
-      await this.epochSystem.loadEpoch(this.gameState.epochId);
 
       // Offline progress
       const elapsed = Math.max(0, (Date.now() - data.savedAt) / 1000);

@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=03e91e7';
-import { Camera } from './Camera.js?v=03e91e7';
-import { ParticleSystem } from './ParticleSystem.js?v=03e91e7';
-import { RegionManager } from './RegionManager.js?v=03e91e7';
-import { FloatingNumbers } from './FloatingNumbers.js?v=03e91e7';
+import { SpriteManager } from './SpriteManager.js?v=fc017ad';
+import { Camera } from './Camera.js?v=fc017ad';
+import { ParticleSystem } from './ParticleSystem.js?v=fc017ad';
+import { RegionManager } from './RegionManager.js?v=fc017ad';
+import { FloatingNumbers } from './FloatingNumbers.js?v=fc017ad';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -49,6 +49,7 @@ export class CanvasRenderer {
     // Mote controller reference (set via setMoteController)
     this._moteController = null;
     this._gravityBaseRadius = 0; // set when upg_gravitationalPull purchased
+    this._pendingGravityLevel = 0; // deferred if canvasConfig not ready on purchase
 
     // Mass-based gravity scaling state
     this._currentMass = 0;
@@ -222,6 +223,12 @@ export class CanvasRenderer {
       }
     }
     this._thresholdLevel = 0;
+
+    // Apply any gravity upgrade that fired before canvasConfig was ready
+    if (this._pendingGravityLevel > 0) {
+      this._onUpgradePurchased({ upgradeId: 'upg_gravitationalPull', level: this._pendingGravityLevel });
+      this._pendingGravityLevel = 0;
+    }
   }
 
   // ---------------------------------------------------------------
@@ -827,7 +834,9 @@ export class CanvasRenderer {
     if (data.upgradeId === 'upg_gravitationalPull') {
       const ho = this.canvasConfig?.homeObject;
       if (!ho) {
-        console.warn('[CanvasRenderer] Gravitational Pull purchased but home object not ready yet');
+        // canvasConfig not loaded yet — defer until loadEpochConfig runs
+        this._pendingGravityLevel = Math.max(this._pendingGravityLevel, data.level || 1);
+        console.warn('[CanvasRenderer] Gravitational Pull deferred — home object not ready yet');
         return;
       }
       try {
