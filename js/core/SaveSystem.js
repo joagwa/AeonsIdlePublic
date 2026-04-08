@@ -43,6 +43,8 @@ export class SaveSystem {
       savedAt: Date.now(),
       gameState: { ...this.gameState },
       resourceStates: this.resourceManager.getStates(),
+      rateBonuses: this.resourceManager.getRateBonuses(),
+      capBonuses: this.resourceManager.getCapBonuses(),
       upgradeStates: this.upgradeSystem.getStates(),
       milestoneStates: this.milestoneSystem.getStates(),
       starStates: this.starManager.getStates(),
@@ -101,6 +103,8 @@ export class SaveSystem {
       // Restore module states
       Object.assign(this.gameState, data.gameState);
       this.resourceManager.loadStates(data.resourceStates);
+      this.resourceManager.loadRateBonuses(data.rateBonuses);
+      this.resourceManager.loadCapBonuses(data.capBonuses);
       this.upgradeSystem.loadStates(data.upgradeStates);
       this.milestoneSystem.loadStates(data.milestoneStates);
       this.starManager.loadStates(data.starStates);

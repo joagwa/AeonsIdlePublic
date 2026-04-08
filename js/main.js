@@ -32,6 +32,7 @@ import { OfflineProgress } from './ui/OfflineProgress.js';
 import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js';
 import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js';
 import { StatsPanel } from './ui/StatsPanel.js';
+import { GoalWidget } from './ui/GoalWidget.js';
 
 // === Game State ===
 let gameState = {
@@ -40,6 +41,7 @@ let gameState = {
   residualBonuses: [],
   aeonCount: 0,
   totalRealTime: 0,
+  cosmicEchoCount: 0,
   settings: {
     notationMode: 'shortSuffix',
     glowEnabled: true,
@@ -71,6 +73,7 @@ const offlineProgress = new OfflineProgress(EventBus);
 const epochTransitionOverlay = new EpochTransitionOverlay(EventBus, epochSystem);
 const residualBonusPanel = new ResidualBonusPanel(EventBus, gameState);
 const statsPanel = new StatsPanel(EventBus);
+const goalWidget = new GoalWidget(EventBus, milestoneSystem, resourceManager);
 
 // === Bootstrap ===
 async function bootstrap() {
@@ -93,6 +96,10 @@ async function bootstrap() {
   epochTransitionOverlay.init();
   residualBonusPanel.init();
   statsPanel.init(resourceManager, upgradeSystem, milestoneSystem);
+  goalWidget.init();
+
+  // --- Particle Storm state (tracks absorption bonus end time) ---
+  let _particleStormEndTime = 0;
 
   // --- Click handling ---
   EventBus.on('click:primaryObject', (data) => {
@@ -133,10 +140,13 @@ async function bootstrap() {
     }
 
     const roundedValue = Math.max(1, Math.round(energyValue));
-    resourceManager.add('energy', roundedValue);
+
+    // Triple energy absorption during Particle Storm
+    const stormBonus = (_particleStormEndTime > 0 && Date.now() < _particleStormEndTime) ? 3 : 1;
+    resourceManager.add('energy', roundedValue * stormBonus);
 
     // Floating number at absorption point
-    const floatingText = roundedValue > 1 ? `+${roundedValue}` : '+1';
+    const floatingText = roundedValue * stormBonus > 1 ? `+${roundedValue * stormBonus}` : '+1';
     canvasRenderer.spawnFloatingNumber(floatingText, data.screenX, data.screenY - 8);
 
     // Mote Densification: convert absorbed motes to mass
@@ -152,27 +162,43 @@ async function bootstrap() {
 
   // --- Milestone reward application ---
   EventBus.on('milestone:triggered', (data) => {
-    if (data.reward) {
-      switch (data.reward.type) {
+    const rewards = Array.isArray(data.reward)
+      ? data.reward
+      : data.reward
+      ? [data.reward]
+      : [];
+
+    for (const reward of rewards) {
+      switch (reward.type) {
         case 'resource_grant':
-          resourceManager.add(data.reward.target, data.reward.amount);
+          resourceManager.add(reward.target, reward.amount);
           break;
         case 'unlock_mechanic':
-          if (data.reward.target === 'darkMatter_display') {
+          if (reward.target === 'darkMatter_display') {
             resourceManager.setVisible('darkMatter', true);
-          } else if (data.reward.target === 'darkMatter_generation') {
+          } else if (reward.target === 'darkMatter_generation') {
             resourceManager.setGenerationEnabled('darkMatter', true);
-          } else if (data.reward.target === 'heavyElements_display') {
+          } else if (reward.target === 'heavyElements_display') {
             resourceManager.setVisible('heavyElements', true);
-          } else if (data.reward.target === 'star_lifecycle') {
+          } else if (reward.target === 'star_lifecycle') {
             starManager.addStar();
           }
           break;
         case 'cap_increase':
-          resourceManager.increaseCap(data.reward.target, data.reward.amount);
+          resourceManager.increaseCap(reward.target, reward.amount);
           break;
         case 'rate_bonus':
-          resourceManager.applyRateBonus(data.reward.target, data.reward.amount);
+          resourceManager.applyRateBonus(reward.target, reward.amount);
+          break;
+        case 'particle_storm':
+          canvasRenderer.activateParticleStorm(30_000);
+          _particleStormEndTime = Date.now() + 30_000;
+          setTimeout(() => { _particleStormEndTime = 0; }, 30_000);
+          break;
+        case 'cosmic_echo':
+          gameState.cosmicEchoCount = (gameState.cosmicEchoCount || 0) + 1;
+          resourceManager.applyRateBonus('mass', 0.2);
+          resourceManager.applyCapBonus('energy', 1000);
           break;
       }
     }

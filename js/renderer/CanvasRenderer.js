@@ -69,6 +69,11 @@ export class CanvasRenderer {
 
     this._resizeObserver = null;
     this._darkMatterActive = false;
+
+    // Particle storm (temporary boost from milestone reward)
+    this._particleStormActive = false;
+    this._particleStormTimer = 0;   // seconds remaining
+    this._stormGravityMult = 1;
   }
 
   // ---------------------------------------------------------------
@@ -255,7 +260,7 @@ export class CanvasRenderer {
         const tractorRange = this._moteController.tractorBeamRange || 0;
         // Mass-based radius expansion: +50% radius per 100 mass, logarithmic scaling
         const massBonus = this._currentMass > 0 ? Math.log10(1 + this._currentMass) * 0.4 : 0;
-        const effectiveRadius = (baseRadius + tractorRange) * (1 + massBonus);
+        const effectiveRadius = (baseRadius + tractorRange) * (1 + massBonus) * this._stormGravityMult;
         this.particleSystem.updateAttractionTargetAll(
           this._moteController.worldX,
           this._moteController.worldY,
@@ -284,6 +289,15 @@ export class CanvasRenderer {
     // Decay absorption pulse
     if (this._homeObjectPulse > 0) {
       this._homeObjectPulse = Math.max(0, this._homeObjectPulse - clampedDt * 4);
+    }
+
+    // Decay particle storm timer
+    if (this._particleStormActive) {
+      this._particleStormTimer -= clampedDt;
+      if (this._particleStormTimer <= 0) {
+        this._particleStormActive = false;
+        this._stormGravityMult = 1;
+      }
     }
 
     // Lerp visual size and glow toward targets
@@ -420,6 +434,25 @@ export class CanvasRenderer {
         this.glowCtx.fill();
         this.glowCtx.globalAlpha = 1;
       }
+    }
+
+    // Storm visual: pulsing cyan ring when particle storm is active
+    if (this._particleStormActive) {
+      const stormPulse = (Math.sin(performance.now() * 0.006) + 1) * 0.5;
+      const stormR = s + 10 + stormPulse * 8;
+      ctx.globalAlpha = 0.35 + stormPulse * 0.35;
+      ctx.strokeStyle = '#00e8ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, stormR, 0, Math.PI * 2);
+      ctx.stroke();
+      const stormR2 = s + 22 + stormPulse * 12;
+      ctx.globalAlpha = 0.15 + stormPulse * 0.15;
+      ctx.strokeStyle = '#80ffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, stormR2, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     // Glow on glow canvas
@@ -774,6 +807,22 @@ export class CanvasRenderer {
    */
   setMoteController(mc) {
     this._moteController = mc;
+  }
+
+  /**
+   * Activate the Particle Storm reward effect.
+   * Expands gravity radius ×3, spawns a mote burst, and shows a visual indicator.
+   * @param {number} durationMs
+   */
+  activateParticleStorm(durationMs) {
+    this._particleStormActive = true;
+    this._particleStormTimer = durationMs / 1000;
+    this._stormGravityMult = 3;
+    this._visualFlash = 1.0;
+    // Spawn burst of motes in void region
+    if (this.particleSystem) {
+      this.particleSystem.spawnInitialParticles('void', 500);
+    }
   }
 
   /** Handle epoch change by loading the new epoch's canvas config. */

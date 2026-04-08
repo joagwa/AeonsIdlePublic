@@ -154,6 +154,27 @@ export class MilestoneSystem {
     return [...this.#chronicleLog];
   }
 
+  /**
+   * Returns the first untriggered milestone that can show meaningful progress.
+   * Skips `game_state` conditions (always_true, trigger immediately).
+   * @returns {{ id, title, conditionType, conditionTarget, conditionValue } | null}
+   */
+  getNextGoal() {
+    for (const [id, def] of this.#definitions) {
+      const state = this.#states.get(id);
+      if (state?.triggered) continue;
+      if (def.conditionType === 'game_state') continue;
+      return {
+        id: def.id,
+        title: def.title,
+        conditionType: def.conditionType,
+        conditionTarget: def.conditionTarget,
+        conditionValue: def.conditionValue,
+      };
+    }
+    return null;
+  }
+
   // ── Serialisation ─────────────────────────────────────────────────────
 
   /** @returns {object} states keyed by milestone id */

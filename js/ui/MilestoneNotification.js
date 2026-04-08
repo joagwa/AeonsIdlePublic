@@ -37,6 +37,7 @@ export class MilestoneNotification {
     if (reward) {
       const rewardLine = document.createElement('div');
       rewardLine.className = 'milestone-reward';
+      rewardLine.style.whiteSpace = 'pre-line';
       rewardLine.textContent = this._formatReward(reward);
       popup.appendChild(rewardLine);
     }
@@ -68,17 +69,27 @@ export class MilestoneNotification {
   }
 
   _formatReward(reward) {
-    switch (reward.type) {
-      case 'resource_grant':
-        return `Reward: +${reward.amount} ${reward.target}`;
-      case 'unlock_mechanic':
-        return `Unlocked: ${reward.target}`;
-      case 'cap_increase':
-        return `Cap +${reward.amount} ${reward.target}`;
-      case 'rate_bonus':
-        return `Rate +${reward.amount} ${reward.target}`;
-      default:
-        return '';
-    }
+    const rewards = Array.isArray(reward) ? reward : [reward];
+    return rewards
+      .map((r) => {
+        switch (r.type) {
+          case 'resource_grant':
+            return `Reward: +${r.amount} ${r.target}`;
+          case 'unlock_mechanic':
+            return `Unlocked: ${r.target}`;
+          case 'cap_increase':
+            return `Cap +${r.amount} ${r.target}`;
+          case 'rate_bonus':
+            return `Rate +${r.amount} ${r.target}/s`;
+          case 'particle_storm':
+            return `⚡ Particle Storm: 30s void eruption (+3× energy absorption)`;
+          case 'cosmic_echo':
+            return `✦ Cosmic Echo: +0.2 mass/s · +1K energy cap (permanent)`;
+          default:
+            return '';
+        }
+      })
+      .filter(Boolean)
+      .join('\n');
   }
 }

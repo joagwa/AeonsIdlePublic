@@ -14,6 +14,8 @@ export class ResourceManager {
   #upgradeSystem = null;
   /** @type {Map<string, number>} milestone rate bonuses keyed by resource id */
   #rateBonuses = new Map();
+  /** @type {Map<string, number>} persistent cap bonuses (e.g. cosmic echo) keyed by resource id */
+  #capBonuses = new Map();
   /** @type {number} combined click multiplier from upgrades */
   #clickMultiplier = 1;
   /** @type {number[]} timestamps of recent clicks for combo detection */
@@ -266,6 +268,18 @@ export class ResourceManager {
     this.recalculateRates();
   }
 
+  /**
+   * Track a persistent cap bonus for a resource (survives recalculateRates).
+   * Triggers a full rate recalculation.
+   * @param {string} id — resource id
+   * @param {number} amount
+   */
+  applyCapBonus(id, amount) {
+    const current = this.#capBonuses.get(id) || 0;
+    this.#capBonuses.set(id, current + amount);
+    this.recalculateRates();
+  }
+
   // ── Offline gains ─────────────────────────────────────────────────────
 
   /**
@@ -358,6 +372,12 @@ export class ResourceManager {
       }
     }
 
+    // 6b. Persistent cap bonuses (cosmic echo, etc.)
+    for (const [id, bonus] of this.#capBonuses) {
+      const state = this.#states.get(id);
+      if (state && state.cap !== null) state.cap += bonus;
+    }
+
     // 7. Click multiplier from upgrades
     for (const effect of effects) {
       if (effect.effectType === 'clickMultiplier') {
@@ -375,6 +395,36 @@ export class ResourceManager {
       obj[id] = { ...state };
     }
     return obj;
+  }
+
+  /** @returns {object} rate bonus map as plain object */
+  getRateBonuses() {
+    const obj = {};
+    for (const [id, bonus] of this.#rateBonuses) obj[id] = bonus;
+    return obj;
+  }
+
+  /** @returns {object} cap bonus map as plain object */
+  getCapBonuses() {
+    const obj = {};
+    for (const [id, bonus] of this.#capBonuses) obj[id] = bonus;
+    return obj;
+  }
+
+  /** Restore rate bonuses from save data (does not trigger recalculation). */
+  loadRateBonuses(bonuses) {
+    if (!bonuses) return;
+    for (const [id, bonus] of Object.entries(bonuses)) {
+      this.#rateBonuses.set(id, bonus);
+    }
+  }
+
+  /** Restore cap bonuses from save data (does not trigger recalculation). */
+  loadCapBonuses(bonuses) {
+    if (!bonuses) return;
+    for (const [id, bonus] of Object.entries(bonuses)) {
+      this.#capBonuses.set(id, bonus);
+    }
   }
 
   /** Restore states from save data. */
@@ -395,6 +445,7 @@ export class ResourceManager {
     this.#states.clear();
     this.#definitions.clear();
     this.#rateBonuses.clear();
+    this.#capBonuses.clear();
     this.#clickMultiplier = 1;
     this.#clickTimestamps = [];
     this.#comboActive = false;

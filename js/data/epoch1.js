@@ -769,7 +769,10 @@ const milestones = [
     conditionTarget: 'mass',
     conditionValue: 500,
     regionBand: 2,
-    reward: { type: 'resource_grant', target: 'energy', amount: 200 },
+    reward: [
+      { type: 'resource_grant', target: 'energy', amount: 200 },
+      { type: 'particle_storm' },
+    ],
     isEpochTransitionTrigger: false,
   },
   {
@@ -795,7 +798,10 @@ const milestones = [
     conditionTarget: 'darkMatter',
     conditionValue: 100,
     regionBand: 3,
-    reward: { type: 'rate_bonus', target: 'darkMatter', amount: 0.5 },
+    reward: [
+      { type: 'rate_bonus', target: 'darkMatter', amount: 0.5 },
+      { type: 'cosmic_echo' },
+    ],
     isEpochTransitionTrigger: false,
   },
   {
@@ -808,11 +814,7 @@ const milestones = [
     conditionTarget: 'mass',
     conditionValue: 50000,
     regionBand: 3,
-    reward: null,
-    isEpochTransitionTrigger: false,
-  },
-  {
-    id: 'ms_mainSequenceStar',
+    reward: { type: 'particle_storm' },
     epochId: 'epoch1',
     title: 'A Light in the Dark',
     flavourText:
@@ -834,7 +836,10 @@ const milestones = [
     conditionTarget: 'star_stage',
     conditionValue: 'red_giant',
     regionBand: 4,
-    reward: { type: 'rate_bonus', target: 'energy', amount: 2.0 },
+    reward: [
+      { type: 'rate_bonus', target: 'energy', amount: 2.0 },
+      { type: 'cosmic_echo' },
+    ],
     isEpochTransitionTrigger: false,
   },
   {
@@ -860,7 +865,7 @@ const milestones = [
     conditionTarget: 'star_stage',
     conditionValue: 'neutron_star',
     regionBand: 4,
-    reward: null,
+    reward: { type: 'cosmic_echo' },
     isEpochTransitionTrigger: false,
   },
   {
@@ -873,7 +878,7 @@ const milestones = [
     conditionTarget: 'heavyElements',
     conditionValue: 50,
     regionBand: 4,
-    reward: null,
+    reward: { type: 'particle_storm' },
     isEpochTransitionTrigger: false,
   },
   {
@@ -886,7 +891,7 @@ const milestones = [
     conditionTarget: 'heavyElements',
     conditionValue: 200,
     regionBand: 5,
-    reward: null,
+    reward: { type: 'cosmic_echo' },
     isEpochTransitionTrigger: false,
   },
   {
@@ -899,7 +904,10 @@ const milestones = [
     conditionTarget: 'mass',
     conditionValue: 10000000,
     regionBand: 5,
-    reward: { type: 'rate_bonus', target: 'mass', amount: 5.0 },
+    reward: [
+      { type: 'rate_bonus', target: 'mass', amount: 5.0 },
+      { type: 'particle_storm' },
+    ],
     isEpochTransitionTrigger: false,
   },
   {
@@ -912,7 +920,7 @@ const milestones = [
     conditionTarget: 'mass',
     conditionValue: 100000000,
     regionBand: 5,
-    reward: null,
+    reward: { type: 'cosmic_echo' },
     isEpochTransitionTrigger: false,
   },
   {
@@ -925,7 +933,10 @@ const milestones = [
     conditionTarget: 'mass',
     conditionValue: 1000000000,
     regionBand: 5,
-    reward: { type: 'rate_bonus', target: 'heavyElements', amount: 3.0 },
+    reward: [
+      { type: 'rate_bonus', target: 'heavyElements', amount: 3.0 },
+      { type: 'cosmic_echo' },
+    ],
     isEpochTransitionTrigger: false,
   },
   {
@@ -938,8 +949,7 @@ const milestones = [
     conditionTarget: 'mass',
     conditionValue: 10000000000,
     regionBand: 5,
-    reward: null,
-    isEpochTransitionTrigger: true,
+    reward: { type: 'cosmic_echo' },
   },
 ];
 

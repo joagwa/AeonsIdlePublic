@@ -28,7 +28,7 @@
  * ─────────────────────────────────────────────────────────────────────
  */
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 /**
  * Map of version → migration function.
@@ -44,6 +44,15 @@ const migrations = {
     data.starStates     = data.starStates     ?? {};
     data.chronicleLog   = data.chronicleLog   ?? [];
     data.savedAt        = data.savedAt        ?? 0;
+    return data;
+  },
+  2(data) {
+    // v1 → v2: add rate/cap bonus persistence and cosmicEchoCount
+    data.rateBonuses = data.rateBonuses ?? {};
+    data.capBonuses  = data.capBonuses  ?? {};
+    if (data.gameState) {
+      data.gameState.cosmicEchoCount = data.gameState.cosmicEchoCount ?? 0;
+    }
     return data;
   },
 };
