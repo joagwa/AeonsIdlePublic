@@ -33,6 +33,7 @@ import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js';
 import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js';
 import { StatsPanel } from './ui/StatsPanel.js';
 import { GoalWidget } from './ui/GoalWidget.js';
+import { MobileTabBar } from './ui/MobileTabBar.js';
 
 // === Game State ===
 let gameState = {
@@ -74,6 +75,7 @@ const epochTransitionOverlay = new EpochTransitionOverlay(EventBus, epochSystem)
 const residualBonusPanel = new ResidualBonusPanel(EventBus, gameState);
 const statsPanel = new StatsPanel(EventBus);
 const goalWidget = new GoalWidget(EventBus, milestoneSystem, resourceManager);
+const mobileTabBar = new MobileTabBar(EventBus);
 
 // === Bootstrap ===
 async function bootstrap() {
@@ -97,6 +99,7 @@ async function bootstrap() {
   residualBonusPanel.init();
   statsPanel.init(resourceManager, upgradeSystem, milestoneSystem);
   goalWidget.init();
+  mobileTabBar.init();
 
   // --- Particle Storm state (tracks absorption bonus end time) ---
   let _particleStormEndTime = 0;

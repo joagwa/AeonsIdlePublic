@@ -6,7 +6,7 @@
   <title>Aeons: The Grand Unfolding</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>✦</text></svg>">
   <link rel="stylesheet" href="style.css">
-  <meta name="game-version" content="986b6e6">
+  <meta name="game-version" content="16a1535">
 </head>
 <body>
   <div id="game-container">
@@ -16,6 +16,15 @@
     </div>
 
     <div id="ui-layer">
+      <!-- Mobile drawer header (visible only on ≤768px) -->
+      <div id="mobile-drawer-header">
+        <span id="mobile-drawer-title">Resources</span>
+        <div class="mobile-drawer-actions">
+          <button id="mobile-settings-btn" class="mobile-icon-btn" aria-label="Settings">⚙️</button>
+          <button id="mobile-drawer-close" class="mobile-icon-btn" aria-label="Collapse panel">▼</button>
+        </div>
+      </div>
+
       <!-- Stats Panel -->
       <div id="stats-panel" class="panel collapsible-panel">
         <div id="stats-panel-header" class="panel-header-collapsible">
@@ -76,6 +85,30 @@
       </div>
     </div>
 
+    <!-- Mobile tab bar (visible only on ≤768px) -->
+    <nav id="mobile-tab-bar" aria-label="Game sections">
+      <button class="mobile-tab" data-panel="stats-panel" aria-label="Stats">
+        <span class="mobile-tab-icon">📊</span>
+        <span class="mobile-tab-label">Stats</span>
+      </button>
+      <button class="mobile-tab" data-panel="resource-panel" aria-label="Resources">
+        <span class="mobile-tab-icon">⚡</span>
+        <span class="mobile-tab-label">Resources</span>
+      </button>
+      <button class="mobile-tab" data-panel="upgrade-panel" aria-label="Upgrades">
+        <span class="mobile-tab-icon">🔬</span>
+        <span class="mobile-tab-label">Upgrades</span>
+      </button>
+      <button class="mobile-tab" data-panel="chronicle-panel" aria-label="Chronicle">
+        <span class="mobile-tab-icon">📜</span>
+        <span class="mobile-tab-label">Chronicle</span>
+      </button>
+      <button class="mobile-tab" data-panel="residual-bonus-panel" aria-label="Legacy">
+        <span class="mobile-tab-icon">✨</span>
+        <span class="mobile-tab-label">Legacy</span>
+      </button>
+    </nav>
+
     <div id="toolbar">
       <button id="chronicle-toggle" class="toolbar-btn" title="Chronicle">📜</button>
       <button id="settings-toggle" class="toolbar-btn" title="Settings">⚙️</button>
@@ -97,6 +130,6 @@
     <div id="save-error-banner" class="banner hidden"></div>
   </div>
 
-  <script type="module" src="js/main.js?v=986b6e6"></script>
+  <script type="module" src="js/main.js?v=16a1535"></script>
 </body>
 </html>
