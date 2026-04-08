@@ -346,7 +346,7 @@ async function bootstrap() {
     const initX = ho?.worldX ?? 600;
     const initY = ho?.worldY ?? 1500;
     console.log(`[Bootstrap] MoteController init at (${initX}, ${initY})`);
-    moteController.init(initX, initY);
+    moteController.init(initX, initY, mainCanvas);
     if (canvasRenderer.canvasConfig) {
       moteController.setBounds(
         canvasRenderer.canvasConfig.universeWidth,

@@ -30,19 +30,43 @@ export class MoteController {
     this._hintShowTime = 0;
     this._lastMoveTime = 0;
 
+    // Touch/pointer drag state
+    this._isDragging = false;
+    this._lastDragX = 0;
+    this._lastDragY = 0;
+    this._canvas = null;
+
+    /** True when the primary input is touch (used to tailor the controls hint). */
+    this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
     // Bound handlers
     this._onKeyDown = this._handleKeyDown.bind(this);
     this._onKeyUp = this._handleKeyUp.bind(this);
+    this._onPointerDown = this._handlePointerDown.bind(this);
+    this._onPointerMove = this._handlePointerMove.bind(this);
+    this._onPointerUp = this._handlePointerUp.bind(this);
   }
 
   /**
-   * Initialise with starting position and attach keyboard listeners.
+   * Initialise with starting position, attach keyboard listeners, and
+   * optionally attach pointer-based drag-to-move on a canvas element.
+   * @param {number} initialX
+   * @param {number} initialY
+   * @param {HTMLCanvasElement} [canvas]
    */
-  init(initialX, initialY) {
+  init(initialX, initialY, canvas) {
     this.worldX = initialX;
     this.worldY = initialY;
     document.addEventListener('keydown', this._onKeyDown);
     document.addEventListener('keyup', this._onKeyUp);
+
+    if (canvas) {
+      this._canvas = canvas;
+      canvas.addEventListener('pointerdown', this._onPointerDown);
+      canvas.addEventListener('pointermove', this._onPointerMove, { passive: false });
+      canvas.addEventListener('pointerup', this._onPointerUp);
+      canvas.addEventListener('pointercancel', this._onPointerUp);
+    }
 
     this.bus.on('upgrade:purchased', (data) => this._onUpgrade(data));
   }
@@ -125,6 +149,39 @@ export class MoteController {
       case 'a': case 'A': case 'ArrowLeft':   this._input.left  = false; break;
       case 'd': case 'D': case 'ArrowRight':  this._input.right = false; break;
     }
+  }
+
+  // ── Pointer/touch drag handlers ─────────────────────────────────────
+
+  _handlePointerDown(e) {
+    if (!this._enabled || !e.isPrimary) return;
+    this._isDragging = true;
+    this._lastDragX = e.clientX;
+    this._lastDragY = e.clientY;
+    try { this._canvas.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+  }
+
+  _handlePointerMove(e) {
+    if (!this._isDragging || !e.isPrimary) return;
+    e.preventDefault(); // prevent scroll on touch
+
+    const dx = e.clientX - this._lastDragX;
+    const dy = e.clientY - this._lastDragY;
+    this._lastDragX = e.clientX;
+    this._lastDragY = e.clientY;
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+    this.worldX += dx;
+    this.worldY += dy;
+
+    this.angle = Math.atan2(dy, dx);
+    this._lastMoveTime = performance.now();
+  }
+
+  _handlePointerUp(e) {
+    if (!e.isPrimary) return;
+    this._isDragging = false;
   }
 
   // ── Upgrade handler ─────────────────────────────────────────────────

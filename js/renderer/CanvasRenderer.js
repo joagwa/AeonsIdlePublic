@@ -647,12 +647,16 @@ export class CanvasRenderer {
     const hint = this._moteController.getHintState();
     if (!hint.visible || hint.alpha <= 0) return;
 
+    const hintText = this._moteController.isTouchDevice
+      ? 'Drag to move'
+      : 'WASD / \u2191\u2193\u2190\u2192 or drag to move';
+
     ctx.save();
     ctx.globalAlpha = hint.alpha;
     ctx.fillStyle = '#a0c4ff';
     ctx.font = '11px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('WASD / \u2191\u2193\u2190\u2192 to move', 14, viewH - 18);
+    ctx.fillText(hintText, 14, viewH - 18);
     ctx.restore();
   }
 
