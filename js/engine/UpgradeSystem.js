@@ -294,8 +294,9 @@ export class UpgradeSystem {
         this.#states.set(id, normalized);
       }
       
-      // Emit purchase event for loaded upgrades so listeners can initialize (e.g., gravity)
-      if (purchased) {
+      // Emit purchase event for ALL partially or fully purchased upgrades so
+      // listeners can restore their state (e.g. gravity radius, mote generation rate).
+      if (level > 0) {
         console.log(`[UpgradeSystem] Restored upgrade: ${id} (level ${level})`);
         this.#eventBus.emit('upgrade:purchased', { upgradeId: id, level });
       }

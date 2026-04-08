@@ -346,6 +346,9 @@ export class CanvasRenderer {
 
     // Draw controls hint overlay (bottom-left of canvas)
     this._drawControlsHint(this.mainCtx, viewW, viewH);
+
+    // Draw virtual joystick overlay (screen-space, on top of everything)
+    this._drawJoystick(this.mainCtx);
   }
 
   // ---------------------------------------------------------------
@@ -700,7 +703,7 @@ export class CanvasRenderer {
     if (!hint.visible || hint.alpha <= 0) return;
 
     const hintText = this._moteController.isTouchDevice
-      ? 'Drag to move'
+      ? 'Touch & drag to move'
       : 'WASD / \u2191\u2193\u2190\u2192 or drag to move';
 
     ctx.save();
@@ -709,6 +712,80 @@ export class CanvasRenderer {
     ctx.font = '11px monospace';
     ctx.textAlign = 'left';
     ctx.fillText(hintText, 14, viewH - 18);
+    ctx.restore();
+  }
+
+  /**
+   * Draw the virtual joystick overlay in screen space.
+   * Renders an outer boundary ring and a draggable thumb at the current
+   * pointer position (clamped to the boundary radius).
+   */
+  _drawJoystick(ctx) {
+    const mc = this._moteController;
+    if (!mc?.enabled) return;
+    const js = mc.getJoystickState();
+    if (!js.active) return;
+
+    const { originX, originY, currentX, currentY, maxRadius } = js;
+
+    // Clamp thumb to boundary ring
+    const dx = currentX - originX;
+    const dy = currentY - originY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const thumbDist = Math.min(dist, maxRadius);
+    const thumbX = dist > 0 ? originX + (dx / dist) * thumbDist : originX;
+    const thumbY = dist > 0 ? originY + (dy / dist) * thumbDist : originY;
+
+    ctx.save();
+
+    // Outer boundary ring fill
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = '#aaccff';
+    ctx.beginPath();
+    ctx.arc(originX, originY, maxRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer boundary ring stroke
+    ctx.globalAlpha = 0.30;
+    ctx.strokeStyle = '#aaccff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(originX, originY, maxRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Line from origin to thumb
+    if (dist > 6) {
+      ctx.globalAlpha = 0.25;
+      ctx.strokeStyle = '#aaccff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(originX, originY);
+      ctx.lineTo(thumbX, thumbY);
+      ctx.stroke();
+    }
+
+    // Origin centre dot
+    ctx.globalAlpha = 0.40;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(originX, originY, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Thumb fill
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#aaddff';
+    ctx.beginPath();
+    ctx.arc(thumbX, thumbY, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Thumb stroke
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(thumbX, thumbY, 18, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.restore();
   }
 

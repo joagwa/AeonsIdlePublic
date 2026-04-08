@@ -30,10 +30,16 @@ export class MoteController {
     this._hintShowTime = 0;
     this._lastMoveTime = 0;
 
-    // Touch/pointer drag state
-    this._isDragging = false;
-    this._lastDragX = 0;
-    this._lastDragY = 0;
+    // Virtual joystick state (touch/mouse drag)
+    this._joystickActive = false;
+    this._joystickOriginX = 0;  // canvas-relative screen coords
+    this._joystickOriginY = 0;
+    this._joystickCurrentX = 0;
+    this._joystickCurrentY = 0;
+    this._joystickCanvasLeft = 0; // cached canvas offset at gesture start
+    this._joystickCanvasTop = 0;
+    /** Maximum drag radius in CSS pixels before speed is capped */
+    this._joystickMaxRadius = 60;
     this._canvas = null;
 
     /** True when the primary input is touch (used to tailor the controls hint). */
@@ -87,17 +93,41 @@ export class MoteController {
     if (!this._enabled || dt <= 0) return;
 
     const accel = this.maxSpeed * 8 * dt;   // reach max speed in ~0.125s
-    const friction = Math.pow(0.008, dt);    // aggressive stop — nearly instant when key released
+    const friction = Math.pow(0.008, dt);    // aggressive stop — nearly instant when released
 
-    // Horizontal
-    if (this._input.left)       this._vx = Math.max(this._vx - accel, -this.maxSpeed);
-    else if (this._input.right) this._vx = Math.min(this._vx + accel,  this.maxSpeed);
-    else                        this._vx *= friction;
+    if (this._joystickActive) {
+      // Virtual joystick drives velocity — speed proportional to drag distance
+      const dx = this._joystickCurrentX - this._joystickOriginX;
+      const dy = this._joystickCurrentY - this._joystickOriginY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const deadZone = 6; // CSS pixels — ignore micro-movements
 
-    // Vertical
-    if (this._input.up)         this._vy = Math.max(this._vy - accel, -this.maxSpeed);
-    else if (this._input.down)  this._vy = Math.min(this._vy + accel,  this.maxSpeed);
-    else                        this._vy *= friction;
+      if (dist > deadZone) {
+        const norm = Math.min(dist, this._joystickMaxRadius) / this._joystickMaxRadius;
+        const nx = (dx / dist) * norm;
+        const ny = (dy / dist) * norm;
+        const targetVx = nx * this.maxSpeed;
+        const targetVy = ny * this.maxSpeed;
+
+        // Accelerate toward joystick target
+        if (targetVx < this._vx) this._vx = Math.max(this._vx - accel, targetVx);
+        else                      this._vx = Math.min(this._vx + accel, targetVx);
+        if (targetVy < this._vy) this._vy = Math.max(this._vy - accel, targetVy);
+        else                      this._vy = Math.min(this._vy + accel, targetVy);
+      } else {
+        this._vx *= friction;
+        this._vy *= friction;
+      }
+    } else {
+      // Keyboard input
+      if (this._input.left)       this._vx = Math.max(this._vx - accel, -this.maxSpeed);
+      else if (this._input.right) this._vx = Math.min(this._vx + accel,  this.maxSpeed);
+      else                        this._vx *= friction;
+
+      if (this._input.up)         this._vy = Math.max(this._vy - accel, -this.maxSpeed);
+      else if (this._input.down)  this._vy = Math.min(this._vy + accel,  this.maxSpeed);
+      else                        this._vy *= friction;
+    }
 
     // Snap tiny velocity to zero to avoid micro-drift
     if (Math.abs(this._vx) < 0.5) this._vx = 0;
@@ -130,6 +160,21 @@ export class MoteController {
     return this._enabled;
   }
 
+  /**
+   * Returns joystick state for the renderer to draw the virtual joystick overlay.
+   * @returns {{ active: boolean, originX: number, originY: number, currentX: number, currentY: number, maxRadius: number }}
+   */
+  getJoystickState() {
+    return {
+      active: this._joystickActive,
+      originX: this._joystickOriginX,
+      originY: this._joystickOriginY,
+      currentX: this._joystickCurrentX,
+      currentY: this._joystickCurrentY,
+      maxRadius: this._joystickMaxRadius,
+    };
+  }
+
   // ── Keyboard handlers ───────────────────────────────────────────────
 
   _handleKeyDown(e) {
@@ -151,37 +196,35 @@ export class MoteController {
     }
   }
 
-  // ── Pointer/touch drag handlers ─────────────────────────────────────
+  // ── Virtual joystick pointer handlers ───────────────────────────────
 
   _handlePointerDown(e) {
     if (!this._enabled || !e.isPrimary) return;
-    this._isDragging = true;
-    this._lastDragX = e.clientX;
-    this._lastDragY = e.clientY;
+    // Cache canvas offset so we don't call getBoundingClientRect() every frame
+    const rect = this._canvas.getBoundingClientRect();
+    this._joystickCanvasLeft = rect.left;
+    this._joystickCanvasTop = rect.top;
+    const cx = e.clientX - this._joystickCanvasLeft;
+    const cy = e.clientY - this._joystickCanvasTop;
+    this._joystickOriginX = cx;
+    this._joystickOriginY = cy;
+    this._joystickCurrentX = cx;
+    this._joystickCurrentY = cy;
+    this._joystickActive = true;
     try { this._canvas.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
   }
 
   _handlePointerMove(e) {
-    if (!this._isDragging || !e.isPrimary) return;
+    if (!this._joystickActive || !e.isPrimary) return;
     e.preventDefault(); // prevent scroll on touch
-
-    const dx = e.clientX - this._lastDragX;
-    const dy = e.clientY - this._lastDragY;
-    this._lastDragX = e.clientX;
-    this._lastDragY = e.clientY;
-
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
-
-    this.worldX += dx;
-    this.worldY += dy;
-
-    this.angle = Math.atan2(dy, dx);
+    this._joystickCurrentX = e.clientX - this._joystickCanvasLeft;
+    this._joystickCurrentY = e.clientY - this._joystickCanvasTop;
     this._lastMoveTime = performance.now();
   }
 
   _handlePointerUp(e) {
     if (!e.isPrimary) return;
-    this._isDragging = false;
+    this._joystickActive = false;
   }
 
   // ── Upgrade handler ─────────────────────────────────────────────────
