@@ -15,9 +15,9 @@ const STAGE_ORDER = ['main_sequence', 'red_giant', 'supernova', 'neutron_star'];
 const BASE_HEAVY_ELEMENTS_YIELD = 10;
 
 export class StarManager {
-  /** @type {import('../core/EventBus.js').EventBus} */
+  /** @type {import('../core/EventBus.js?v=03e91e7').EventBus} */
   #eventBus;
-  /** @type {import('./ResourceManager.js').ResourceManager} */
+  /** @type {import('./ResourceManager.js?v=03e91e7').ResourceManager} */
   #resourceManager;
   /** @type {object[]} active star instances */
   #stars = [];
@@ -25,8 +25,8 @@ export class StarManager {
   #starCount = 0;
 
   /**
-   * @param {import('../core/EventBus.js').EventBus} EventBus
-   * @param {import('./ResourceManager.js').ResourceManager} resourceManager
+   * @param {import('../core/EventBus.js?v=03e91e7').EventBus} EventBus
+   * @param {import('./ResourceManager.js?v=03e91e7').ResourceManager} resourceManager
    */
   constructor(EventBus, resourceManager) {
     this.#eventBus = EventBus;
