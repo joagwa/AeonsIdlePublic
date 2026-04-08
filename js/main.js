@@ -4,37 +4,38 @@
  */
 
 // === Core Imports ===
-import { EventBus } from './core/EventBus.js?v=28ddd1c';
-import { GameLoop } from './core/GameLoop.js?v=28ddd1c';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=28ddd1c';
-import { SaveSystem } from './core/SaveSystem.js?v=28ddd1c';
-import { UpdateChecker } from './core/UpdateChecker.js?v=28ddd1c';
+import { ErrorReporter } from './core/ErrorReporter.js?v=131d585';
+import { EventBus } from './core/EventBus.js?v=131d585';
+import { GameLoop } from './core/GameLoop.js?v=131d585';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=131d585';
+import { SaveSystem } from './core/SaveSystem.js?v=131d585';
+import { UpdateChecker } from './core/UpdateChecker.js?v=131d585';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=28ddd1c';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=28ddd1c';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=28ddd1c';
-import { StarManager } from './engine/StarManager.js?v=28ddd1c';
-import { EpochSystem } from './engine/EpochSystem.js?v=28ddd1c';
-import { MoteController } from './engine/MoteController.js?v=28ddd1c';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=28ddd1c';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=28ddd1c';
+import { ResourceManager } from './engine/ResourceManager.js?v=131d585';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=131d585';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=131d585';
+import { StarManager } from './engine/StarManager.js?v=131d585';
+import { EpochSystem } from './engine/EpochSystem.js?v=131d585';
+import { MoteController } from './engine/MoteController.js?v=131d585';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=131d585';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=131d585';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=28ddd1c';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=131d585';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=28ddd1c';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=28ddd1c';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=28ddd1c';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=28ddd1c';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=28ddd1c';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=28ddd1c';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=28ddd1c';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=28ddd1c';
-import { StatsPanel } from './ui/StatsPanel.js?v=28ddd1c';
-import { GoalWidget } from './ui/GoalWidget.js?v=28ddd1c';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=28ddd1c';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=131d585';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=131d585';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=131d585';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=131d585';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=131d585';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=131d585';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=131d585';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=131d585';
+import { StatsPanel } from './ui/StatsPanel.js?v=131d585';
+import { GoalWidget } from './ui/GoalWidget.js?v=131d585';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=131d585';
 
 // === Game State ===
 let gameState = {
@@ -81,6 +82,9 @@ const mobileTabBar = new MobileTabBar(EventBus);
 
 // === Bootstrap ===
 async function bootstrap() {
+  // Start error reporter immediately so any crash during init is captured.
+  new ErrorReporter();
+
   console.debug('[main] Bootstrapping Aeons: The Grand Unfolding');
 
   // Init canvas
