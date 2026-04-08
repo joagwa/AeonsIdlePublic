@@ -1,20 +1,17 @@
 /**
  * ErrorReporter — catches unhandled exceptions and promise rejections,
- * then automatically files a GitHub issue assigned to the Copilot coding
- * agent so it can propose a fix. Requires approval for the resulting PR.
+ * then shows a dismissible in-game banner with a "Report →" link that
+ * pre-fills a GitHub issue in the public tracker.
  *
- * A fine-grained PAT (issues:write only) is injected at deploy time via
- * <meta name="error-reporter-token">. Without it (local dev), errors are
- * only logged to console.
+ * No tokens are used. Secrets must never appear in client-side code
+ * that is pushed to a public repository.
  */
 export class ErrorReporter {
-  #token = null;
-  #repo   = null;
-  #reported   = new Set(); // per-session dedup fingerprints
+  #publicRepo = null;
+  #reported   = new Set();
   #lastReport = 0;
-  #cooldownMs = 30_000; // 30 s between any two reports
+  #cooldownMs = 30_000;
 
-  /** Noise patterns we never want to file as issues. */
   static #NOISE = [
     /^Script error\.?$/i,
     /ResizeObserver loop/i,
@@ -26,19 +23,13 @@ export class ErrorReporter {
   ];
 
   constructor() {
-    const tokenMeta = document.querySelector('meta[name="error-reporter-token"]');
-    const repoMeta  = document.querySelector('meta[name="error-reporter-repo"]');
-    this.#token = tokenMeta?.content ?? null;
-    this.#repo  = repoMeta?.content  ?? 'joagwa/AeonsIdle';
-
-    if (!this.#token || this.#token === 'dev') {
-      console.log('[ErrorReporter] No deploy token — errors logged locally only.');
-      return;
-    }
+    const repoMeta = document.querySelector('meta[name="feedback-repo"]');
+    const repo = repoMeta?.content?.trim();
+    this.#publicRepo = (repo && repo !== 'dev') ? repo : null;
 
     window.onerror = (message, source, lineno, colno, error) => {
       this.#handle(error ?? new Error(String(message)), { source, lineno, colno });
-      return false; // preserve default browser logging
+      return false;
     };
 
     window.addEventListener('unhandledrejection', (ev) => {
@@ -47,8 +38,6 @@ export class ErrorReporter {
         : new Error(String(ev.reason ?? 'Unhandled rejection'));
       this.#handle(err, { source: 'unhandledrejection' });
     });
-
-    console.log(`[ErrorReporter] Active — issues → ${this.#repo}`);
   }
 
   // ── Internal helpers ───────────────────────────────────────────────────────
@@ -66,99 +55,56 @@ export class ErrorReporter {
     this.#reported.add(fingerprint);
     this.#lastReport = now;
 
-    this.#createIssue(error, context).catch(e =>
-      console.error('[ErrorReporter] Failed to create issue:', e)
-    );
+    this.#showBanner(error, context);
   }
 
-  async #createIssue(error, context) {
-    const title = `[Bug] ${(error.message ?? 'Unknown error').slice(0, 80)}`;
-
-    // Deduplicate against existing open issues
-    const q = encodeURIComponent(
-      `repo:${this.#repo} is:open is:issue in:title "${title}"`
-    );
-    try {
-      const searchResp = await fetch(
-        `https://api.github.com/search/issues?q=${q}&per_page=1`,
-        { headers: this.#headers() }
-      );
-      if (searchResp.ok) {
-        const { total_count } = await searchResp.json();
-        if (total_count > 0) {
-          console.log('[ErrorReporter] Duplicate issue exists — skipping.');
-          return;
-        }
-      }
-    } catch {
-      // Search failure is non-fatal; proceed to create anyway
+  #showBanner(error, context) {
+    let container = document.getElementById('error-reporter-banner');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'error-reporter-banner';
+      document.body.appendChild(container);
     }
 
-    const resp = await fetch(`https://api.github.com/repos/${this.#repo}/issues`, {
-      method: 'POST',
-      headers: { ...this.#headers(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        body:      this.#buildBody(error, context),
-        labels:    ['bug', 'automated-error'],
-        assignees: ['Copilot'], // triggers Copilot coding agent
-      }),
-    });
+    const msg = (error.message ?? 'Unknown error').slice(0, 90);
+    const reportUrl = this.#buildReportUrl(error, context);
 
-    if (resp.ok) {
-      const issue = await resp.json();
-      console.log(`[ErrorReporter] Issue filed: ${issue.html_url}`);
-    } else {
-      console.error('[ErrorReporter] GitHub API error:', resp.status, await resp.text());
-    }
+    const item = document.createElement('div');
+    item.className = 'error-banner-item';
+    item.innerHTML =
+      `<span class="error-banner-msg">⚠ ${msg}</span>` +
+      (reportUrl
+        ? `<a class="error-banner-link" href="${reportUrl}" target="_blank" rel="noopener">Report →</a>`
+        : '') +
+      `<button class="error-banner-dismiss" aria-label="Dismiss">✕</button>`;
+
+    item.querySelector('.error-banner-dismiss').addEventListener('click', () => item.remove());
+    container.appendChild(item);
+
+    // Auto-dismiss after 20 s
+    setTimeout(() => item.remove(), 20_000);
   }
 
-  #headers() {
-    return {
-      Authorization:        `Bearer ${this.#token}`,
-      Accept:               'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-    };
-  }
-
-  #buildBody(error, context) {
-    const stack = (error.stack ?? 'No stack trace')
-      .split('\n').slice(0, 12).join('\n');
+  #buildReportUrl(error, context) {
+    if (!this.#publicRepo) return null;
     const version = document.querySelector('meta[name="game-version"]')?.content ?? 'unknown';
-
-    return [
-      '## 🤖 Automated Bug Report',
+    const title   = `[Bug] ${(error.message ?? 'Unknown error').slice(0, 80)}`;
+    const stack   = (error.stack ?? 'No stack trace').split('\n').slice(0, 8).join('\n');
+    const body = [
+      `**Error:** \`${error.name ?? 'Error'}: ${error.message ?? ''}\``,
       '',
-      '_This issue was automatically created by the in-game error reporter._',
-      '',
-      '### Error',
-      '```',
-      `${error.name ?? 'Error'}: ${error.message ?? '(no message)'}`,
-      '```',
-      '',
-      '### Stack Trace',
+      '**Stack trace:**',
       '```',
       stack,
       '```',
       '',
-      '### Environment',
-      '| | |',
-      '|---|---|',
-      `| **Source** | \`${context.source ?? 'unknown'}\` |`,
-      `| **Line / Col** | ${context.lineno ?? '?'} / ${context.colno ?? '?'} |`,
-      `| **Game version** | \`${version}\` |`,
-      `| **URL** | \`${window.location.href}\` |`,
-      `| **Time (UTC)** | ${new Date().toISOString()} |`,
-      `| **User agent** | ${navigator.userAgent} |`,
-      '',
-      '### Instructions for Copilot',
-      '1. Analyse the stack trace to identify the root cause.',
-      '2. Fix the issue without breaking existing game mechanics.',
-      '3. Run `npm test` to verify no regressions.',
-      '4. Add a regression test if appropriate.',
-      '',
-      '---',
-      '_Please review and close this issue if it is not a real bug._',
+      `**Version:** \`${version}\` | **Source:** \`${context.source ?? 'unknown'}\` line ${context.lineno ?? '?'}`,
+      `**Time:** ${new Date().toISOString()} | **UA:** ${navigator.userAgent.slice(0, 80)}`,
     ].join('\n');
+
+    return `https://github.com/${this.#publicRepo}/issues/new`
+      + `?title=${encodeURIComponent(title)}`
+      + `&body=${encodeURIComponent(body.slice(0, 4000))}`
+      + `&labels=${encodeURIComponent('bug,automated-error')}`;
   }
 }
