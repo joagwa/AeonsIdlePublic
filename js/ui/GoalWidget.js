@@ -3,7 +3,7 @@
  * at the top of the resource panel.
  */
 
-import { formatNumber } from '../core/NumberFormatter.js?v=553db90';
+import { formatNumber } from '../core/NumberFormatter.js?v=28ddd1c';
 
 export class GoalWidget {
   constructor(EventBus, milestoneSystem, resourceManager) {

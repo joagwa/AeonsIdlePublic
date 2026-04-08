@@ -161,7 +161,12 @@ export class ParticleSystem {
       const massMult = this._massGravityMult;
 
       for (const p of entry.particles) {
-        if (p.attracted && attraction) {
+        // Decay dark-matter wave push immunity
+        if (p._pushTimer > 0) {
+          p._pushTimer = Math.max(0, p._pushTimer - dt);
+        }
+
+        if (p.attracted && attraction && !p._pushTimer) {
           // Cubic distance-based speed with mass scaling: strong core, steep dropoff
           const dx = attraction.targetX - p.x;
           const dy = attraction.targetY - p.y;
@@ -179,7 +184,7 @@ export class ParticleSystem {
             p.size = p.sprite.minSize + (p.sprite.maxSize - p.sprite.minSize) * Math.min(1, t);
           }
         } else {
-          // Normal ambient drift
+          // Normal ambient drift (also used during DM wave push)
           p.x += p.vx * speed * dt;
           p.y += p.vy * speed * dt;
 
@@ -224,6 +229,7 @@ export class ParticleSystem {
 
         for (const p of entry.particles) {
           if (p.attracted) continue;
+          if (p._pushTimer > 0) continue; // DM wave push: skip re-attraction
 
           const dx = attraction.targetX - p.x;
           const dy = attraction.targetY - p.y;
@@ -461,6 +467,34 @@ export class ParticleSystem {
   /** Store the glow canvas 2D context for glow particle rendering. */
   setGlowCtx(ctx) {
     this._glowCtx = ctx;
+  }
+
+  /**
+   * Apply an outward radial force burst (e.g., from a dark matter gravity wave).
+   * Particles within the radius are pushed outward and briefly cannot re-enter attraction.
+   * @param {number} centerX  World X of the wave source
+   * @param {number} centerY  World Y of the wave source
+   * @param {number} radius   Affected radius in world pixels
+   * @param {number} strength Outward impulse strength (pixels/s)
+   */
+  applyRadialForce(centerX, centerY, radius, strength) {
+    const radiusSq = radius * radius;
+    for (const [, entry] of this.regions) {
+      for (const p of entry.particles) {
+        const dx = p.x - centerX;
+        const dy = p.y - centerY;
+        const distSq = dx * dx + dy * dy;
+        if (distSq > 0 && distSq < radiusSq) {
+          const dist = Math.sqrt(distSq);
+          const falloff = 1 - dist / radius; // strongest at centre, 0 at edge
+          const impulse = strength * falloff * 0.012;
+          p.vx = (dx / dist) * impulse;
+          p.vy = (dy / dist) * impulse;
+          p.attracted = false;
+          p._pushTimer = 2.2; // seconds of push immunity before gravity reclaims particle
+        }
+      }
+    }
   }
 
   /**

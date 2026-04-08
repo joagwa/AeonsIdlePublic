@@ -3,7 +3,7 @@
  * handling for Aeons save data.
  */
 
-import { SaveMigrator } from './SaveMigrator.js?v=553db90';
+import { SaveMigrator } from './SaveMigrator.js?v=28ddd1c';
 
 const STORAGE_KEY = 'aeons_save_v1';
 const AUTO_SAVE_INTERVAL_MS = 60_000;
@@ -15,7 +15,7 @@ export class SaveSystem {
   #autoSaveTimer = null;
 
   /**
-   * @param {import('./EventBus.js?v=553db90').EventBus} eventBus
+   * @param {import('./EventBus.js?v=28ddd1c').EventBus} eventBus
    * @param {*} resourceManager
    * @param {*} upgradeSystem
    * @param {*} milestoneSystem
@@ -23,7 +23,7 @@ export class SaveSystem {
    * @param {*} epochSystem
    * @param {object} gameState — mutable reference
    */
-  constructor(eventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, epochSystem, gameState, moteController) {
+  constructor(eventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, epochSystem, gameState, moteController, darkMatterSystem) {
     this.eventBus = eventBus;
     this.resourceManager = resourceManager;
     this.upgradeSystem = upgradeSystem;
@@ -32,6 +32,7 @@ export class SaveSystem {
     this.epochSystem = epochSystem;
     this.gameState = gameState;
     this.moteController = moteController || null;
+    this.darkMatterSystem = darkMatterSystem || null;
   }
 
   // ── Serialisation helpers ────────────────────────────────────────────
@@ -50,6 +51,7 @@ export class SaveSystem {
       starStates: this.starManager.getStates(),
       chronicleLog: this.milestoneSystem.getChronicleLog(),
       moteState: this.moteController ? this.moteController.getState() : null,
+      darkMatterState: this.darkMatterSystem ? this.darkMatterSystem.getState() : null,
     };
   }
 
@@ -114,6 +116,9 @@ export class SaveSystem {
       this.milestoneSystem.loadChronicleLog(data.chronicleLog);
       if (this.moteController && data.moteState) {
         this.moteController.loadState(data.moteState);
+      }
+      if (this.darkMatterSystem && data.darkMatterState) {
+        this.darkMatterSystem.loadState(data.darkMatterState);
       }
 
       // Offline progress

@@ -4,36 +4,37 @@
  */
 
 // === Core Imports ===
-import { EventBus } from './core/EventBus.js?v=553db90';
-import { GameLoop } from './core/GameLoop.js?v=553db90';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=553db90';
-import { SaveSystem } from './core/SaveSystem.js?v=553db90';
-import { UpdateChecker } from './core/UpdateChecker.js?v=553db90';
+import { EventBus } from './core/EventBus.js?v=28ddd1c';
+import { GameLoop } from './core/GameLoop.js?v=28ddd1c';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=28ddd1c';
+import { SaveSystem } from './core/SaveSystem.js?v=28ddd1c';
+import { UpdateChecker } from './core/UpdateChecker.js?v=28ddd1c';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=553db90';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=553db90';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=553db90';
-import { StarManager } from './engine/StarManager.js?v=553db90';
-import { EpochSystem } from './engine/EpochSystem.js?v=553db90';
-import { MoteController } from './engine/MoteController.js?v=553db90';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=553db90';
+import { ResourceManager } from './engine/ResourceManager.js?v=28ddd1c';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=28ddd1c';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=28ddd1c';
+import { StarManager } from './engine/StarManager.js?v=28ddd1c';
+import { EpochSystem } from './engine/EpochSystem.js?v=28ddd1c';
+import { MoteController } from './engine/MoteController.js?v=28ddd1c';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=28ddd1c';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=28ddd1c';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=553db90';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=28ddd1c';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=553db90';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=553db90';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=553db90';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=553db90';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=553db90';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=553db90';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=553db90';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=553db90';
-import { StatsPanel } from './ui/StatsPanel.js?v=553db90';
-import { GoalWidget } from './ui/GoalWidget.js?v=553db90';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=553db90';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=28ddd1c';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=28ddd1c';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=28ddd1c';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=28ddd1c';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=28ddd1c';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=28ddd1c';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=28ddd1c';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=28ddd1c';
+import { StatsPanel } from './ui/StatsPanel.js?v=28ddd1c';
+import { GoalWidget } from './ui/GoalWidget.js?v=28ddd1c';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=28ddd1c';
 
 // === Game State ===
 let gameState = {
@@ -57,12 +58,13 @@ const starManager = new StarManager(EventBus, resourceManager);
 const epochSystem = new EpochSystem(EventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, gameState);
 const moteController = new MoteController(EventBus);
 const proceduralMoteGenerator = new ProceduralMoteGenerator(EventBus);
+const darkMatterSystem = new DarkMatterSystem(EventBus, upgradeSystem);
 
 // Cross-wire systems that need references to each other
 resourceManager.setUpgradeSystem(upgradeSystem);
 upgradeSystem.setMilestoneSystem(milestoneSystem);
 
-const saveSystem = new SaveSystem(EventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, epochSystem, gameState, moteController);
+const saveSystem = new SaveSystem(EventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, epochSystem, gameState, moteController, darkMatterSystem);
 
 const canvasRenderer = new CanvasRenderer(EventBus);
 const resourcePanel = new ResourcePanel(EventBus);
@@ -86,6 +88,7 @@ async function bootstrap() {
   const glowCanvas = document.getElementById('glow-canvas');
   canvasRenderer.init(mainCanvas, glowCanvas);
   canvasRenderer.setMoteController(moteController);
+  canvasRenderer.setDarkMatterSystem(darkMatterSystem);
 
   // Init UI panels
   resourcePanel.setResourceManager(resourceManager);
@@ -180,7 +183,10 @@ async function bootstrap() {
           if (reward.target === 'darkMatter_display') {
             resourceManager.setVisible('darkMatter', true);
           } else if (reward.target === 'darkMatter_generation') {
-            resourceManager.setGenerationEnabled('darkMatter', true);
+            // Activate the interactive DarkMatterSystem (nodes in the void) instead of passive generation
+            const voidRegion = canvasRenderer.canvasConfig?.regions?.find(r => r.regionId === 'void');
+            if (voidRegion) darkMatterSystem.setVoidBounds(voidRegion.worldBounds);
+            darkMatterSystem.activate();
           } else if (reward.target === 'heavyElements_display') {
             resourceManager.setVisible('heavyElements', true);
           } else if (reward.target === 'star_lifecycle') {
@@ -300,11 +306,32 @@ async function bootstrap() {
   // Timer-based conversion accumulator
   let _conversionAccumulator = 0;
 
+  // --- Dark matter gravity waves ---
+  EventBus.on('darkMatter:wave', (data) => {
+    canvasRenderer.applyRadialForce(data.x, data.y, data.radius, data.strength);
+  });
+
   GameLoop.onTick((dt) => {
     resourceManager.tick(dt);
     milestoneSystem.check();
     starManager.tick(dt);
     gameState.totalRealTime += dt;
+
+    // --- Dark matter node update ---
+    if (darkMatterSystem.active) {
+      const ho = canvasRenderer.canvasConfig?.homeObject;
+      if (ho) {
+        const collected = darkMatterSystem.update(dt, ho.worldX, ho.worldY);
+        for (const node of collected) {
+          resourceManager.add('darkMatter', node.value);
+          const label = node.value >= 10
+            ? `+${formatNumber(Math.round(node.value))} DM`
+            : `+${node.value.toFixed(2)} DM`;
+          const { sx, sy } = canvasRenderer.camera?.worldToScreen(node.x, node.y) ?? { sx: 0, sy: 0 };
+          canvasRenderer.spawnFloatingNumber(label, sx, sy - 12);
+        }
+      }
+    }
 
     // --- Energy → Mass timer-based pulse conversion ---
     const accretionLevel = upgradeSystem.getLevel('upg_massAccretion') || 0;
@@ -380,6 +407,16 @@ async function bootstrap() {
   if (!loaded) {
     await epochSystem.loadEpoch('epoch1');
     console.log('[Bootstrap] Fresh epoch1 loaded');
+  }
+
+  // Restore dark matter system if ms_gasCloud was already triggered in the save
+  {
+    const dmState = milestoneSystem.getStates();
+    if (dmState['ms_gasCloud']?.triggered) {
+      const voidRegion = canvasRenderer.canvasConfig?.regions?.find(r => r.regionId === 'void');
+      if (voidRegion) darkMatterSystem.setVoidBounds(voidRegion.worldBounds);
+      darkMatterSystem.activate();
+    }
   }
 
   // Initialise mote controller with home object position from canvas config

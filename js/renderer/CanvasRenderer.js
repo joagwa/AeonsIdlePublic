@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=553db90';
-import { Camera } from './Camera.js?v=553db90';
-import { ParticleSystem } from './ParticleSystem.js?v=553db90';
-import { RegionManager } from './RegionManager.js?v=553db90';
-import { FloatingNumbers } from './FloatingNumbers.js?v=553db90';
+import { SpriteManager } from './SpriteManager.js?v=28ddd1c';
+import { Camera } from './Camera.js?v=28ddd1c';
+import { ParticleSystem } from './ParticleSystem.js?v=28ddd1c';
+import { RegionManager } from './RegionManager.js?v=28ddd1c';
+import { FloatingNumbers } from './FloatingNumbers.js?v=28ddd1c';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -70,6 +70,9 @@ export class CanvasRenderer {
 
     this._resizeObserver = null;
     this._darkMatterActive = false;
+
+    /** @type {import('../engine/DarkMatterSystem.js?v=28ddd1c').DarkMatterSystem|null} */
+    this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
     this._particleStormActive = false;
@@ -336,6 +339,11 @@ export class CanvasRenderer {
       }
     }
 
+    // Draw dark matter nodes (barely visible in void; wave rings rendered here too)
+    if (this._darkMatterActive) {
+      this._drawDarkMatterNodes(this.mainCtx);
+    }
+
     // Draw particles
     this.particleSystem.draw(this.mainCtx, this.camera, viewW, viewH);
 
@@ -556,6 +564,57 @@ export class CanvasRenderer {
       star.stage = data.newStage;
       star.stageProgress = data.stageProgress || 0;
     }
+  }
+
+  /**
+   * Draw dark matter nodes (barely-visible void anomalies) and their wave rings.
+   * @param {CanvasRenderingContext2D} ctx
+   */
+  _drawDarkMatterNodes(ctx) {
+    if (!this._darkMatterSystem) return;
+    const nodes = this._darkMatterSystem.getNodes();
+    if (nodes.length === 0) return;
+
+    ctx.save();
+    for (const node of nodes) {
+      const { sx, sy } = this.camera.worldToScreen(node.x, node.y);
+
+      // Expanding wave ring — subtle dark-purple stroke
+      if (node.pulsing && node.waveAlpha > 0) {
+        ctx.globalAlpha = node.waveAlpha * 0.9;
+        ctx.strokeStyle = '#5a0090';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, node.waveRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Secondary, slightly larger, more transparent ring
+        ctx.globalAlpha = node.waveAlpha * 0.4;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.arc(sx, sy, node.waveRadius * 1.15, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const op = node.displayOpacity || 0.10;
+      const r = node.nodeRadius || 6;
+
+      // Dark core (slightly darker than the void background)
+      ctx.globalAlpha = op * 1.2;
+      ctx.fillStyle = '#060010';
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Very faint outer glow ring to hint at presence
+      ctx.globalAlpha = op * 0.5;
+      ctx.strokeStyle = '#3a0055';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   _drawStars(ctx) {
@@ -893,6 +952,25 @@ export class CanvasRenderer {
    */
   setMoteController(mc) {
     this._moteController = mc;
+  }
+
+  /**
+   * Attach a DarkMatterSystem for node rendering and wave dispatch.
+   * @param {import('../engine/DarkMatterSystem.js?v=28ddd1c').DarkMatterSystem} sys
+   */
+  setDarkMatterSystem(sys) {
+    this._darkMatterSystem = sys;
+  }
+
+  /**
+   * Apply an outward radial force to particles (called on darkMatter:wave event).
+   * @param {number} x  World X
+   * @param {number} y  World Y
+   * @param {number} radius  Affected radius in world pixels
+   * @param {number} strength  Wave force strength
+   */
+  applyRadialForce(x, y, radius, strength) {
+    this.particleSystem?.applyRadialForce(x, y, radius, strength);
   }
 
   /**
