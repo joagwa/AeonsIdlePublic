@@ -88,6 +88,9 @@ export const epoch1CanvasConfig = {
     mote_rare:      { minSize: 1, maxSize: 3, baseColor: '#c850ff', glowRadius: 1, flickerRate: 0.2 },   // purple
     mote_epic:      { minSize: 2, maxSize: 4, baseColor: '#ffd700', glowRadius: 1.5, flickerRate: 0.25 }, // gold
     mote_legendary: { minSize: 2, maxSize: 4, baseColor: '#ffffff', glowRadius: 2, flickerRate: 0.3 },   // white
+
+    // Dark matter motes — appear as darker-than-void specks once dark matter unlocks
+    darkMote: { minSize: 1, maxSize: 3, baseColor: '#1a0830', glowRadius: 0, flickerRate: 0.06 },
   },
 
   // --- Home object: the player's anchor point in The Void ---

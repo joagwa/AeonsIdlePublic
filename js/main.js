@@ -210,6 +210,7 @@ async function bootstrap() {
     if (data.upgradeId === 'upg_moteQuality') {
       const level = upgradeSystem.getLevel('upg_moteQuality');
       proceduralMoteGenerator.setQualityLevel(level);
+      canvasRenderer.particleSystem.setQualityLevel(level);
     }
 
     // Show conversion slider when Mass Accretion is unlocked

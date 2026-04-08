@@ -18,6 +18,7 @@ export class ParticleSystem {
     this._massGravityMult = 1;
     // Spawn flash tracking: [{x, y, age, maxAge}]
     this._spawnFlashes = [];
+    this._qualityLevel = 0;
   }
 
   /** Initialize particle arrays for each region. */
@@ -41,7 +42,10 @@ export class ParticleSystem {
     if (!entry || entry.particles.length >= MAX_PER_REGION) return;
 
     const bounds = entry.config.worldBounds;
-    const sprite = this.spriteManager.getSprite(type);
+    const actualType = (type === 'mote' && this._qualityLevel > 0)
+      ? this._selectQualityType()
+      : type;
+    const sprite = this.spriteManager.getSprite(actualType);
     if (!sprite) return;
 
     const size = sprite.minSize + Math.random() * (sprite.maxSize - sprite.minSize);
@@ -69,7 +73,7 @@ export class ParticleSystem {
       vy: (Math.random() - 0.5) * 2 * 1.5 + 0.5 * Math.sign(Math.random() - 0.5),
       size,
       brightness: 0.4 + Math.random() * 0.5,
-      type,
+      type: actualType,
       sprite,
       attracted: false,
     });
@@ -86,8 +90,11 @@ export class ParticleSystem {
 
     const bounds = entry.config.worldBounds;
     const types = entry.config.particleTypes;
-    const type = types[Math.floor(Math.random() * types.length)];
-    const sprite = this.spriteManager.getSprite(type);
+    const rawType = types[Math.floor(Math.random() * types.length)];
+    const actualType = (rawType === 'mote' && this._qualityLevel > 0)
+      ? this._selectQualityType()
+      : rawType;
+    const sprite = this.spriteManager.getSprite(actualType);
     if (!sprite) return;
 
     const size = sprite.minSize + Math.random() * (sprite.maxSize - sprite.minSize);
@@ -114,7 +121,7 @@ export class ParticleSystem {
       }
     }
 
-    entry.particles.push({ x, y, vx: 0, vy: 0, size, brightness: 0.4 + Math.random() * 0.4, type, sprite, attracted: false });
+    entry.particles.push({ x, y, vx: 0, vy: 0, size, brightness: 0.4 + Math.random() * 0.4, type: actualType, sprite, attracted: false });
 
     // Tiny spawn flash
     this._spawnFlashes.push({ x, y, age: 0, maxAge: 0.25 });
@@ -232,23 +239,25 @@ export class ParticleSystem {
         if (!camera.isVisible(p.x, p.y, p.size, p.size)) continue;
 
         const { sx, sy } = camera.worldToScreen(p.x, p.y);
+        const r = Math.max(0.5, p.size / 2);
+        const cx = sx + r;
+        const cy = sy + r;
         const alpha = p.brightness * bri;
         ctx.globalAlpha = Math.max(0.05, Math.min(1, alpha));
-        ctx.fillStyle = p.attracted ? '#b8d4ff' : p.sprite.baseColor; // attracted particles are brighter blue-white
-        ctx.fillRect(Math.round(sx), Math.round(sy), Math.ceil(p.size), Math.ceil(p.size));
+        ctx.fillStyle = p.attracted ? '#b8d4ff' : p.sprite.baseColor;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
 
         // Glow on separate context (attracted particles always glow when close to target)
         const shouldGlow = p.sprite.glowRadius > 0 || p.attracted;
         if (shouldGlow && this._glowCtx) {
           this._glowCtx.globalAlpha = Math.max(0.05, Math.min(0.7, alpha * 0.5));
           this._glowCtx.fillStyle = p.attracted ? '#c0dcff' : p.sprite.baseColor;
-          const gr = p.attracted ? Math.ceil(p.size) : p.sprite.glowRadius;
-          this._glowCtx.fillRect(
-            Math.round(sx - gr),
-            Math.round(sy - gr),
-            Math.ceil(p.size + gr * 2),
-            Math.ceil(p.size + gr * 2)
-          );
+          const gr = p.attracted ? r : p.sprite.glowRadius;
+          this._glowCtx.beginPath();
+          this._glowCtx.arc(cx, cy, r + gr, 0, Math.PI * 2);
+          this._glowCtx.fill();
         }
       }
     }
@@ -260,12 +269,47 @@ export class ParticleSystem {
       const t = 1 - flash.age / flash.maxAge; // 1→0 over lifetime
       ctx.globalAlpha = t * 0.6;
       ctx.fillStyle = '#ffffff';
-      const r = 1 + t * 2;
-      ctx.fillRect(Math.round(sx - r), Math.round(sy - r), Math.ceil(r * 2), Math.ceil(r * 2));
+      const fr = 1 + t * 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, fr, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.globalAlpha = 1;
     if (this._glowCtx) this._glowCtx.globalAlpha = 1;
+  }
+
+  // ---------------------------------------------------------------
+  // Quality level API
+  // ---------------------------------------------------------------
+
+  /** Set the quality level for mote spawning (0 = base only, up to 5 = all tiers). */
+  setQualityLevel(level) {
+    this._qualityLevel = Math.max(0, Math.min(5, level));
+  }
+
+  /**
+   * Pick a quality-tiered sprite type based on current quality level.
+   * Higher quality levels unlock rarer tiers with increasing probability.
+   */
+  _selectQualityType() {
+    const distributions = [
+      [1.00, 0.00, 0.00, 0.00, 0.00],
+      [0.70, 0.30, 0.00, 0.00, 0.00],
+      [0.50, 0.30, 0.20, 0.00, 0.00],
+      [0.30, 0.25, 0.25, 0.20, 0.00],
+      [0.20, 0.20, 0.20, 0.20, 0.20],
+      [0.10, 0.15, 0.25, 0.25, 0.25],
+    ];
+    const dist = distributions[Math.min(this._qualityLevel, 5)];
+    const r = Math.random();
+    let cumulative = 0;
+    const types = ['mote_base', 'mote_common', 'mote_rare', 'mote_epic', 'mote_legendary'];
+    for (let i = 0; i < dist.length; i++) {
+      cumulative += dist[i];
+      if (r < cumulative) return types[i];
+    }
+    return 'mote_base';
   }
 
   // ---------------------------------------------------------------

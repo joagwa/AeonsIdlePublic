@@ -19,9 +19,11 @@ export class ResourcePanel {
 
     this._onResourceUpdated = (data) => this._handleResourceUpdated(data);
     this._onEpochTransition = () => this._handleEpochTransition();
+    this._onVisibilityChanged = (data) => this._handleVisibilityChanged(data);
 
     this.eventBus.on('resource:updated', this._onResourceUpdated);
     this.eventBus.on('epoch:transition:complete', this._onEpochTransition);
+    this.eventBus.on('resource:visibility:changed', this._onVisibilityChanged);
 
     const header = document.getElementById('resource-panel-header');
     if (header) header.addEventListener('click', () => this._toggleCollapse());
@@ -108,6 +110,31 @@ export class ResourcePanel {
     el.appendChild(rateSpan);
 
     return { el, labelSpan, valueSpan, rateSpan };
+  }
+
+  _handleVisibilityChanged({ resourceId, visible }) {
+    if (visible) {
+      if (!this.rows[resourceId] && this._resourceManager) {
+        const state = this._resourceManager.get(resourceId);
+        if (state) {
+          const row = this._createRow(resourceId, state.displayLabel || resourceId);
+          this.rows[resourceId] = row;
+          this.container.appendChild(row.el);
+          if (state.cap !== null && state.cap !== undefined) {
+            row.valueSpan.textContent = `${formatNumber(state.currentValue)} / ${formatNumber(state.cap)}`;
+          } else {
+            row.valueSpan.textContent = formatNumber(state.currentValue);
+          }
+          const sign = state.passiveRatePerSec >= 0 ? '+' : '';
+          row.rateSpan.textContent = `${sign}${formatRate(state.passiveRatePerSec)}/s`;
+        }
+      }
+    } else {
+      if (this.rows[resourceId]) {
+        this.rows[resourceId].el.remove();
+        delete this.rows[resourceId];
+      }
+    }
   }
 
   _handleEpochTransition() {

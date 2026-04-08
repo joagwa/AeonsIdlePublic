@@ -68,6 +68,7 @@ export class CanvasRenderer {
     this._visualThresholds = null; // loaded from epoch config
 
     this._resizeObserver = null;
+    this._darkMatterActive = false;
   }
 
   // ---------------------------------------------------------------
@@ -126,6 +127,18 @@ export class CanvasRenderer {
     this.bus.on('mass:converted', () => {
       // Trigger golden flash for energy→mass conversion
       this._massConversionFlash = Math.min(1, this._massConversionFlash + 0.5);
+    });
+    this.bus.on('milestone:triggered', (data) => {
+      if (data.milestoneId === 'ms_gasCloud') {
+        this._darkMatterActive = true;
+        // Inject dark matter motes into the void region particle types
+        const voidRegion = this.canvasConfig?.regions?.find(r => r.regionId === 'void');
+        if (voidRegion && !voidRegion.particleTypes.includes('darkMote')) {
+          voidRegion.particleTypes.push('darkMote');
+        }
+        // Seed some dark motes immediately
+        this.particleSystem?.spawnInitialParticles('void', 80);
+      }
     });
   }
 
@@ -289,6 +302,19 @@ export class CanvasRenderer {
     // Draw region backgrounds
     this.regionManager.draw(this.mainCtx, this.camera, viewW, viewH);
 
+    // Subtle dark matter tint over the void when dark matter is active
+    if (this._darkMatterActive && this.canvasConfig) {
+      const voidRegion = this.canvasConfig.regions?.find(r => r.regionId === 'void');
+      if (voidRegion) {
+        const b = voidRegion.worldBounds;
+        const { sx, sy } = this.camera.worldToScreen(b.x, b.y);
+        this.mainCtx.globalAlpha = 0.18;
+        this.mainCtx.fillStyle = '#110024';
+        this.mainCtx.fillRect(Math.round(sx), Math.round(sy), b.w, b.h);
+        this.mainCtx.globalAlpha = 1;
+      }
+    }
+
     // Draw particles
     this.particleSystem.draw(this.mainCtx, this.camera, viewW, viewH);
 
@@ -343,12 +369,14 @@ export class CanvasRenderer {
       ctx.restore();
     }
 
-    // Bright core cluster
+    // Bright core circle
     ctx.fillStyle = color;
     ctx.globalAlpha = 1;
-    ctx.fillRect(Math.round(sx - s), Math.round(sy - s), s * 2, s * 2);
+    ctx.beginPath();
+    ctx.arc(sx, sy, s, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Cross-hair glow pixels
+    // Cross-hair glow dots
     ctx.globalAlpha = 0.5 + pulse * 0.4;
     ctx.fillRect(Math.round(sx - s - 2), Math.round(sy), 2, 1);
     ctx.fillRect(Math.round(sx + s + 1), Math.round(sy), 2, 1);
@@ -372,12 +400,9 @@ export class CanvasRenderer {
       const flashR = s + 4 + this._massConversionFlash * 8;
       ctx.globalAlpha = flashAlpha;
       ctx.fillStyle = '#ffd700';
-      ctx.fillRect(
-        Math.round(sx - flashR),
-        Math.round(sy - flashR),
-        flashR * 2,
-        flashR * 2
-      );
+      ctx.beginPath();
+      ctx.arc(sx, sy, flashR, 0, Math.PI * 2);
+      ctx.fill();
       // Outer golden ring
       ctx.globalAlpha = flashAlpha * 0.6;
       ctx.strokeStyle = '#ffaa00';
@@ -390,12 +415,9 @@ export class CanvasRenderer {
         this.glowCtx.globalAlpha = flashAlpha * 0.5;
         this.glowCtx.fillStyle = '#ffd700';
         const glowR = flashR + 10;
-        this.glowCtx.fillRect(
-          Math.round(sx - glowR),
-          Math.round(sy - glowR),
-          glowR * 2,
-          glowR * 2
-        );
+        this.glowCtx.beginPath();
+        this.glowCtx.arc(sx, sy, glowR, 0, Math.PI * 2);
+        this.glowCtx.fill();
         this.glowCtx.globalAlpha = 1;
       }
     }
@@ -405,12 +427,9 @@ export class CanvasRenderer {
       const gr = this._visualGlow + pulse * 6;
       this.glowCtx.globalAlpha = 0.4 + pulse * 0.4;
       this.glowCtx.fillStyle = color;
-      this.glowCtx.fillRect(
-        Math.round(sx - s - gr),
-        Math.round(sy - s - gr),
-        s * 2 + gr * 2,
-        s * 2 + gr * 2
-      );
+      this.glowCtx.beginPath();
+      this.glowCtx.arc(sx, sy, s + gr, 0, Math.PI * 2);
+      this.glowCtx.fill();
       this.glowCtx.globalAlpha = 1;
     }
 
