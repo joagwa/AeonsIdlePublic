@@ -25,7 +25,8 @@ export class ParticleSystem {
         config: region,
         params: { density: 0, motionSpeed: 1, brightness: 1 },
         targetDensity: 0,
-        attraction: null,
+        // Apply stored attraction defaults so gravity persists across region reloads
+        attraction: this._defaultAttraction ? { ...this._defaultAttraction } : null,
       });
     }
   }
@@ -240,14 +241,14 @@ export class ParticleSystem {
   enableAttractionAll(targetX, targetY, gravityRadius = 100) {
     let enabledCount = 0;
     for (const [regionId, entry] of this.regions) {
-      if (entry.particles.length > 0 || entry.targetDensity > 0) {
-        entry.attraction = { targetX, targetY, gravityRadius };
-        enabledCount++;
-        if (window.AEONS_DEBUG && enabledCount <= 3) {
-          console.log(`[ParticleSystem] Gravity enabled in ${regionId}: ${entry.particles.length} particles, target density ${entry.targetDensity}`);
-        }
+      entry.attraction = { targetX, targetY, gravityRadius };
+      enabledCount++;
+      if (window.AEONS_DEBUG && enabledCount <= 3) {
+        console.log(`[ParticleSystem] Gravity enabled in ${regionId}: ${entry.particles.length} particles, target density ${entry.targetDensity}`);
       }
     }
+    // Store attraction defaults so newly added regions also get attraction
+    this._defaultAttraction = { targetX, targetY, gravityRadius };
     console.log(`[ParticleSystem] Gravity enabled in ${enabledCount} regions at (${targetX}, ${targetY}), radius ${gravityRadius}`);
   }
 
@@ -262,6 +263,12 @@ export class ParticleSystem {
         entry.attraction.targetY = y;
         if (gravityRadius !== undefined) entry.attraction.gravityRadius = gravityRadius;
       }
+    }
+    // Keep default in sync so newly loaded regions get latest position
+    if (this._defaultAttraction) {
+      this._defaultAttraction.targetX = x;
+      this._defaultAttraction.targetY = y;
+      if (gravityRadius !== undefined) this._defaultAttraction.gravityRadius = gravityRadius;
     }
   }
 
