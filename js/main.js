@@ -4,36 +4,36 @@
  */
 
 // === Core Imports ===
-import { EventBus } from './core/EventBus.js?v=abdc512';
-import { GameLoop } from './core/GameLoop.js?v=abdc512';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=abdc512';
-import { SaveSystem } from './core/SaveSystem.js?v=abdc512';
-import { UpdateChecker } from './core/UpdateChecker.js?v=abdc512';
+import { EventBus } from './core/EventBus.js?v=6cd1d3d';
+import { GameLoop } from './core/GameLoop.js?v=6cd1d3d';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=6cd1d3d';
+import { SaveSystem } from './core/SaveSystem.js?v=6cd1d3d';
+import { UpdateChecker } from './core/UpdateChecker.js?v=6cd1d3d';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=abdc512';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=abdc512';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=abdc512';
-import { StarManager } from './engine/StarManager.js?v=abdc512';
-import { EpochSystem } from './engine/EpochSystem.js?v=abdc512';
-import { MoteController } from './engine/MoteController.js?v=abdc512';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=abdc512';
+import { ResourceManager } from './engine/ResourceManager.js?v=6cd1d3d';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=6cd1d3d';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=6cd1d3d';
+import { StarManager } from './engine/StarManager.js?v=6cd1d3d';
+import { EpochSystem } from './engine/EpochSystem.js?v=6cd1d3d';
+import { MoteController } from './engine/MoteController.js?v=6cd1d3d';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=6cd1d3d';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=abdc512';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=6cd1d3d';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=abdc512';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=abdc512';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=abdc512';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=abdc512';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=abdc512';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=abdc512';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=abdc512';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=abdc512';
-import { StatsPanel } from './ui/StatsPanel.js?v=abdc512';
-import { GoalWidget } from './ui/GoalWidget.js?v=abdc512';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=abdc512';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=6cd1d3d';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=6cd1d3d';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=6cd1d3d';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=6cd1d3d';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=6cd1d3d';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=6cd1d3d';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=6cd1d3d';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=6cd1d3d';
+import { StatsPanel } from './ui/StatsPanel.js?v=6cd1d3d';
+import { GoalWidget } from './ui/GoalWidget.js?v=6cd1d3d';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=6cd1d3d';
 
 // === Game State ===
 let gameState = {
@@ -230,10 +230,11 @@ async function bootstrap() {
     }
     
     // Mote generation upgrades
-    if (data.upgradeId === 'upg_moteGeneration' || data.upgradeId === 'upg_moteFlood') {
+    if (data.upgradeId === 'upg_moteGeneration' || data.upgradeId === 'upg_moteFlood' || data.upgradeId === 'upg_voidSaturation') {
       const genLevel = upgradeSystem.getLevel('upg_moteGeneration');
       const floodLevel = upgradeSystem.getLevel('upg_moteFlood');
-      const rate = 5 * Math.pow(1.5, genLevel) * Math.pow(2.0, floodLevel);
+      const satLevel = upgradeSystem.getLevel('upg_voidSaturation');
+      const rate = 5 * Math.pow(1.5, genLevel) * Math.pow(2.0, floodLevel) * Math.pow(3.0, satLevel);
       proceduralMoteGenerator.setGenerationRate(rate);
       // Increase void particle density proportional to generation rate
       const voidCount = Math.min(500, Math.floor(80 + rate));
