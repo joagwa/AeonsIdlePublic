@@ -271,51 +271,7 @@ async function bootstrap() {
     }
   });
 
-  // --- Smooth camera follow on mote movement with 20% tolerance zone ---
-  EventBus.on('mote:moved', (data) => {
-    const cam = canvasRenderer.camera;
-    if (cam) {
-      // Ideal camera center on mote
-      const targetCamX = data.worldX - cam.viewW / 2;
-      const targetCamY = data.worldY - cam.viewH / 2;
-      
-      // Current camera center
-      const camCenterX = cam.x + cam.viewW / 2;
-      const camCenterY = cam.y + cam.viewH / 2;
-      
-      // 20% tolerance zone: smooth lerp increases as player moves toward edge
-      const toleranceX = cam.viewW * 0.1;  // 10% left + 10% right = 20% total
-      const toleranceY = cam.viewH * 0.1;
-      
-      // Smooth lerp factor based on distance from tolerance boundary
-      // Within tolerance: lerp factor decreases (slower follow)
-      // Beyond tolerance: lerp factor increases (faster catch-up)
-      const distX = Math.abs(data.worldX - camCenterX);
-      const distY = Math.abs(data.worldY - camCenterY);
-      
-      let lerpX = 0.08;  // base smooth lerp
-      let lerpY = 0.08;
-      
-      if (distX > toleranceX) {
-        // Beyond tolerance - speed up catch-up based on excess distance
-        const excessX = (distX - toleranceX) / (cam.viewW * 0.4);  // normalize to 0..1
-        lerpX = 0.08 + Math.min(excessX, 0.12);  // scale from 0.08 to 0.20
-      }
-      if (distY > toleranceY) {
-        const excessY = (distY - toleranceY) / (cam.viewH * 0.4);
-        lerpY = 0.08 + Math.min(excessY, 0.12);
-      }
-      
-      // Smooth lerp to target
-      cam.x += (targetCamX - cam.x) * lerpX;
-      cam.y += (targetCamY - cam.y) * lerpY;
-      cam.clamp();
-      
-      if (window.AEONS_DEBUG && Math.random() < 0.02) {  // Log 2% of frames to avoid spam
-        console.log(`[Camera] Pos: (${Math.round(cam.x)}, ${Math.round(cam.y)}) | Mote: (${data.worldX}, ${data.worldY})`);
-      }
-    }
-  });
+  // Camera centering is handled in CanvasRenderer.onFrame() — no lerp needed
 
   // --- Register render frame callback ---
   GameLoop.onFrame((ts) => {

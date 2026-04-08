@@ -143,7 +143,15 @@ export class CanvasRenderer {
       ctx.imageSmoothingEnabled = false;
     }
 
-    if (this.camera) this.camera.setViewSize(w, h);
+    if (this.camera) {
+      this.camera.setViewSize(w, h);
+      // Re-center camera on home object after resize
+      const ho = this.canvasConfig?.homeObject;
+      if (ho) {
+        this.camera.x = ho.worldX - w / 2;
+        this.camera.y = ho.worldY - h / 2;
+      }
+    }
   }
 
   // ---------------------------------------------------------------
@@ -214,6 +222,13 @@ export class CanvasRenderer {
     if (this.glowEnabled) this.glowCtx.clearRect(0, 0, viewW, viewH);
 
     if (!this.canvasConfig) return;
+
+    // Always center camera on home object
+    const ho = this.canvasConfig.homeObject;
+    if (ho && this.camera) {
+      this.camera.x = ho.worldX - viewW / 2;
+      this.camera.y = ho.worldY - viewH / 2;
+    }
 
     // Sync home object position from mote controller
     if (this._moteController && this.canvasConfig.homeObject) {
@@ -684,14 +699,17 @@ export class CanvasRenderer {
         return;
       }
       try {
-        console.log(`[CanvasRenderer] Setting up gravity attraction at (${ho.worldX}, ${ho.worldY})`);
-        // Enable attraction in ALL active regions so particles everywhere can be absorbed
-        this.particleSystem.enableAttractionAll(ho.worldX, ho.worldY, 600);
-        this._gravityBaseRadius = 600;
+        // Gravity radius scales with upgrade level
+        const gravityRadiusByLevel = [0, 100, 200, 300, 450, 600];
+        const level = data.level || 1;
+        const radius = gravityRadiusByLevel[Math.min(level, gravityRadiusByLevel.length - 1)];
+
+        console.log(`[CanvasRenderer] Gravity level ${level}, radius ${radius} at (${ho.worldX}, ${ho.worldY})`);
+        this.particleSystem.enableAttractionAll(ho.worldX, ho.worldY, radius);
+        this._gravityBaseRadius = radius;
         this.particleSystem.setAbsorptionCallback((wx, wy, quality) => {
           this._homeObjectPulse = 1;
           const { sx, sy } = this.camera.worldToScreen(wx, wy);
-          // Emit raw quality — main.js applies absorption multipliers and shows floating number
           this.bus.emit('particle:absorbed', { worldX: wx, worldY: wy, screenX: sx, screenY: sy, quality });
         });
         console.log('[CanvasRenderer] Gravity attraction set up successfully');
