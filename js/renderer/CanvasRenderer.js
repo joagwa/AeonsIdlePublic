@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=6cd1d3d';
-import { Camera } from './Camera.js?v=6cd1d3d';
-import { ParticleSystem } from './ParticleSystem.js?v=6cd1d3d';
-import { RegionManager } from './RegionManager.js?v=6cd1d3d';
-import { FloatingNumbers } from './FloatingNumbers.js?v=6cd1d3d';
+import { SpriteManager } from './SpriteManager.js?v=8bdc7b5';
+import { Camera } from './Camera.js?v=8bdc7b5';
+import { ParticleSystem } from './ParticleSystem.js?v=8bdc7b5';
+import { RegionManager } from './RegionManager.js?v=8bdc7b5';
+import { FloatingNumbers } from './FloatingNumbers.js?v=8bdc7b5';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {

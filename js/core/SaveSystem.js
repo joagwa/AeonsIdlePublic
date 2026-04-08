@@ -3,7 +3,7 @@
  * handling for Aeons save data.
  */
 
-import { SaveMigrator } from './SaveMigrator.js?v=6cd1d3d';
+import { SaveMigrator } from './SaveMigrator.js?v=8bdc7b5';
 
 const STORAGE_KEY = 'aeons_save_v1';
 const AUTO_SAVE_INTERVAL_MS = 60_000;
@@ -15,7 +15,7 @@ export class SaveSystem {
   #autoSaveTimer = null;
 
   /**
-   * @param {import('./EventBus.js?v=6cd1d3d').EventBus} eventBus
+   * @param {import('./EventBus.js?v=8bdc7b5').EventBus} eventBus
    * @param {*} resourceManager
    * @param {*} upgradeSystem
    * @param {*} milestoneSystem
@@ -43,8 +43,8 @@ export class SaveSystem {
       savedAt: Date.now(),
       gameState: { ...this.gameState },
       resourceStates: this.resourceManager.getStates(),
-      rateBonuses: this.resourceManager.getRateBonuses(),
-      capBonuses: this.resourceManager.getCapBonuses(),
+      rateBonuses: typeof this.resourceManager.getRateBonuses === 'function' ? this.resourceManager.getRateBonuses() : {},
+      capBonuses: typeof this.resourceManager.getCapBonuses === 'function' ? this.resourceManager.getCapBonuses() : {},
       upgradeStates: this.upgradeSystem.getStates(),
       milestoneStates: this.milestoneSystem.getStates(),
       starStates: this.starManager.getStates(),
@@ -103,8 +103,8 @@ export class SaveSystem {
       // Restore module states
       Object.assign(this.gameState, data.gameState);
       this.resourceManager.loadStates(data.resourceStates);
-      this.resourceManager.loadRateBonuses(data.rateBonuses);
-      this.resourceManager.loadCapBonuses(data.capBonuses);
+      if (typeof this.resourceManager.loadRateBonuses === 'function') this.resourceManager.loadRateBonuses(data.rateBonuses);
+      if (typeof this.resourceManager.loadCapBonuses === 'function') this.resourceManager.loadCapBonuses(data.capBonuses);
       // Load canvas config BEFORE upgrades so that the renderer's canvasConfig.homeObject
       // is already set when upgrade:purchased fires for upg_gravitationalPull.
       await this.epochSystem.loadEpoch(this.gameState.epochId);
