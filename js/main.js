@@ -251,53 +251,72 @@ async function bootstrap() {
     convSlider.addEventListener('input', () => {
       const val = parseInt(convSlider.value, 10) / 100;
       canvasRenderer.setConversionRate(val);
-      if (convPct) convPct.textContent = `${convSlider.value}%`;
+      if (convPct) convPct.textContent = `${Math.round(val * 100)}% rate`;
     });
+    // Set initial label
+    if (convPct) convPct.textContent = `${convSlider.value}% rate`;
   }
+
+  // Timer-based conversion accumulator
+  let _conversionAccumulator = 0;
 
   GameLoop.onTick((dt) => {
     resourceManager.tick(dt);
     milestoneSystem.check();
     starManager.tick(dt);
-    moteController.tick(dt);
     gameState.totalRealTime += dt;
 
-    // --- Energy → Mass auto-conversion (Mass Accretion mechanic) ---
+    // --- Energy → Mass timer-based pulse conversion ---
     const accretionLevel = upgradeSystem.getLevel('upg_massAccretion') || 0;
     if (accretionLevel > 0) {
-      // Conversion rate from slider (0..1)
-      const conversionRate = canvasRenderer.getConversionRate();
+      const conversionRate = canvasRenderer.getConversionRate(); // 0..1 from slider
       if (conversionRate > 0) {
-        // Base: drain 10 energy/s, produce 1 mass/s per level
-        const energyDrainPerSec = 10 * accretionLevel * conversionRate;
-        const baseMassPerSec = 1 * accretionLevel * conversionRate;
+        // Advance accumulator proportional to slider rate
+        _conversionAccumulator += dt * conversionRate;
 
-        // Primal Synthesis efficiency boost (×1.4^level)
-        const synthLevel = upgradeSystem.getLevel('upg_primalSynthesis') || 0;
-        const efficiencyMult = synthLevel > 0 ? Math.pow(1.4, synthLevel) : 1;
-        const massPerSec = baseMassPerSec * efficiencyMult;
+        // Base pulse interval 2s; Rapid Accretion shrinks it by ×0.8 per level
+        const rapidLevel = upgradeSystem.getLevel('upg_rapidAccretion') || 0;
+        const pulseInterval = 2.0 * Math.pow(0.8, rapidLevel);
 
-        const energyState = resourceManager.get('energy');
-        if (energyState && energyState.currentValue > 0) {
-          const energyAvailable = energyState.currentValue;
-          const energyToDrain = Math.min(energyAvailable, energyDrainPerSec * dt);
-          const fraction = energyToDrain / (energyDrainPerSec * dt);
-          const massProduced = massPerSec * dt * fraction;
+        while (_conversionAccumulator >= pulseInterval) {
+          _conversionAccumulator -= pulseInterval;
 
-          if (energyToDrain > 0.001) {
+          // Energy cost per pulse = accretionLevel × 10
+          const energyCost = accretionLevel * 10;
+          const energyState = resourceManager.get('energy');
+          const energyAvailable = energyState ? energyState.currentValue : 0;
+
+          if (energyAvailable >= energyCost * 0.01) {
+            // Partial pulse if not enough energy
+            const fraction = Math.min(1, energyAvailable / energyCost);
+            const energyToDrain = energyCost * fraction;
+
+            // Mass per pulse = accretionLevel × efficiency
+            const synthLevel = upgradeSystem.getLevel('upg_primalSynthesis') || 0;
+            const efficiencyMult = synthLevel > 0 ? Math.pow(1.4, synthLevel) : 1;
+            const massGained = accretionLevel * efficiencyMult * fraction;
+
             resourceManager.spend('energy', energyToDrain);
-            resourceManager.add('mass', massProduced);
-            EventBus.emit('mass:converted', { energySpent: energyToDrain, massGained: massProduced });
+            resourceManager.add('mass', massGained);
+            EventBus.emit('mass:converted', { energySpent: energyToDrain, massGained });
           }
         }
+      } else {
+        _conversionAccumulator = 0;
       }
     }
   });
 
   // Camera centering is handled in CanvasRenderer.onFrame() — no lerp needed
 
-  // --- Register render frame callback ---
+  // --- Register render frame callback (mote movement runs here for 60fps smoothness) ---
+  let _lastFrameTs = null;
   GameLoop.onFrame((ts) => {
+    if (_lastFrameTs !== null) {
+      const realDt = Math.min((ts - _lastFrameTs) / 1000, 0.1);
+      moteController.tick(realDt);
+    }
+    _lastFrameTs = ts;
     canvasRenderer.onFrame(ts);
   });
 

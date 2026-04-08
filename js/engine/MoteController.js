@@ -9,15 +9,17 @@ export class MoteController {
     this.bus = EventBus;
     this.worldX = 600;
     this.worldY = 1500;
-    this.angle = -Math.PI / 2; // face upward initially
-    this.speed = 0;
+    this.angle = -Math.PI / 2; // visual facing angle, derived from velocity
     this.maxSpeed = 0;
-    this.turnSpeed = 0;
     this.tractorBeamRange = 0;
     this.tractorBeamStrength = 1.0;
 
-    // Movement input state
-    this._input = { forward: false, backward: false, left: false, right: false };
+    // Velocity components for direct 4-axis movement
+    this._vx = 0;
+    this._vy = 0;
+
+    // Movement input state (WASD = up/down/left/right in world space)
+    this._input = { up: false, down: false, left: false, right: false };
     this._enabled = false;
 
     // Universe bounds (set from canvas config)
@@ -25,9 +27,8 @@ export class MoteController {
     this._boundsH = 3000;
 
     // Controls hint timing
-    this._hintShowTime = 0;      // when to stop showing hint (performance.now)
-    this._lastMoveTime = 0;      // last time player moved
-    this._hintFadeStart = 0;     // when fade-out began
+    this._hintShowTime = 0;
+    this._lastMoveTime = 0;
 
     // Bound handlers
     this._onKeyDown = this._handleKeyDown.bind(this);
@@ -55,35 +56,35 @@ export class MoteController {
   }
 
   /**
-   * Game-tick update (called at 20 Hz from GameLoop).
+   * Game-frame update — called from onFrame at full rAF rate (~60fps) for smooth motion.
+   * @param {number} dt — real wall-clock delta in seconds (clamped externally)
    */
   tick(dt) {
-    if (!this._enabled) return;
+    if (!this._enabled || dt <= 0) return;
 
-    // Turn
-    if (this._input.left) this.angle -= this.turnSpeed * dt;
-    if (this._input.right) this.angle += this.turnSpeed * dt;
+    const accel = this.maxSpeed * 8 * dt;   // reach max speed in ~0.125s
+    const friction = Math.pow(0.008, dt);    // aggressive stop — nearly instant when key released
 
-    // Accelerate / decelerate
-    if (this._input.forward) {
-      this.speed = Math.min(this.speed + this.maxSpeed * 2 * dt, this.maxSpeed);
-    } else if (this._input.backward) {
-      this.speed = Math.max(this.speed - this.maxSpeed * 3 * dt, -this.maxSpeed * 0.3);
-    } else {
-      // Friction
-      this.speed *= Math.pow(0.3, dt);
-      if (Math.abs(this.speed) < 0.5) this.speed = 0;
-    }
+    // Horizontal
+    if (this._input.left)       this._vx = Math.max(this._vx - accel, -this.maxSpeed);
+    else if (this._input.right) this._vx = Math.min(this._vx + accel,  this.maxSpeed);
+    else                        this._vx *= friction;
 
-    // Move
-    this.worldX += Math.cos(this.angle) * this.speed * dt;
-    this.worldY += Math.sin(this.angle) * this.speed * dt;
+    // Vertical
+    if (this._input.up)         this._vy = Math.max(this._vy - accel, -this.maxSpeed);
+    else if (this._input.down)  this._vy = Math.min(this._vy + accel,  this.maxSpeed);
+    else                        this._vy *= friction;
 
-    // No bounds clamping needed for very large universe (1M×1M)
-    // Player can move freely in any direction
+    // Snap tiny velocity to zero to avoid micro-drift
+    if (Math.abs(this._vx) < 0.5) this._vx = 0;
+    if (Math.abs(this._vy) < 0.5) this._vy = 0;
 
-    // Track movement for hint display
-    if (this.speed !== 0) {
+    this.worldX += this._vx * dt;
+    this.worldY += this._vy * dt;
+
+    // Update visual facing angle from current velocity direction
+    if (Math.abs(this._vx) > 1 || Math.abs(this._vy) > 1) {
+      this.angle = Math.atan2(this._vy, this._vx);
       this._lastMoveTime = performance.now();
     }
 
@@ -91,8 +92,13 @@ export class MoteController {
       worldX: this.worldX,
       worldY: this.worldY,
       angle: this.angle,
-      speed: this.speed,
+      speed: Math.sqrt(this._vx * this._vx + this._vy * this._vy),
     });
+  }
+
+  /** Current speed magnitude (for compatibility). */
+  get speed() {
+    return Math.sqrt(this._vx * this._vx + this._vy * this._vy);
   }
 
   /** Whether movement is currently enabled. */
@@ -105,18 +111,18 @@ export class MoteController {
   _handleKeyDown(e) {
     if (!this._enabled) return;
     switch (e.key) {
-      case 'w': case 'W': case 'ArrowUp':    this._input.forward = true; break;
-      case 's': case 'S': case 'ArrowDown':   this._input.backward = true; break;
-      case 'a': case 'A': case 'ArrowLeft':   this._input.left = true; break;
+      case 'w': case 'W': case 'ArrowUp':    this._input.up    = true; break;
+      case 's': case 'S': case 'ArrowDown':   this._input.down  = true; break;
+      case 'a': case 'A': case 'ArrowLeft':   this._input.left  = true; break;
       case 'd': case 'D': case 'ArrowRight':  this._input.right = true; break;
     }
   }
 
   _handleKeyUp(e) {
     switch (e.key) {
-      case 'w': case 'W': case 'ArrowUp':    this._input.forward = false; break;
-      case 's': case 'S': case 'ArrowDown':   this._input.backward = false; break;
-      case 'a': case 'A': case 'ArrowLeft':   this._input.left = false; break;
+      case 'w': case 'W': case 'ArrowUp':    this._input.up    = false; break;
+      case 's': case 'S': case 'ArrowDown':   this._input.down  = false; break;
+      case 'a': case 'A': case 'ArrowLeft':   this._input.left  = false; break;
       case 'd': case 'D': case 'ArrowRight':  this._input.right = false; break;
     }
   }
@@ -127,17 +133,16 @@ export class MoteController {
     switch (data.upgradeId) {
       case 'upg_cosmicDrift':
         this._enabled = true;
-        this.maxSpeed = 40;
-        this.turnSpeed = 1.5;
+        this.maxSpeed = 80;
         // Show controls hint for 10 seconds
         this._hintShowTime = performance.now() + 10_000;
         this._lastMoveTime = performance.now();
         break;
       case 'upg_ionThrust':
-        this.maxSpeed = 40 + (data.level || 1) * 20;
+        this.maxSpeed = 80 + (data.level || 1) * 30;
         break;
       case 'upg_maneuveringJets':
-        this.turnSpeed = 1.5 + (data.level || 1) * 0.8;
+        // No-op for direct movement model — kept for save compatibility
         break;
       case 'upg_eventHorizon':
         this.tractorBeamRange = 120 + (data.level || 1) * 60;
@@ -177,9 +182,10 @@ export class MoteController {
       worldX: this.worldX,
       worldY: this.worldY,
       angle: this.angle,
+      vx: this._vx,
+      vy: this._vy,
       enabled: this._enabled,
       maxSpeed: this.maxSpeed,
-      turnSpeed: this.turnSpeed,
       tractorBeamRange: this.tractorBeamRange,
       tractorBeamStrength: this.tractorBeamStrength,
     };
@@ -190,9 +196,10 @@ export class MoteController {
     this.worldX = state.worldX ?? this.worldX;
     this.worldY = state.worldY ?? this.worldY;
     this.angle = state.angle ?? this.angle;
+    this._vx = state.vx ?? 0;
+    this._vy = state.vy ?? 0;
     this._enabled = state.enabled ?? false;
     this.maxSpeed = state.maxSpeed ?? 0;
-    this.turnSpeed = state.turnSpeed ?? 0;
     this.tractorBeamRange = state.tractorBeamRange ?? 0;
     this.tractorBeamStrength = state.tractorBeamStrength ?? 1.0;
     if (this._enabled) {
