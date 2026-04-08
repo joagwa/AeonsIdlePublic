@@ -60,6 +60,7 @@ export class CanvasRenderer {
     this._visualTargetGlow = 3;
     this._visualColor = '#c8e0ff';
     this._visualFlash = 0; // 0..1, fades out
+    this._massConversionFlash = 0; // golden flash for energy→mass conversion
     this._visualThresholds = null; // loaded from epoch config
 
     this._resizeObserver = null;
@@ -118,6 +119,10 @@ export class CanvasRenderer {
     });
     this.bus.on('settings:changed', (data) => {
       if (data.key === 'glowEnabled') this.setGlowEnabled(data.value);
+    });
+    this.bus.on('mass:converted', () => {
+      // Trigger golden flash for energy→mass conversion
+      this._massConversionFlash = Math.min(1, this._massConversionFlash + 0.5);
     });
   }
 
@@ -254,6 +259,10 @@ export class CanvasRenderer {
     if (this._visualFlash > 0) {
       this._visualFlash = Math.max(0, this._visualFlash - clampedDt * 1.5);
     }
+    // Decay mass conversion flash
+    if (this._massConversionFlash > 0) {
+      this._massConversionFlash = Math.max(0, this._massConversionFlash - clampedDt * 5);
+    }
 
     // Draw region backgrounds
     this.regionManager.draw(this.mainCtx, this.camera, viewW, viewH);
@@ -342,6 +351,40 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.arc(sx, sy, ringR, 0, Math.PI * 2);
       ctx.stroke();
+    }
+
+    // Mass conversion golden flash
+    if (this._massConversionFlash > 0.01) {
+      const flashAlpha = this._massConversionFlash * 0.7;
+      const flashR = s + 4 + this._massConversionFlash * 8;
+      ctx.globalAlpha = flashAlpha;
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(
+        Math.round(sx - flashR),
+        Math.round(sy - flashR),
+        flashR * 2,
+        flashR * 2
+      );
+      // Outer golden ring
+      ctx.globalAlpha = flashAlpha * 0.6;
+      ctx.strokeStyle = '#ffaa00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, flashR + 4, 0, Math.PI * 2);
+      ctx.stroke();
+      // Golden glow on glow canvas
+      if (this.glowEnabled) {
+        this.glowCtx.globalAlpha = flashAlpha * 0.5;
+        this.glowCtx.fillStyle = '#ffd700';
+        const glowR = flashR + 10;
+        this.glowCtx.fillRect(
+          Math.round(sx - glowR),
+          Math.round(sy - glowR),
+          glowR * 2,
+          glowR * 2
+        );
+        this.glowCtx.globalAlpha = 1;
+      }
     }
 
     // Glow on glow canvas
@@ -643,18 +686,13 @@ export class CanvasRenderer {
       try {
         console.log(`[CanvasRenderer] Setting up gravity attraction at (${ho.worldX}, ${ho.worldY})`);
         // Enable attraction in ALL active regions so particles everywhere can be absorbed
-        this.particleSystem.enableAttractionAll(ho.worldX, ho.worldY, 100);
-        this._gravityBaseRadius = 100;
+        this.particleSystem.enableAttractionAll(ho.worldX, ho.worldY, 600);
+        this._gravityBaseRadius = 600;
         this.particleSystem.setAbsorptionCallback((wx, wy, quality) => {
           this._homeObjectPulse = 1;
-          // Get value multiplier from quality tier (0=1x, 1=1.5x, 2=2.5x, 3=5x, 4=10x)
-          const qualityMultipliers = [1.0, 1.5, 2.5, 5, 10];
-          const multiplier = qualityMultipliers[Math.min(quality, 4)] || 1.0;
-          const value = Math.round(multiplier);
           const { sx, sy } = this.camera.worldToScreen(wx, wy);
-          const floatingText = value > 1 ? `+${value}` : '+1';
-          this.floatingNumbers.spawn(floatingText, sx, sy - 8, false);
-          this.bus.emit('particle:absorbed', { resourceId: 'energy', amount: value, quality });
+          // Emit raw quality — main.js applies absorption multipliers and shows floating number
+          this.bus.emit('particle:absorbed', { worldX: wx, worldY: wy, screenX: sx, screenY: sy, quality });
         });
         console.log('[CanvasRenderer] Gravity attraction set up successfully');
       } catch (err) {

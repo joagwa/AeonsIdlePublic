@@ -91,19 +91,24 @@ export class ParticleSystem {
       const aParms = entry.attractionParams || { conversionRate: 1, speedMultiplier: 1 };
 
       // --- Move particles ---
+      const gravRadius = attraction ? (attraction.gravityRadius || 600) : 0;
+
       for (const p of entry.particles) {
         if (p.attracted && attraction) {
-          // Home toward the attraction target with speed increasing as distance decreases
+          // Quadratic distance-based speed: slow at edge, fast near center
           const dx = attraction.targetX - p.x;
           const dy = attraction.targetY - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist > 0) {
-            const moveSpeed = Math.min(160, 25 + 4000 / (dist + 10)) * aParms.speedMultiplier;
+            const t = Math.max(0, 1 - dist / gravRadius); // 0 at edge, 1 at center
+            const minSpd = 3;
+            const maxSpd = 150;
+            const moveSpeed = (minSpd + (maxSpd - minSpd) * t * t) * aParms.speedMultiplier;
             p.x += (dx / dist) * moveSpeed * dt;
             p.y += (dy / dist) * moveSpeed * dt;
-            // Brighten and grow slightly as approaching
-            p.brightness = Math.min(1, 0.35 + (1 - Math.min(1, dist / 500)) * 0.65);
-            p.size = p.sprite.minSize + (p.sprite.maxSize - p.sprite.minSize) * Math.min(1, 1 - dist / 500);
+            // Brighten and grow as approaching
+            p.brightness = Math.min(1, 0.35 + t * 0.65);
+            p.size = p.sprite.minSize + (p.sprite.maxSize - p.sprite.minSize) * Math.min(1, t);
           }
         } else {
           // Normal ambient drift
@@ -146,31 +151,16 @@ export class ParticleSystem {
           }
         }
 
-        // --- Proximity-based attraction: particles within gravityRadius get pulled ---
-        const gravRadius = attraction.gravityRadius || 100;
+        // --- Proximity-based attraction: ALL particles within gravityRadius drift inward ---
         const gravRadiusSq = gravRadius * gravRadius;
-        let attractedCount = 0;
-        const maxAttracted = Math.max(8, Math.floor(entry.particles.length * 0.25));
 
         for (const p of entry.particles) {
-          if (p.attracted) { attractedCount++; continue; }
-          if (attractedCount >= maxAttracted) break;
+          if (p.attracted) continue;
 
           const dx = attraction.targetX - p.x;
           const dy = attraction.targetY - p.y;
           if (dx * dx + dy * dy < gravRadiusSq) {
             p.attracted = true;
-            attractedCount++;
-          }
-        }
-
-        // Small random conversion as fallback (for stationary gravitational pull)
-        if (attractedCount < Math.max(4, Math.floor(entry.particles.length * 0.06))) {
-          const convRate = dt * 1.5 * aParms.conversionRate;
-          if (Math.random() < convRate) {
-            for (const p of entry.particles) {
-              if (!p.attracted) { p.attracted = true; break; }
-            }
           }
         }
       }
@@ -238,7 +228,7 @@ export class ParticleSystem {
   /**
    * Enable attraction in ALL active regions at once (used when mote moves between regions).
    */
-  enableAttractionAll(targetX, targetY, gravityRadius = 100) {
+  enableAttractionAll(targetX, targetY, gravityRadius = 600) {
     let enabledCount = 0;
     for (const [regionId, entry] of this.regions) {
       entry.attraction = { targetX, targetY, gravityRadius };

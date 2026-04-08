@@ -116,17 +116,33 @@ async function bootstrap() {
 
   // --- Particle absorption (Gravitational Pull visual mechanic) ---
   EventBus.on('particle:absorbed', (data) => {
-    resourceManager.add(data.resourceId, data.amount);
-    
+    // Quality-based base value
+    const qualityMultipliers = [1.0, 1.5, 2.5, 5, 10];
+    const qualityMult = qualityMultipliers[Math.min(data.quality || 0, 4)] || 1.0;
+    let energyValue = qualityMult;
+
+    // Apply all absorptionMultiplier upgrades (Quantum Fluctuation, Vacuum Harvesting, etc.)
+    for (const { definition: def } of upgradeSystem.getAll()) {
+      if (def.effectType === 'absorptionMultiplier') {
+        const level = upgradeSystem.getLevel(def.id) || 0;
+        if (level > 0) {
+          energyValue *= Math.pow(def.effectMagnitude, level);
+        }
+      }
+    }
+
+    const roundedValue = Math.max(1, Math.round(energyValue));
+    resourceManager.add('energy', roundedValue);
+
+    // Floating number at absorption point
+    const floatingText = roundedValue > 1 ? `+${roundedValue}` : '+1';
+    canvasRenderer.spawnFloatingNumber(floatingText, data.screenX, data.screenY - 8);
+
     // Mote Densification: convert absorbed motes to mass
-    // Quality multipliers: [1.0, 1.5, 2.5, 5, 10]
-    // Base mass per mote: 0.1
     if (data.quality !== undefined && data.quality >= 0) {
       const level = upgradeSystem.getLevel('upg_moteDensification') || 0;
       if (level > 0) {
-        const qualityMultipliers = [1.0, 1.5, 2.5, 5, 10];
-        const qualityMult = qualityMultipliers[Math.min(data.quality, 4)] || 1.0;
-        const densificationMult = Math.pow(1.5, level);  // 1.5^level
+        const densificationMult = Math.pow(1.5, level);
         const massGain = 0.1 * qualityMult * densificationMult;
         resourceManager.add('mass', massGain);
       }
@@ -226,6 +242,33 @@ async function bootstrap() {
     starManager.tick(dt);
     moteController.tick(dt);
     gameState.totalRealTime += dt;
+
+    // --- Energy → Mass auto-conversion (Mass Accretion mechanic) ---
+    const accretionLevel = upgradeSystem.getLevel('upg_massAccretion') || 0;
+    if (accretionLevel > 0) {
+      // Base: drain 10 energy/s, produce 1 mass/s per level
+      const energyDrainPerSec = 10 * accretionLevel;
+      const baseMassPerSec = 1 * accretionLevel;
+
+      // Primal Synthesis efficiency boost (×1.4^level)
+      const synthLevel = upgradeSystem.getLevel('upg_primalSynthesis') || 0;
+      const efficiencyMult = synthLevel > 0 ? Math.pow(1.4, synthLevel) : 1;
+      const massPerSec = baseMassPerSec * efficiencyMult;
+
+      const energyState = resourceManager.get('energy');
+      if (energyState && energyState.currentValue > 0) {
+        const energyAvailable = energyState.currentValue;
+        const energyToDrain = Math.min(energyAvailable, energyDrainPerSec * dt);
+        const fraction = energyToDrain / (energyDrainPerSec * dt);
+        const massProduced = massPerSec * dt * fraction;
+
+        if (energyToDrain > 0.001) {
+          resourceManager.spend('energy', energyToDrain);
+          resourceManager.add('mass', massProduced);
+          EventBus.emit('mass:converted', { energySpent: energyToDrain, massGained: massProduced });
+        }
+      }
+    }
   });
 
   // --- Smooth camera follow on mote movement with 20% tolerance zone ---
