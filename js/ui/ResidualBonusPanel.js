@@ -9,6 +9,7 @@ export class ResidualBonusPanel {
     this.eventBus = EventBus;
     this.gameState = gameState;
     this.container = null;
+    this._collapsed = false;
   }
 
   init() {
@@ -17,6 +18,9 @@ export class ResidualBonusPanel {
 
     this._onEpochTransition = () => this._render();
     this.eventBus.on('epoch:transition:complete', this._onEpochTransition);
+
+    const header = document.getElementById('residual-bonus-panel-header');
+    if (header) header.addEventListener('click', () => this._toggleCollapse());
   }
 
   _render() {
@@ -52,5 +56,13 @@ export class ResidualBonusPanel {
       row.appendChild(valueSpan);
       this.container.appendChild(row);
     }
+  }
+
+  _toggleCollapse() {
+    this._collapsed = !this._collapsed;
+    const body = document.getElementById('residual-bonus-body');
+    if (body) body.classList.toggle('collapsed', this._collapsed);
+    const icon = document.querySelector('#residual-bonus-panel-header .collapse-icon');
+    if (icon) icon.textContent = this._collapsed ? '▼' : '▲';
   }
 }

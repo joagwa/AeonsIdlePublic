@@ -11,6 +11,7 @@ export class ResourcePanel {
     this.rows = {};
     this.container = null;
     this._resourceManager = null;
+    this._collapsed = false;
   }
 
   init() {
@@ -21,6 +22,9 @@ export class ResourcePanel {
 
     this.eventBus.on('resource:updated', this._onResourceUpdated);
     this.eventBus.on('epoch:transition:complete', this._onEpochTransition);
+
+    const header = document.getElementById('resource-panel-header');
+    if (header) header.addEventListener('click', () => this._toggleCollapse());
   }
 
   /** Called from main.js to give direct access to ResourceManager for initial render. */
@@ -108,5 +112,13 @@ export class ResourcePanel {
 
   _handleEpochTransition() {
     this.renderAll();
+  }
+
+  _toggleCollapse() {
+    this._collapsed = !this._collapsed;
+    const body = document.getElementById('resource-body');
+    if (body) body.classList.toggle('collapsed', this._collapsed);
+    const icon = document.querySelector('#resource-panel-header .collapse-icon');
+    if (icon) icon.textContent = this._collapsed ? '▼' : '▲';
   }
 }

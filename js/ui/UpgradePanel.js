@@ -21,6 +21,7 @@ export class UpgradePanel {
     this.container = null;
     this.cards = {};
     this._collapsedGroups = new Set(); // track which groups are collapsed
+    this._collapsed = false; // whole-panel collapse
   }
 
   init() {
@@ -32,6 +33,9 @@ export class UpgradePanel {
     this.eventBus.on('milestone:triggered',           () => this._renderAll());
     this.eventBus.on('resource:visibility:changed',   () => this._renderAll());
     this.eventBus.on('epoch:transition:complete',     () => this._renderAll());
+
+    const header = document.getElementById('upgrade-panel-header');
+    if (header) header.addEventListener('click', () => this._toggleCollapse());
   }
 
   // ---------------------------------------------------------------
@@ -278,6 +282,16 @@ export class UpgradePanel {
       el.classList.add('unaffordable');
       btn.disabled = true;
     }
+  }
+
+  _toggleCollapse() {
+    this._collapsed = !this._collapsed;
+    const body = document.getElementById('upgrade-body');
+    const panel = document.getElementById('upgrade-panel');
+    if (body) body.classList.toggle('collapsed', this._collapsed);
+    if (panel) panel.classList.toggle('panel-collapsed', this._collapsed);
+    const icon = document.querySelector('#upgrade-panel-header .collapse-icon');
+    if (icon) icon.textContent = this._collapsed ? '▼' : '▲';
   }
 }
 

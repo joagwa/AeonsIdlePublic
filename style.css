@@ -204,8 +204,26 @@ html, body {
 /* --- Upgrade Panel --- */
 #upgrade-panel {
   flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#upgrade-body {
+  flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  max-height: 4000px;
+}
+
+#upgrade-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Collapse flex-grow for panels that use flex:1 when their body is hidden */
+.panel-collapsed {
+  flex: 0 0 auto !important;
 }
 
 .upgrade-group-header {
@@ -888,6 +906,7 @@ html, body {
   #upgrade-panel {
     flex: 1 1 100%;
     max-height: 35vh;
+    overflow: hidden;
   }
 
   #toolbar {

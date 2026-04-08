@@ -7,7 +7,6 @@ import { SpriteManager } from './SpriteManager.js';
 import { Camera } from './Camera.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { RegionManager } from './RegionManager.js';
-import { Minimap } from './Minimap.js';
 import { FloatingNumbers } from './FloatingNumbers.js';
 
 // Star visual definitions by stage
@@ -32,7 +31,6 @@ export class CanvasRenderer {
     this.spriteManager = null;
     this.particleSystem = null;
     this.regionManager = null;
-    this.minimap = null;
     this.floatingNumbers = null;
 
     this.glowEnabled = true;
@@ -95,7 +93,6 @@ export class CanvasRenderer {
     this.camera = new Camera(this.bus);
     this.particleSystem = new ParticleSystem(this.spriteManager);
     this.regionManager = new RegionManager(this.bus, this.particleSystem);
-    this.minimap = new Minimap(this.bus);
     this.floatingNumbers = new FloatingNumbers();
 
     this.camera.attach(mainCanvas);
@@ -172,7 +169,6 @@ export class CanvasRenderer {
     this.spriteManager.loadEpochSprites(config);
     this.particleSystem.loadRegions(config.regions);
     this.regionManager.loadRegions(config.regions);
-    this.minimap.loadConfig(config);
 
     // Center camera on home object
     if (config.homeObject) {
@@ -301,15 +297,6 @@ export class CanvasRenderer {
 
     // Draw stars
     this._drawStars(this.mainCtx);
-
-    // Draw minimap
-    this.minimap.draw(
-      this.mainCtx,
-      this.camera,
-      viewW,
-      viewH,
-      this.regionManager.getRegions()
-    );
 
     // Draw floating numbers (screen-space)
     this.floatingNumbers.draw(this.mainCtx);

@@ -6,14 +6,13 @@
   <title>Aeons: The Grand Unfolding</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>✦</text></svg>">
   <link rel="stylesheet" href="style.css">
-  <meta name="game-version" content="3010830">
+  <meta name="game-version" content="bd55e4a">
 </head>
 <body>
   <div id="game-container">
     <div id="canvas-wrapper">
       <canvas id="main-canvas"></canvas>
       <canvas id="glow-canvas"></canvas>
-      <div id="minimap-overlay"></div>
     </div>
 
     <div id="ui-layer">
@@ -26,21 +25,31 @@
         <div id="stats-body" class="panel-body-collapsible"></div>
       </div>
 
-      <div id="resource-panel" class="panel">
-        <h2 class="panel-title">Resources</h2>
-        <div id="resource-list"></div>
-        <div id="conversion-slider-row" class="hidden">
-          <div class="conversion-label-row">
-            <span class="conversion-label">Conversion Rate</span>
-            <span id="conversion-pct" class="conversion-pct">100% rate</span>
+      <div id="resource-panel" class="panel collapsible-panel">
+        <div id="resource-panel-header" class="panel-header-collapsible">
+          <h2 class="panel-title">Resources</h2>
+          <span class="collapse-icon">▲</span>
+        </div>
+        <div id="resource-body" class="panel-body-collapsible">
+          <div id="resource-list"></div>
+          <div id="conversion-slider-row" class="hidden">
+            <div class="conversion-label-row">
+              <span class="conversion-label">Conversion Rate</span>
+              <span id="conversion-pct" class="conversion-pct">100% rate</span>
+            </div>
+            <input type="range" id="conversion-slider" min="0" max="100" value="100" class="conversion-slider">
           </div>
-          <input type="range" id="conversion-slider" min="0" max="100" value="100" class="conversion-slider">
         </div>
       </div>
 
-      <div id="upgrade-panel" class="panel">
-        <h2 class="panel-title">Upgrades</h2>
-        <div id="upgrade-list"></div>
+      <div id="upgrade-panel" class="panel collapsible-panel">
+        <div id="upgrade-panel-header" class="panel-header-collapsible">
+          <h2 class="panel-title">Upgrades</h2>
+          <span class="collapse-icon">▲</span>
+        </div>
+        <div id="upgrade-body" class="panel-body-collapsible">
+          <div id="upgrade-list"></div>
+        </div>
       </div>
 
       <div id="chronicle-panel" class="panel hidden">
@@ -48,9 +57,14 @@
         <div id="chronicle-list"></div>
       </div>
 
-      <div id="residual-bonus-panel" class="panel">
-        <h2 class="panel-title">Cosmic Legacy</h2>
-        <div id="bonus-list"></div>
+      <div id="residual-bonus-panel" class="panel collapsible-panel">
+        <div id="residual-bonus-panel-header" class="panel-header-collapsible">
+          <h2 class="panel-title">Cosmic Legacy</h2>
+          <span class="collapse-icon">▲</span>
+        </div>
+        <div id="residual-bonus-body" class="panel-body-collapsible">
+          <div id="bonus-list"></div>
+        </div>
       </div>
     </div>
 
@@ -75,6 +89,6 @@
     <div id="save-error-banner" class="banner hidden"></div>
   </div>
 
-  <script type="module" src="js/main.js?v=3010830"></script>
+  <script type="module" src="js/main.js?v=bd55e4a"></script>
 </body>
 </html>
