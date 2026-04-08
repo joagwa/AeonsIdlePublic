@@ -4,36 +4,36 @@
  */
 
 // === Core Imports ===
-import { EventBus } from './core/EventBus.js?v=8bdc7b5';
-import { GameLoop } from './core/GameLoop.js?v=8bdc7b5';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=8bdc7b5';
-import { SaveSystem } from './core/SaveSystem.js?v=8bdc7b5';
-import { UpdateChecker } from './core/UpdateChecker.js?v=8bdc7b5';
+import { EventBus } from './core/EventBus.js?v=553db90';
+import { GameLoop } from './core/GameLoop.js?v=553db90';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=553db90';
+import { SaveSystem } from './core/SaveSystem.js?v=553db90';
+import { UpdateChecker } from './core/UpdateChecker.js?v=553db90';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=8bdc7b5';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=8bdc7b5';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=8bdc7b5';
-import { StarManager } from './engine/StarManager.js?v=8bdc7b5';
-import { EpochSystem } from './engine/EpochSystem.js?v=8bdc7b5';
-import { MoteController } from './engine/MoteController.js?v=8bdc7b5';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=8bdc7b5';
+import { ResourceManager } from './engine/ResourceManager.js?v=553db90';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=553db90';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=553db90';
+import { StarManager } from './engine/StarManager.js?v=553db90';
+import { EpochSystem } from './engine/EpochSystem.js?v=553db90';
+import { MoteController } from './engine/MoteController.js?v=553db90';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=553db90';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=8bdc7b5';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=553db90';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=8bdc7b5';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=8bdc7b5';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=8bdc7b5';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=8bdc7b5';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=8bdc7b5';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=8bdc7b5';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=8bdc7b5';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=8bdc7b5';
-import { StatsPanel } from './ui/StatsPanel.js?v=8bdc7b5';
-import { GoalWidget } from './ui/GoalWidget.js?v=8bdc7b5';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=8bdc7b5';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=553db90';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=553db90';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=553db90';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=553db90';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=553db90';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=553db90';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=553db90';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=553db90';
+import { StatsPanel } from './ui/StatsPanel.js?v=553db90';
+import { GoalWidget } from './ui/GoalWidget.js?v=553db90';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=553db90';
 
 // === Game State ===
 let gameState = {
