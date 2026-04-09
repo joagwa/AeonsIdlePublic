@@ -4,40 +4,40 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=d5f5ed5';
-import { LogBuffer } from './core/LogBuffer.js?v=d5f5ed5';
-import { EventBus } from './core/EventBus.js?v=d5f5ed5';
-import { GameLoop } from './core/GameLoop.js?v=d5f5ed5';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=d5f5ed5';
-import { SaveSystem } from './core/SaveSystem.js?v=d5f5ed5';
-import { UpdateChecker } from './core/UpdateChecker.js?v=d5f5ed5';
+import { ErrorReporter } from './core/ErrorReporter.js?v=d514990';
+import { LogBuffer } from './core/LogBuffer.js?v=d514990';
+import { EventBus } from './core/EventBus.js?v=d514990';
+import { GameLoop } from './core/GameLoop.js?v=d514990';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=d514990';
+import { SaveSystem } from './core/SaveSystem.js?v=d514990';
+import { UpdateChecker } from './core/UpdateChecker.js?v=d514990';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=d5f5ed5';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=d5f5ed5';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=d5f5ed5';
-import { StarManager } from './engine/StarManager.js?v=d5f5ed5';
-import { EpochSystem } from './engine/EpochSystem.js?v=d5f5ed5';
-import { MoteController } from './engine/MoteController.js?v=d5f5ed5';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=d5f5ed5';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=d5f5ed5';
+import { ResourceManager } from './engine/ResourceManager.js?v=d514990';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=d514990';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=d514990';
+import { StarManager } from './engine/StarManager.js?v=d514990';
+import { EpochSystem } from './engine/EpochSystem.js?v=d514990';
+import { MoteController } from './engine/MoteController.js?v=d514990';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=d514990';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=d514990';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=d5f5ed5';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=d514990';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=d5f5ed5';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=d5f5ed5';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=d5f5ed5';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=d5f5ed5';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=d5f5ed5';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=d5f5ed5';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=d5f5ed5';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=d5f5ed5';
-import { StatsPanel } from './ui/StatsPanel.js?v=d5f5ed5';
-import { GoalWidget } from './ui/GoalWidget.js?v=d5f5ed5';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=d5f5ed5';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=d5f5ed5';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=d514990';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=d514990';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=d514990';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=d514990';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=d514990';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=d514990';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=d514990';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=d514990';
+import { StatsPanel } from './ui/StatsPanel.js?v=d514990';
+import { GoalWidget } from './ui/GoalWidget.js?v=d514990';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=d514990';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=d514990';
 
 // === Game State ===
 let gameState = {

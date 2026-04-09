@@ -164,6 +164,13 @@ export class MobileTabBar {
     document.querySelectorAll('.mobile-tab').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.panel === panelId);
     });
+
+    // Notify renderer to shift camera into the visible area above the drawer.
+    // Drawer is 50vh, so the visible canvas centre shifts up by 25vh.
+    this.bus.emit('ui:mobile:drawer:state', {
+      open: true,
+      offsetY: window.innerHeight * 0.25,
+    });
   }
 
   _closeDrawer() {
@@ -173,5 +180,8 @@ export class MobileTabBar {
     if (drawer) drawer.classList.remove('drawer-open');
 
     document.querySelectorAll('.mobile-tab').forEach(btn => btn.classList.remove('active'));
+
+    // Restore camera to centre of full canvas.
+    this.bus.emit('ui:mobile:drawer:state', { open: false, offsetY: 0 });
   }
 }

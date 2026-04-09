@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=d5f5ed5';
-import { Camera } from './Camera.js?v=d5f5ed5';
-import { ParticleSystem } from './ParticleSystem.js?v=d5f5ed5';
-import { RegionManager } from './RegionManager.js?v=d5f5ed5';
-import { FloatingNumbers } from './FloatingNumbers.js?v=d5f5ed5';
+import { SpriteManager } from './SpriteManager.js?v=d514990';
+import { Camera } from './Camera.js?v=d514990';
+import { ParticleSystem } from './ParticleSystem.js?v=d514990';
+import { RegionManager } from './RegionManager.js?v=d514990';
+import { FloatingNumbers } from './FloatingNumbers.js?v=d514990';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,13 +71,21 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=d5f5ed5').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=d514990').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
     this._particleStormActive = false;
     this._particleStormTimer = 0;   // seconds remaining
     this._stormGravityMult = 1;
+
+    // Mobile drawer camera offset (smooth lerp when drawer opens/closes)
+    this._cameraOffsetY = 0;
+    this._targetCameraOffsetY = 0;
+
+    // Space dust parallax layer (unlocked with movement)
+    this._dustParticles = null;
+    this._dustParallax = 0.07; // dust moves at 7% of camera speed
   }
 
   // ---------------------------------------------------------------
@@ -136,6 +144,9 @@ export class CanvasRenderer {
     this.bus.on('mass:converted', () => {
       // Trigger golden flash for energy→mass conversion
       this._massConversionFlash = Math.min(1, this._massConversionFlash + 0.5);
+    });
+    this.bus.on('ui:mobile:drawer:state', (data) => {
+      this._targetCameraOffsetY = data.open ? data.offsetY : 0;
     });
     this.bus.on('milestone:triggered', (data) => {
       if (data.milestoneId === 'ms_gasCloud') {
@@ -255,9 +266,18 @@ export class CanvasRenderer {
 
     // Always center camera on home object
     const ho = this.canvasConfig.homeObject;
+
+    // Smooth mobile drawer camera offset
+    if (this._cameraOffsetY !== this._targetCameraOffsetY) {
+      this._cameraOffsetY += (this._targetCameraOffsetY - this._cameraOffsetY) * Math.min(1, 8 * clampedDt);
+      if (Math.abs(this._cameraOffsetY - this._targetCameraOffsetY) < 0.5) {
+        this._cameraOffsetY = this._targetCameraOffsetY;
+      }
+    }
+
     if (ho && this.camera) {
       this.camera.x = ho.worldX - viewW / 2;
-      this.camera.y = ho.worldY - viewH / 2;
+      this.camera.y = ho.worldY - viewH / 2 + this._cameraOffsetY;
     }
 
     // Sync home object position from mote controller
@@ -325,6 +345,14 @@ export class CanvasRenderer {
 
     // Draw region backgrounds
     this.regionManager.draw(this.mainCtx, this.camera, viewW, viewH);
+
+    // Lazy-init space dust when movement becomes available
+    if (this._moteController?.enabled && !this._dustParticles) {
+      this._initSpaceDust();
+    }
+
+    // Space dust parallax layer (very subtle, drawn behind everything)
+    this._drawSpaceDust(this.mainCtx, viewW, viewH);
 
     // Subtle dark matter tint over the void when dark matter is active
     if (this._darkMatterActive && this.canvasConfig) {
@@ -579,16 +607,15 @@ export class CanvasRenderer {
     for (const node of nodes) {
       const { sx, sy } = this.camera.worldToScreen(node.x, node.y);
 
-      // Expanding wave ring — subtle dark-purple stroke
+      // Expanding wave ring — dark-purple stroke
       if (node.pulsing && node.waveAlpha > 0) {
         ctx.globalAlpha = node.waveAlpha * 0.9;
-        ctx.strokeStyle = '#5a0090';
+        ctx.strokeStyle = '#6a00b0';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(sx, sy, node.waveRadius, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Secondary, slightly larger, more transparent ring
         ctx.globalAlpha = node.waveAlpha * 0.4;
         ctx.lineWidth = 0.8;
         ctx.beginPath();
@@ -599,19 +626,29 @@ export class CanvasRenderer {
       const op = node.displayOpacity || 0.10;
       const r = node.nodeRadius || 6;
 
-      // Dark core (slightly darker than the void background)
-      ctx.globalAlpha = op * 1.2;
-      ctx.fillStyle = '#060010';
+      // Soft violet glow halo — primary visibility cue
+      const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 5);
+      glow.addColorStop(0,   `rgba(120, 0, 200, ${(op * 2.5).toFixed(3)})`);
+      glow.addColorStop(0.4, `rgba(60,  0, 110, ${(op * 1.2).toFixed(3)})`);
+      glow.addColorStop(1,   'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r * 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dark void core
+      ctx.globalAlpha = Math.min(op * 3, 0.55);
+      ctx.fillStyle = '#050010';
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
       ctx.fill();
 
-      // Very faint outer glow ring to hint at presence
-      ctx.globalAlpha = op * 0.5;
-      ctx.strokeStyle = '#3a0055';
-      ctx.lineWidth = 0.8;
+      // Faint violet ring outlining the node
+      ctx.globalAlpha = op * 1.8;
+      ctx.strokeStyle = '#7a00cc';
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(sx, sy, r + 3, 0, Math.PI * 2);
+      ctx.arc(sx, sy, r + 2, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.restore();
@@ -920,6 +957,111 @@ export class CanvasRenderer {
   }
 
   // ---------------------------------------------------------------
+  // Space dust parallax layer
+  // ---------------------------------------------------------------
+
+  /** Simple seeded LCG PRNG — returns a function that yields [0, 1). */
+  _seededRand(seed) {
+    let s = (seed ^ 0x5A5A5A5A) >>> 0;
+    return () => {
+      s = ((Math.imul(s, 1664525) + 1013904223) | 0) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  /** Initialise ~350 dust particles using a deterministic seed. */
+  _initSpaceDust() {
+    const rand = this._seededRand(0xAE0E5);
+    this._dustParticles = Array.from({ length: 350 }, () => ({
+      nx: rand(),                          // normalised x [0, 1)
+      ny: rand(),                          // normalised y [0, 1)
+      alpha: 0.014 + rand() * 0.042,       // 0.014–0.056 (ultra-faint)
+      warm: rand() < 0.28,                 // 28% warm amber, 72% cool blue-white
+    }));
+  }
+
+  /**
+   * Draw the space dust layer with dark matter node disruption.
+   * Dust particles are pushed away from nearby DM nodes, creating a visible
+   * void-clearing around each node and a ripple at the wave front.
+   */
+  _drawSpaceDust(ctx, viewW, viewH) {
+    if (!this._dustParticles || !this.camera) return;
+
+    // Build screen-space influence records for each active DM node
+    const dmInfluences = [];
+    if (this._darkMatterActive && this._darkMatterSystem) {
+      for (const node of this._darkMatterSystem.getNodes()) {
+        const { sx, sy } = this.camera.worldToScreen(node.x, node.y);
+        dmInfluences.push({
+          sx,
+          sy,
+          clearRadius: 55 + (node.nodeRadius || 6) * 7,
+          waveRadius: node.waveRadius || 0,
+          waveAlpha: node.waveAlpha || 0,
+        });
+      }
+    }
+
+    const px = this._dustParallax;
+    ctx.save();
+
+    // Void-clearing halo behind dust — drawn first so dust overlaps edge
+    for (const dm of dmInfluences) {
+      const grad = ctx.createRadialGradient(dm.sx, dm.sy, 0, dm.sx, dm.sy, dm.clearRadius);
+      grad.addColorStop(0,   'rgba(8,0,22,0.30)');
+      grad.addColorStop(0.55,'rgba(25,0,50,0.10)');
+      grad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(dm.sx, dm.sy, dm.clearRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Individual dust points
+    for (const p of this._dustParticles) {
+      let sx = ((p.nx * viewW - this.camera.x * px) % viewW + viewW) % viewW;
+      let sy = ((p.ny * viewH - this.camera.y * px) % viewH + viewH) % viewH;
+      let alpha = p.alpha;
+
+      for (const dm of dmInfluences) {
+        const dx = sx - dm.sx;
+        const dy = sy - dm.sy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Core clearing: push dust outward and fade near the node
+        if (dist < dm.clearRadius && dist > 0.5) {
+          const t = 1 - dist / dm.clearRadius;
+          sx += (dx / dist) * t * t * 38;
+          sy += (dy / dist) * t * t * 38;
+          alpha *= dist / dm.clearRadius * 0.75;
+        }
+
+        // Wave front ripple: push dust at the expanding ring
+        if (dm.waveAlpha > 0.01 && dm.waveRadius > 0) {
+          const distFromWave = Math.abs(dist - dm.waveRadius);
+          const waveWidth = 28;
+          if (distFromWave < waveWidth && dist > 0.5) {
+            const wt = (1 - distFromWave / waveWidth) * dm.waveAlpha;
+            sx += (dx / dist) * wt * 22;
+            sy += (dy / dist) * wt * 22;
+            // Slightly brighten dust compressed ahead of the wave
+            if (dist < dm.waveRadius) alpha = Math.min(alpha * (1 + wt * 1.5), 0.11);
+          }
+        }
+      }
+
+      if (alpha < 0.004) continue;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.warm ? '#ffe8c0' : '#c8d8f8';
+      ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------
 
@@ -956,7 +1098,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=d5f5ed5').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=d514990').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
