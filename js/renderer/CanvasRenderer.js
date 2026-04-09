@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=8f9cac5';
-import { Camera } from './Camera.js?v=8f9cac5';
-import { ParticleSystem } from './ParticleSystem.js?v=8f9cac5';
-import { RegionManager } from './RegionManager.js?v=8f9cac5';
-import { FloatingNumbers } from './FloatingNumbers.js?v=8f9cac5';
+import { SpriteManager } from './SpriteManager.js?v=d7324f8';
+import { Camera } from './Camera.js?v=d7324f8';
+import { ParticleSystem } from './ParticleSystem.js?v=d7324f8';
+import { RegionManager } from './RegionManager.js?v=d7324f8';
+import { FloatingNumbers } from './FloatingNumbers.js?v=d7324f8';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=8f9cac5').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=d7324f8').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -967,7 +967,7 @@ export class CanvasRenderer {
     const farParticles = Array.from({ length: 800 }, () => ({
       nx:          rand(),
       ny:          rand(),
-      alpha:       0.06 + rand() * 0.10,       // 0.06–0.16
+      alpha:       0.18 + rand() * 0.18,       // 0.18–0.36
       color:       farColors[Math.floor(rand() * farColors.length)],
       phase:       rand() * Math.PI * 2,        // twinkle phase offset
       twinkleSpd:  0.2 + rand() * 0.5,         // slow twinkle (0.2–0.7 Hz)
@@ -985,7 +985,7 @@ export class CanvasRenderer {
       return {
         nx:         rand2(),
         ny:         rand2(),
-        alpha:      0.09 + rand2() * 0.13,     // 0.09–0.22
+        alpha:      0.25 + rand2() * 0.20,     // 0.25–0.45
         color:      nearColors[Math.floor(rand2() * nearColors.length)],
         shape,
         phase:      rand2() * Math.PI * 2,
@@ -1059,22 +1059,22 @@ export class CanvasRenderer {
           const ddy = sy - dm.sy;
           const dist = Math.sqrt(ddx * ddx + ddy * ddy);
           const distFromWave = Math.abs(dist - dm.waveRadius);
-          if (distFromWave < 40) {
-            const ringFactor  = (1 - distFromWave / 40) * dm.waveAlpha;  // proximity to ring front
-            const distFalloff = Math.max(0, 1 - dist / 420);              // taper with distance from node
-            p.dvy -= ringFactor * distFalloff * 5000 * dt;
+          if (distFromWave < 80) {
+            const ringFactor  = (1 - distFromWave / 80) * dm.waveAlpha;  // proximity to ring front
+            const distFalloff = Math.max(0, 1 - dist / 650);              // taper with distance from node
+            p.dvy -= ringFactor * distFalloff * 20000 * dt;
           }
         }
 
         // Spring back toward rest + velocity damping
         if (p.dy !== 0 || p.dvy !== 0) {
-          p.dvy += -4.0 * p.dy * dt;   // restoring force toward dy=0
-          p.dvy *= (1 - 5.0 * dt);      // damping
+          p.dvy += -2.5 * p.dy * dt;   // restoring force toward dy=0
+          p.dvy *= (1 - 3.5 * dt);      // damping
           p.dy  += p.dvy * dt;
           if (Math.abs(p.dy) < 0.05 && Math.abs(p.dvy) < 0.05) {
             p.dy = 0; p.dvy = 0;
           } else {
-            p.dy = Math.max(-12, Math.min(12, p.dy));
+            p.dy = Math.max(-50, Math.min(50, p.dy));
           }
         }
 
@@ -1095,25 +1095,35 @@ export class CanvasRenderer {
 
         if (alpha < 0.01) continue;
 
+        // Gravity wave displacement: boost brightness and expand size
+        const dispAbs = Math.abs(p.dy);
+        let extra = 0;
+        if (dispAbs > 0.5) {
+          const dispBoost = Math.min(3.0, 1 + dispAbs / 16);
+          alpha = Math.min(1.0, alpha * dispBoost);
+          extra = Math.min(2, Math.round(dispAbs / 18));
+        }
+
         const px = Math.round(sx);
         const py = Math.round(sy);
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.color;
 
         // Shape: 0=1×1, 1=2×2, 2=horizontal needle, 3=plus cross
+        // extra pixels expand each shape when pushed by a gravity wave
         switch (p.shape) {
           case 1:  // 2×2 dot
-            ctx.fillRect(px - 1, py - 1, 2, 2);
+            ctx.fillRect(px - 1 - extra, py - 1 - extra, 2 + extra * 2, 2 + extra * 2);
             break;
           case 2:  // horizontal needle 3×1
-            ctx.fillRect(px - 1, py, 3, 1);
+            ctx.fillRect(px - 1 - extra, py - extra, 3 + extra * 2, 1 + extra * 2);
             break;
           case 3:  // plus cross
-            ctx.fillRect(px - 1, py, 3, 1);
-            ctx.fillRect(px, py - 1, 1, 3);
+            ctx.fillRect(px - 1 - extra, py - extra, 3 + extra * 2, 1 + extra * 2);
+            ctx.fillRect(px - extra, py - 1 - extra, 1 + extra * 2, 3 + extra * 2);
             break;
-          default: // 1×1 dot
-            ctx.fillRect(px, py, 1, 1);
+          default: // 1×1 dot → expands to (1+extra*2)×(1+extra*2)
+            ctx.fillRect(px - extra, py - extra, 1 + extra * 2, 1 + extra * 2);
         }
       }
 
@@ -1160,7 +1170,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=8f9cac5').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=d7324f8').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

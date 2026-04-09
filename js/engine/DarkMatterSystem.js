@@ -8,8 +8,8 @@
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=8f9cac5').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=8f9cac5').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=d7324f8').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=d7324f8').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
