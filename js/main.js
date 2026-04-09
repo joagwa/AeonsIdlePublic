@@ -4,41 +4,41 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=f7d41c8';
-import { LogBuffer } from './core/LogBuffer.js?v=f7d41c8';
-import { EventBus } from './core/EventBus.js?v=f7d41c8';
-import { GameLoop } from './core/GameLoop.js?v=f7d41c8';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=f7d41c8';
-import { SaveSystem } from './core/SaveSystem.js?v=f7d41c8';
-import { UpdateChecker } from './core/UpdateChecker.js?v=f7d41c8';
+import { ErrorReporter } from './core/ErrorReporter.js?v=b7910b1';
+import { LogBuffer } from './core/LogBuffer.js?v=b7910b1';
+import { EventBus } from './core/EventBus.js?v=b7910b1';
+import { GameLoop } from './core/GameLoop.js?v=b7910b1';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=b7910b1';
+import { SaveSystem } from './core/SaveSystem.js?v=b7910b1';
+import { UpdateChecker } from './core/UpdateChecker.js?v=b7910b1';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=f7d41c8';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=f7d41c8';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=f7d41c8';
-import { StarManager } from './engine/StarManager.js?v=f7d41c8';
-import { EpochSystem } from './engine/EpochSystem.js?v=f7d41c8';
-import { MoteController } from './engine/MoteController.js?v=f7d41c8';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=f7d41c8';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=f7d41c8';
-import { AutoBuySystem } from './engine/AutoBuySystem.js?v=f7d41c8';
+import { ResourceManager } from './engine/ResourceManager.js?v=b7910b1';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=b7910b1';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=b7910b1';
+import { StarManager } from './engine/StarManager.js?v=b7910b1';
+import { EpochSystem } from './engine/EpochSystem.js?v=b7910b1';
+import { MoteController } from './engine/MoteController.js?v=b7910b1';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=b7910b1';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=b7910b1';
+import { AutoBuySystem } from './engine/AutoBuySystem.js?v=b7910b1';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=f7d41c8';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=b7910b1';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=f7d41c8';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=f7d41c8';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=f7d41c8';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=f7d41c8';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=f7d41c8';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=f7d41c8';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=f7d41c8';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=f7d41c8';
-import { StatsPanel } from './ui/StatsPanel.js?v=f7d41c8';
-import { GoalWidget } from './ui/GoalWidget.js?v=f7d41c8';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=f7d41c8';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=f7d41c8';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=b7910b1';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=b7910b1';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=b7910b1';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=b7910b1';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=b7910b1';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=b7910b1';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=b7910b1';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=b7910b1';
+import { StatsPanel } from './ui/StatsPanel.js?v=b7910b1';
+import { GoalWidget } from './ui/GoalWidget.js?v=b7910b1';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=b7910b1';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=b7910b1';
 
 // === Game State ===
 let gameState = {

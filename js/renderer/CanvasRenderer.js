@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=f7d41c8';
-import { Camera } from './Camera.js?v=f7d41c8';
-import { ParticleSystem } from './ParticleSystem.js?v=f7d41c8';
-import { RegionManager } from './RegionManager.js?v=f7d41c8';
-import { FloatingNumbers } from './FloatingNumbers.js?v=f7d41c8';
+import { SpriteManager } from './SpriteManager.js?v=b7910b1';
+import { Camera } from './Camera.js?v=b7910b1';
+import { ParticleSystem } from './ParticleSystem.js?v=b7910b1';
+import { RegionManager } from './RegionManager.js?v=b7910b1';
+import { FloatingNumbers } from './FloatingNumbers.js?v=b7910b1';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=f7d41c8').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=b7910b1').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -83,8 +83,9 @@ export class CanvasRenderer {
     this._cameraOffsetY = 0;
     this._targetCameraOffsetY = 0;
 
-    // Space dust parallax layers (unlocked with movement): [far, near]
+    // Space dust parallax layers: [far, near]
     this._dustLayers = null;
+    this._dustTime   = 0;  // accumulated time for twinkle animation
   }
 
   // ---------------------------------------------------------------
@@ -349,6 +350,7 @@ export class CanvasRenderer {
     if (!this._dustLayers) {
       this._initSpaceDust();
     }
+    this._dustTime += clampedDt;
 
     // Space dust parallax layers (drawn behind everything)
     this._drawSpaceDust(this.mainCtx, viewW, viewH, clampedDt);
@@ -957,24 +959,40 @@ export class CanvasRenderer {
     const rand  = this._seededRand(0xAE0E5);
     const rand2 = this._seededRand(0xBF1F6);
 
-    // Far layer: very distant, faint — clearly visible but subtle
-    const farParticles = Array.from({ length: 300 }, () => ({
-      nx: rand(),
-      ny: rand(),
-      alpha: 0.04 + rand() * 0.06,     // 0.04–0.10 (visible background haze)
-      warm: rand() < 0.12,             // mostly cool/blue at distance
+    // Muted, desaturated palette — clearly distinct from the vivid blue motes
+    const farColors  = ['#c0c8d0', '#d0ccbe', '#b8c0cc', '#ccc8b8'];
+    const nearColors = ['#e0dcce', '#c8d4e0', '#d8ccb8', '#d0d4e8', '#c8c0b0', '#e4e0d4'];
+
+    // Far layer — distant haze, fine 1×1 dots, slow twinkle
+    const farParticles = Array.from({ length: 800 }, () => ({
+      nx:          rand(),
+      ny:          rand(),
+      alpha:       0.06 + rand() * 0.10,       // 0.06–0.16
+      color:       farColors[Math.floor(rand() * farColors.length)],
+      phase:       rand() * Math.PI * 2,        // twinkle phase offset
+      twinkleSpd:  0.2 + rand() * 0.5,         // slow twinkle (0.2–0.7 Hz)
       dy: 0, dvy: 0,
     }));
 
-    // Near layer: closer, brighter, faster parallax
-    const nearParticles = Array.from({ length: 250 }, () => ({
-      nx: rand2(),
-      ny: rand2(),
-      alpha: 0.07 + rand2() * 0.10,   // 0.07–0.17 (clearly visible)
-      warm: rand2() < 0.30,            // 30% warm amber
-      large: rand2() < 0.20,           // 20% are 2×2 px dots
-      dy: 0, dvy: 0,
-    }));
+    // Near layer — closer, brighter, varied shapes, faster twinkle
+    //   shape 0 = 1×1 dot (60%)
+    //   shape 1 = 2×2 dot (15%)
+    //   shape 2 = horizontal needle 3×1 (15%)
+    //   shape 3 = plus cross (10%)
+    const nearParticles = Array.from({ length: 600 }, () => {
+      const r = rand2();
+      const shape = r < 0.60 ? 0 : r < 0.75 ? 1 : r < 0.90 ? 2 : 3;
+      return {
+        nx:         rand2(),
+        ny:         rand2(),
+        alpha:      0.09 + rand2() * 0.13,     // 0.09–0.22
+        color:      nearColors[Math.floor(rand2() * nearColors.length)],
+        shape,
+        phase:      rand2() * Math.PI * 2,
+        twinkleSpd: 0.4 + rand2() * 0.8,      // slightly faster twinkle (0.4–1.2 Hz)
+        dy: 0, dvy: 0,
+      };
+    });
 
     this._dustLayers = [
       { particles: farParticles,  parallax: 0.20 },
@@ -1061,7 +1079,9 @@ export class CanvasRenderer {
         }
 
         sy += p.dy;
-        let alpha = p.alpha;
+
+        // Twinkle: gentle sinusoidal alpha modulation
+        let alpha = p.alpha * (0.70 + 0.30 * Math.sin(this._dustTime * p.twinkleSpd + p.phase));
 
         // DM core clearing: fade dust near each node
         for (const dm of dmInfluences) {
@@ -1075,12 +1095,25 @@ export class CanvasRenderer {
 
         if (alpha < 0.01) continue;
 
+        const px = Math.round(sx);
+        const py = Math.round(sy);
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = p.warm ? '#ffe8c0' : '#c8d8f8';
-        if (p.large) {
-          ctx.fillRect(Math.round(sx) - 1, Math.round(sy) - 1, 2, 2);
-        } else {
-          ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+        ctx.fillStyle = p.color;
+
+        // Shape: 0=1×1, 1=2×2, 2=horizontal needle, 3=plus cross
+        switch (p.shape) {
+          case 1:  // 2×2 dot
+            ctx.fillRect(px - 1, py - 1, 2, 2);
+            break;
+          case 2:  // horizontal needle 3×1
+            ctx.fillRect(px - 1, py, 3, 1);
+            break;
+          case 3:  // plus cross
+            ctx.fillRect(px - 1, py, 3, 1);
+            ctx.fillRect(px, py - 1, 1, 3);
+            break;
+          default: // 1×1 dot
+            ctx.fillRect(px, py, 1, 1);
         }
       }
 
@@ -1127,7 +1160,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=f7d41c8').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=b7910b1').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
