@@ -6,17 +6,22 @@
  *   value_n = compoundFactor ^ totalCollected
  */
 
+// Beacon pulse constants
+const BEACON_MAX_RADIUS  = 8000;  // px — near-infinite range directional pulse
+const BEACON_WAVE_SPEED  = 1200;  // px/s — expansion rate of the beacon ring
+const BEACON_STRENGTH_MULT = 5;   // multiplier on base waveStrength for beacon force
+
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=d7324f8').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=d7324f8').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=688067a').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=688067a').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
     this.upgradeSystem = upgradeSystem;
 
     this.active = false;
-    /** @type {Array<{x:number, y:number, pulseTimer:number, pulseInterval:number, pulsing:boolean, waveRadius:number, waveAlpha:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean}>} */
+    /** @type {Array<{x:number, y:number, pulseTimer:number, pulseInterval:number, pulsing:boolean, waveRadius:number, waveAlpha:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean, beaconTimer:number, beaconInterval:number, beaconPulsing:boolean, beaconWaveRadius:number, beaconWaveAlpha:number}>} */
     this.nodes = [];
     this.totalCollected = 0;
 
@@ -87,6 +92,12 @@ export class DarkMatterSystem {
       flickerTimer: Math.random() * Math.PI * 2,
       displayOpacity: 0,
       collected: false,
+      // Beacon pulse: a far-stronger periodic pulse that reveals the node's direction
+      beaconTimer: 20 + Math.random() * 20,
+      beaconInterval: 30 + Math.random() * 30,
+      beaconPulsing: false,
+      beaconWaveRadius: 0,
+      beaconWaveAlpha: 0,
     });
   }
 
@@ -133,6 +144,32 @@ export class DarkMatterSystem {
         if (node.waveRadius >= 420) {
           node.pulsing = false;
           node.waveAlpha = 0;
+        }
+      }
+
+      // Beacon countdown — a much stronger, far-reaching pulse to reveal direction
+      node.beaconTimer -= dt;
+      if (node.beaconTimer <= 0) {
+        node.beaconTimer = node.beaconInterval;
+        node.beaconPulsing = true;
+        node.beaconWaveRadius = 0;
+        node.beaconWaveAlpha = 0.9;
+        // Apply strong radial force over a vast radius
+        this.bus.emit('darkMatter:beacon', {
+          x: node.x,
+          y: node.y,
+          strength: node.waveStrength * BEACON_STRENGTH_MULT,
+          radius: BEACON_MAX_RADIUS,
+        });
+      }
+
+      // Expand the beacon ring
+      if (node.beaconPulsing) {
+        node.beaconWaveRadius += dt * BEACON_WAVE_SPEED;
+        node.beaconWaveAlpha = Math.max(0, 0.9 * (1 - node.beaconWaveRadius / BEACON_MAX_RADIUS));
+        if (node.beaconWaveRadius >= BEACON_MAX_RADIUS) {
+          node.beaconPulsing = false;
+          node.beaconWaveAlpha = 0;
         }
       }
 

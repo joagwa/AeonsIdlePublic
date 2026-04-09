@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=d7324f8';
-import { Camera } from './Camera.js?v=d7324f8';
-import { ParticleSystem } from './ParticleSystem.js?v=d7324f8';
-import { RegionManager } from './RegionManager.js?v=d7324f8';
-import { FloatingNumbers } from './FloatingNumbers.js?v=d7324f8';
+import { SpriteManager } from './SpriteManager.js?v=688067a';
+import { Camera } from './Camera.js?v=688067a';
+import { ParticleSystem } from './ParticleSystem.js?v=688067a';
+import { RegionManager } from './RegionManager.js?v=688067a';
+import { FloatingNumbers } from './FloatingNumbers.js?v=688067a';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=d7324f8').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=688067a').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -159,6 +159,25 @@ export class CanvasRenderer {
         // Seed some dark motes immediately
         this.particleSystem?.spawnInitialParticles('void', 80);
       }
+    });
+    this.bus.on('darkMatter:beacon', (data) => {
+      // Apply a strong radial force burst to particles
+      this.particleSystem?.applyRadialForce(data.x, data.y, data.radius, data.strength);
+      // Show a directional indicator if the node is off-screen
+      if (this.camera && !this.camera.isVisible(data.x - 1, data.y - 1, 2, 2)) {
+        this._indicators.push({
+          regionName: '\u25c8 Dark Matter',
+          worldX: data.x,
+          worldY: data.y,
+          createdAt: performance.now(),
+          duration: 5000,
+          color: '#cc44ff',
+        });
+      }
+    });
+    this.bus.on('darkMatter:wave', (data) => {
+      // Apply outward radial force to nearby particles on each regular pulse
+      this.particleSystem?.applyRadialForce(data.x, data.y, data.radius, data.strength);
     });
   }
 
@@ -635,6 +654,35 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.arc(sx, sy, r + 2, 0, Math.PI * 2);
       ctx.stroke();
+
+      // Regular gravity wave ring — expands outward from node on each pulse
+      if (node.pulsing && node.waveRadius > 0) {
+        ctx.globalAlpha = node.waveAlpha || 0;
+        ctx.strokeStyle = '#9900ff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, node.waveRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Beacon ring — far larger, brighter pulse that reveals the node's direction
+      if (node.beaconPulsing && node.beaconWaveRadius > 0) {
+        const bwa = node.beaconWaveAlpha || 0;
+        // Outer bright ring
+        ctx.globalAlpha = bwa * 0.75;
+        ctx.strokeStyle = '#cc44ff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, node.beaconWaveRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        // Inner softer halo band
+        ctx.globalAlpha = bwa * 0.35;
+        ctx.strokeStyle = '#ee88ff';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.arc(sx, sy, node.beaconWaveRadius - 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -764,7 +812,7 @@ export class CanvasRenderer {
       ctx.globalAlpha = alpha * 0.8;
 
       // Draw arrow
-      ctx.fillStyle = '#a0c4ff';
+      ctx.fillStyle = ind.color || '#a0c4ff';
       ctx.beginPath();
       ctx.moveTo(10, 0);
       ctx.lineTo(-4, -5);
@@ -776,7 +824,7 @@ export class CanvasRenderer {
 
       // Label
       ctx.globalAlpha = alpha * 0.7;
-      ctx.fillStyle = '#a0c4ff';
+      ctx.fillStyle = ind.color || '#a0c4ff';
       ctx.font = '10px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(ind.regionName, edgeX, edgeY - 12);
@@ -1170,7 +1218,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=d7324f8').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=688067a').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
