@@ -8,8 +8,8 @@
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=b57db20').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=b57db20').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=a2c3b17').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=a2c3b17').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
@@ -53,8 +53,8 @@ export class DarkMatterSystem {
       maxNodes: 1 + maxNodesLevel,
       // Pixel radius within which the player absorbs a node
       collectRadius: 60 + radiusLevel * 40,
-      // Exponential compound factor per collected node (accelerant + lensing both contribute)
-      compoundFactor: 1.05 + compoundLevel * 0.03 + lensLevel * 0.05,
+      // Exponential compound factor per collected node — base 2 means each node roughly doubles the value
+      compoundFactor: 2.0 * Math.pow(1.15, compoundLevel) * Math.pow(1.20, lensLevel),
       // Outward force strength of the gravity wave
       waveStrength: 180 + waveLevel * 80,
     };

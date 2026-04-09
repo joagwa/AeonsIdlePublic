@@ -108,11 +108,11 @@ export const epoch1CanvasConfig = {
 // Visual thresholds — home object changes appearance as mass grows.
 // CanvasRenderer subscribes to resource:updated for mass and checks these.
 export const visualThresholds = [
-  { minMass: 0,       size: 4,  color: '#c8e0ff', glowRadius: 3,  particleBoost: 300, label: 'Quantum Mote' },
-  { minMass: 50,      size: 5,  color: '#d0e8ff', glowRadius: 5,  particleBoost: 380, label: 'Energy Cluster' },
-  { minMass: 500,     size: 7,  color: '#90b8ff', glowRadius: 8,  particleBoost: 460, label: 'Proto-Cloud' },
-  { minMass: 5000,    size: 10, color: '#ffe080', glowRadius: 12, particleBoost: 550, label: 'Gas Cloud' },
-  { minMass: 50000,   size: 14, color: '#ffb030', glowRadius: 18, particleBoost: 700, label: 'Protostar' },
-  { minMass: 500000,  size: 18, color: '#ff6820', glowRadius: 26, particleBoost: 900, label: 'Young Star' },
+  { minMass: 0,       size: 4,  color: '#c8e0ff', glowRadius: 3,  particleBoost: 60,  label: 'Quantum Mote' },
+  { minMass: 50,      size: 5,  color: '#d0e8ff', glowRadius: 5,  particleBoost: 75,  label: 'Energy Cluster' },
+  { minMass: 500,     size: 7,  color: '#90b8ff', glowRadius: 8,  particleBoost: 90,  label: 'Proto-Cloud' },
+  { minMass: 5000,    size: 10, color: '#ffe080', glowRadius: 12, particleBoost: 110, label: 'Gas Cloud' },
+  { minMass: 50000,   size: 14, color: '#ffb030', glowRadius: 18, particleBoost: 130, label: 'Protostar' },
+  { minMass: 500000,  size: 18, color: '#ff6820', glowRadius: 26, particleBoost: 150, label: 'Young Star' },
 ];
 

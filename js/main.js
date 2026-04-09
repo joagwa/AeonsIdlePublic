@@ -4,40 +4,41 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=b57db20';
-import { LogBuffer } from './core/LogBuffer.js?v=b57db20';
-import { EventBus } from './core/EventBus.js?v=b57db20';
-import { GameLoop } from './core/GameLoop.js?v=b57db20';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=b57db20';
-import { SaveSystem } from './core/SaveSystem.js?v=b57db20';
-import { UpdateChecker } from './core/UpdateChecker.js?v=b57db20';
+import { ErrorReporter } from './core/ErrorReporter.js?v=a2c3b17';
+import { LogBuffer } from './core/LogBuffer.js?v=a2c3b17';
+import { EventBus } from './core/EventBus.js?v=a2c3b17';
+import { GameLoop } from './core/GameLoop.js?v=a2c3b17';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=a2c3b17';
+import { SaveSystem } from './core/SaveSystem.js?v=a2c3b17';
+import { UpdateChecker } from './core/UpdateChecker.js?v=a2c3b17';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=b57db20';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=b57db20';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=b57db20';
-import { StarManager } from './engine/StarManager.js?v=b57db20';
-import { EpochSystem } from './engine/EpochSystem.js?v=b57db20';
-import { MoteController } from './engine/MoteController.js?v=b57db20';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=b57db20';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=b57db20';
+import { ResourceManager } from './engine/ResourceManager.js?v=a2c3b17';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=a2c3b17';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=a2c3b17';
+import { StarManager } from './engine/StarManager.js?v=a2c3b17';
+import { EpochSystem } from './engine/EpochSystem.js?v=a2c3b17';
+import { MoteController } from './engine/MoteController.js?v=a2c3b17';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=a2c3b17';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=a2c3b17';
+import { AutoBuySystem } from './engine/AutoBuySystem.js?v=a2c3b17';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=b57db20';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=a2c3b17';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=b57db20';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=b57db20';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=b57db20';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=b57db20';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=b57db20';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=b57db20';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=b57db20';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=b57db20';
-import { StatsPanel } from './ui/StatsPanel.js?v=b57db20';
-import { GoalWidget } from './ui/GoalWidget.js?v=b57db20';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=b57db20';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=b57db20';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=a2c3b17';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=a2c3b17';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=a2c3b17';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=a2c3b17';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=a2c3b17';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=a2c3b17';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=a2c3b17';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=a2c3b17';
+import { StatsPanel } from './ui/StatsPanel.js?v=a2c3b17';
+import { GoalWidget } from './ui/GoalWidget.js?v=a2c3b17';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=a2c3b17';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=a2c3b17';
 
 // === Game State ===
 let gameState = {
@@ -69,12 +70,14 @@ upgradeSystem.setMilestoneSystem(milestoneSystem);
 
 const saveSystem = new SaveSystem(EventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, epochSystem, gameState, moteController, darkMatterSystem);
 
+const autoBuySystem = new AutoBuySystem(EventBus, upgradeSystem);
+
 const canvasRenderer = new CanvasRenderer(EventBus);
 const resourcePanel = new ResourcePanel(EventBus);
 const upgradePanel = new UpgradePanel(EventBus, upgradeSystem);
 const milestoneNotification = new MilestoneNotification(EventBus);
 const chroniclePanel = new ChroniclePanel(EventBus, milestoneSystem);
-const settingsPanel = new SettingsPanel(EventBus, saveSystem, gameState);
+const settingsPanel = new SettingsPanel(EventBus, saveSystem, gameState, autoBuySystem);
 const offlineProgress = new OfflineProgress(EventBus);
 const epochTransitionOverlay = new EpochTransitionOverlay(EventBus, epochSystem);
 const residualBonusPanel = new ResidualBonusPanel(EventBus, gameState);
@@ -167,7 +170,7 @@ async function bootstrap() {
     resourceManager.add('energy', roundedValue * stormBonus);
 
     // Floating number at absorption point
-    const floatingText = roundedValue * stormBonus > 1 ? `+${roundedValue * stormBonus}` : '+1';
+    const floatingText = `+${formatNumber(roundedValue * stormBonus)}`;
     canvasRenderer.spawnFloatingNumber(floatingText, data.screenX, data.screenY - 8);
 
     // Mote Densification: convert absorbed motes to mass
@@ -250,23 +253,33 @@ async function bootstrap() {
       starManager.setYieldMult(upgradeSystem);
     }
     
-    // Mote generation upgrades
+    // Mote generation upgrades — quantity upgrades shift quality tier, not raw count
     if (data.upgradeId === 'upg_moteGeneration' || data.upgradeId === 'upg_moteFlood' || data.upgradeId === 'upg_voidSaturation') {
-      const genLevel = upgradeSystem.getLevel('upg_moteGeneration');
-      const floodLevel = upgradeSystem.getLevel('upg_moteFlood');
-      const satLevel = upgradeSystem.getLevel('upg_voidSaturation');
+      const genLevel   = upgradeSystem.getLevel('upg_moteGeneration') || 0;
+      const floodLevel = upgradeSystem.getLevel('upg_moteFlood')      || 0;
+      const satLevel   = upgradeSystem.getLevel('upg_voidSaturation') || 0;
+      const combined   = genLevel + floodLevel + satLevel;
       const rate = 5 * Math.pow(1.5, genLevel) * Math.pow(2.0, floodLevel) * Math.pow(3.0, satLevel);
       proceduralMoteGenerator.setGenerationRate(rate);
-      // Increase void particle density proportional to generation rate
-      const voidCount = Math.min(500, Math.floor(80 + rate));
+      // Density grows slowly; quality does the heavy lifting
+      const voidCount = Math.min(150, Math.floor(40 + combined * 8));
       if (canvasRenderer.particleSystem) {
         canvasRenderer.particleSystem.spawnInitialParticles('void', voidCount);
+        const qualLevel = upgradeSystem.getLevel('upg_moteQuality') || 0;
+        const effectiveQuality = Math.min(8, Math.floor(combined / 2) + qualLevel);
+        proceduralMoteGenerator.setQualityLevel(effectiveQuality);
+        canvasRenderer.particleSystem.setQualityLevel(effectiveQuality);
       }
     }
     if (data.upgradeId === 'upg_moteQuality') {
-      const level = upgradeSystem.getLevel('upg_moteQuality');
-      proceduralMoteGenerator.setQualityLevel(level);
-      canvasRenderer.particleSystem.setQualityLevel(level);
+      const genLevel   = upgradeSystem.getLevel('upg_moteGeneration') || 0;
+      const floodLevel = upgradeSystem.getLevel('upg_moteFlood')      || 0;
+      const satLevel   = upgradeSystem.getLevel('upg_voidSaturation') || 0;
+      const combined   = genLevel + floodLevel + satLevel;
+      const qualLevel  = upgradeSystem.getLevel('upg_moteQuality')    || 0;
+      const effectiveQuality = Math.min(8, Math.floor(combined / 2) + qualLevel);
+      proceduralMoteGenerator.setQualityLevel(effectiveQuality);
+      canvasRenderer.particleSystem.setQualityLevel(effectiveQuality);
     }
 
     // Show conversion slider when Mass Accretion is unlocked
@@ -320,11 +333,6 @@ async function bootstrap() {
 
   // Timer-based conversion accumulator
   let _conversionAccumulator = 0;
-
-  // --- Dark matter gravity waves ---
-  EventBus.on('darkMatter:wave', (data) => {
-    canvasRenderer.applyRadialForce(data.x, data.y, data.radius, data.strength);
-  });
 
   GameLoop.onTick((dt) => {
     resourceManager.tick(dt);

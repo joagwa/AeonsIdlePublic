@@ -3,7 +3,7 @@
  * handling for Aeons save data.
  */
 
-import { SaveMigrator } from './SaveMigrator.js?v=b57db20';
+import { SaveMigrator } from './SaveMigrator.js?v=a2c3b17';
 
 const STORAGE_KEY = 'aeons_save_v1';
 const AUTO_SAVE_INTERVAL_MS = 60_000;
@@ -15,7 +15,7 @@ export class SaveSystem {
   #autoSaveTimer = null;
 
   /**
-   * @param {import('./EventBus.js?v=b57db20').EventBus} eventBus
+   * @param {import('./EventBus.js?v=a2c3b17').EventBus} eventBus
    * @param {*} resourceManager
    * @param {*} upgradeSystem
    * @param {*} milestoneSystem

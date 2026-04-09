@@ -52,10 +52,11 @@ const CHANGELOG = [
 ];
 
 export class SettingsPanel {
-  constructor(EventBus, saveSystem, gameState) {
+  constructor(EventBus, saveSystem, gameState, autoBuySystem = null) {
     this.eventBus = EventBus;
     this.saveSystem = saveSystem;
     this.gameState = gameState;
+    this.autoBuySystem = autoBuySystem;
     this.modal = null;
     this.body = null;
   }
@@ -212,6 +213,62 @@ export class SettingsPanel {
     }
     changelogGroup.appendChild(changelogContainer);
     this.body.appendChild(changelogGroup);
+
+    // --- AutoBuy (dev tool) ---
+    if (this.autoBuySystem) {
+      const autoBuyGroup = this._group('AutoBuy');
+
+      // Enable toggle
+      const autoBuyLabel = document.createElement('label');
+      autoBuyLabel.className = 'settings-checkbox-label';
+      const autoBuyCheck = document.createElement('input');
+      autoBuyCheck.type = 'checkbox';
+      autoBuyCheck.checked = this.autoBuySystem.enabled;
+      autoBuyCheck.addEventListener('change', () => {
+        this.autoBuySystem.setEnabled(autoBuyCheck.checked);
+        speedSlider.disabled = !autoBuyCheck.checked;
+      });
+      autoBuyLabel.appendChild(autoBuyCheck);
+      autoBuyLabel.appendChild(document.createTextNode(' Auto-purchase affordable upgrades'));
+      autoBuyGroup.appendChild(autoBuyLabel);
+
+      // Speed slider
+      // slider 0 = slow (2000ms), slider 2000 = instant (0ms)
+      const sliderRow = document.createElement('div');
+      sliderRow.className = 'settings-slider-row';
+
+      const sliderLabel = document.createElement('span');
+      sliderLabel.className = 'settings-slider-label';
+
+      const updateSpeedLabel = (sliderVal) => {
+        const ms = 2000 - Number(sliderVal);
+        sliderLabel.textContent = ms === 0 ? 'Speed: Instant' : `Speed: ${(ms / 1000).toFixed(1)}s`;
+      };
+
+      const speedSlider = document.createElement('input');
+      speedSlider.type = 'range';
+      speedSlider.className = 'settings-slider';
+      speedSlider.min = '0';
+      speedSlider.max = '2000';
+      speedSlider.step = '100';
+      speedSlider.value = String(2000 - this.autoBuySystem.intervalMs);
+      speedSlider.disabled = !this.autoBuySystem.enabled;
+      speedSlider.addEventListener('input', () => {
+        const ms = 2000 - Number(speedSlider.value);
+        this.autoBuySystem.setIntervalMs(ms);
+        updateSpeedLabel(speedSlider.value);
+      });
+
+      updateSpeedLabel(speedSlider.value);
+
+      sliderRow.appendChild(speedSlider);
+      sliderRow.appendChild(sliderLabel);
+      autoBuyGroup.appendChild(sliderRow);
+
+      this.body.appendChild(autoBuyGroup);
+      this._autoBuyCheck = autoBuyCheck;
+      this._speedSlider = speedSlider;
+    }
 
     // --- Save Now ---
     const saveGroup = this._group('Save');
