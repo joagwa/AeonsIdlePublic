@@ -372,7 +372,7 @@ const tier1Upgrades = [
     effectTarget: 'darkMatter',
     effectMagnitude: 1,
     requiresMilestone: 'ms_nebulaCondenses',
-    mechanic: '⚙ +1 max simultaneous dark matter node per level.',
+    mechanic: '⚙ +1 max simultaneous dark matter node per level (maximum 3 nodes total).',
   },
   // -- Movement upgrades --
   {

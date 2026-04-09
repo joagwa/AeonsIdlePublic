@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=688067a';
-import { Camera } from './Camera.js?v=688067a';
-import { ParticleSystem } from './ParticleSystem.js?v=688067a';
-import { RegionManager } from './RegionManager.js?v=688067a';
-import { FloatingNumbers } from './FloatingNumbers.js?v=688067a';
+import { SpriteManager } from './SpriteManager.js?v=70c84f6';
+import { Camera } from './Camera.js?v=70c84f6';
+import { ParticleSystem } from './ParticleSystem.js?v=70c84f6';
+import { RegionManager } from './RegionManager.js?v=70c84f6';
+import { FloatingNumbers } from './FloatingNumbers.js?v=70c84f6';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=688067a').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=70c84f6').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -656,7 +656,7 @@ export class CanvasRenderer {
       ctx.stroke();
 
       // Regular gravity wave ring — expands outward from node on each pulse
-      if (node.pulsing && node.waveRadius > 0) {
+      if (node.pulsing && node.waveRadius > 0 && (node.waveAlpha || 0) > 0.002) {
         ctx.globalAlpha = node.waveAlpha || 0;
         ctx.strokeStyle = '#9900ff';
         ctx.lineWidth = 1.5;
@@ -1027,7 +1027,7 @@ export class CanvasRenderer {
     //   shape 1 = 2×2 dot (15%)
     //   shape 2 = horizontal needle 3×1 (15%)
     //   shape 3 = plus cross (10%)
-    const nearParticles = Array.from({ length: 600 }, () => {
+    const nearParticles = Array.from({ length: 300 }, () => {
       const r = rand2();
       const shape = r < 0.60 ? 0 : r < 0.75 ? 1 : r < 0.90 ? 2 : 3;
       return {
@@ -1110,7 +1110,7 @@ export class CanvasRenderer {
           if (distFromWave < 80) {
             const ringFactor  = (1 - distFromWave / 80) * dm.waveAlpha;  // proximity to ring front
             const distFalloff = Math.max(0, 1 - dist / 650);              // taper with distance from node
-            p.dvy -= ringFactor * distFalloff * 20000 * dt;
+            p.dvy -= ringFactor * distFalloff * 10000 * dt;
           }
         }
 
@@ -1218,7 +1218,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=688067a').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=70c84f6').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

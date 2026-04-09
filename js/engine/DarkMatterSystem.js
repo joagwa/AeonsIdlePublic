@@ -11,10 +11,17 @@ const BEACON_MAX_RADIUS  = 8000;  // px — near-infinite range directional puls
 const BEACON_WAVE_SPEED  = 1200;  // px/s — expansion rate of the beacon ring
 const BEACON_STRENGTH_MULT = 5;   // multiplier on base waveStrength for beacon force
 
+// Regular wave fade constants
+const WAVE_MAX_ALPHA      = 0.55;  // initial alpha of a freshly-emitted wave ring
+const WAVE_FADE_DISTANCE  = 260;   // px — exponential decay half-distance; barely visible by ~600 px
+const WAVE_MIN_STOP_RADIUS = 600;  // px — minimum radius before the wave can stop (even at player's feet)
+const WAVE_PLAYER_BUFFER   = 200;  // px — extra travel past the player before the wave is retired
+const WAVE_MAX_RADIUS      = 5000; // px — hard cap so distant players don't cause runaway waves
+
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=688067a').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=688067a').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=70c84f6').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=70c84f6').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
@@ -54,8 +61,8 @@ export class DarkMatterSystem {
     return {
       // Seconds between node spawns (decreases with upgrades, min 3s)
       spawnInterval: Math.max(3, 20 - spawnLevel * 2),
-      // Max simultaneous nodes in the void
-      maxNodes: 1 + maxNodesLevel,
+      // Max simultaneous nodes — always at least 1, capped at 3 to keep the void navigable
+      maxNodes: Math.min(3, 1 + maxNodesLevel),
       // Pixel radius within which the player absorbs a node
       collectRadius: 60 + radiusLevel * 40,
       // Exponential compound factor per collected node — base 2 means each node roughly doubles the value
@@ -117,6 +124,11 @@ export class DarkMatterSystem {
     const collected = [];
 
     for (const node of this.nodes) {
+      // Pre-compute player distance (used for both wave stopping and collection)
+      const dx = playerX - node.x;
+      const dy = playerY - node.y;
+      const playerDist = Math.sqrt(dx * dx + dy * dy);
+
       // Gentle flicker: slow sinusoidal opacity variation
       node.flickerTimer += dt * 0.7;
       node.displayOpacity = 0.10 + Math.sin(node.flickerTimer) * 0.04;
@@ -137,11 +149,14 @@ export class DarkMatterSystem {
         });
       }
 
-      // Expand the visual wave ring
+      // Expand the visual wave ring — fades exponentially but extends until it passes the player
       if (node.pulsing) {
         node.waveRadius += dt * 280;
-        node.waveAlpha = Math.max(0, 0.55 * (1 - node.waveRadius / 420));
-        if (node.waveRadius >= 420) {
+        // Exponential fade: full strength near the node, barely visible beyond ~600 px
+        node.waveAlpha = WAVE_MAX_ALPHA * Math.exp(-node.waveRadius / WAVE_FADE_DISTANCE);
+        // Stop once the wave has passed the player (with a small buffer) or at hard max
+        const stopRadius = Math.min(Math.max(WAVE_MIN_STOP_RADIUS, playerDist + WAVE_PLAYER_BUFFER), WAVE_MAX_RADIUS);
+        if (node.waveRadius >= stopRadius) {
           node.pulsing = false;
           node.waveAlpha = 0;
         }
@@ -173,9 +188,7 @@ export class DarkMatterSystem {
         }
       }
 
-      // Collection: player proximity check
-      const dx = playerX - node.x;
-      const dy = playerY - node.y;
+      // Collection: player proximity check (reuse pre-computed dx/dy)
       if (dx * dx + dy * dy < params.collectRadius * params.collectRadius) {
         const value = Math.pow(params.compoundFactor, this.totalCollected);
         this.totalCollected++;

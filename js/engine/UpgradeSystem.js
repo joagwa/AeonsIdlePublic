@@ -8,11 +8,11 @@
  */
 
 export class UpgradeSystem {
-  /** @type {import('../core/EventBus.js?v=688067a').EventBus} */
+  /** @type {import('../core/EventBus.js?v=70c84f6').EventBus} */
   #eventBus;
-  /** @type {import('./ResourceManager.js?v=688067a').ResourceManager} */
+  /** @type {import('./ResourceManager.js?v=70c84f6').ResourceManager} */
   #resourceManager;
-  /** @type {import('./MilestoneSystem.js?v=688067a').MilestoneSystem | null} */
+  /** @type {import('./MilestoneSystem.js?v=70c84f6').MilestoneSystem | null} */
   #milestoneSystem = null;
   /** @type {Map<string, object>} upgrade definitions keyed by id */
   #definitions = new Map();
@@ -50,14 +50,34 @@ export class UpgradeSystem {
 
   /**
    * Returns the cost for the NEXT purchase of this upgrade (scales with level).
-   * Formula: baseCost * costScaling^currentLevel
+   *
+   * Base formula (levels 0..threshold): baseCost * costScaling^currentLevel
+   *
+   * Logarithmic transition (level > threshold, for upgrades with many levels):
+   *   cost = costAtThreshold * (1 + log₂(level − threshold + 1) * (costScaling − 1))
+   * This ensures cost continuity at threshold+1 and gentle growth beyond it,
+   * keeping late-game upgrade costs manageable after milestone storms.
    */
   getCost(upgradeId) {
     const def = this.#definitions.get(upgradeId);
     const state = this.#states.get(upgradeId);
     if (!def || !state) return Infinity;
     const scaling = def.costScaling || 1;
-    return Math.round(def.baseCost * Math.pow(scaling, state.level));
+    const level = state.level;
+
+    // Logarithmic scaling kicks in for long upgrades (maxLevel > threshold) after the threshold.
+    // Threshold defaults to 5; individual upgrades can override via logScalingThreshold.
+    const threshold = def.logScalingThreshold ?? 5;
+    const maxLevel = def.maxLevel || 1;
+
+    if (scaling > 1 && maxLevel > threshold && level > threshold) {
+      const costAtThreshold = def.baseCost * Math.pow(scaling, threshold);
+      // Normalisation constant: ensures cost at threshold+1 equals costAtThreshold * scaling
+      const logScalingFactor = scaling - 1;
+      return Math.round(costAtThreshold * (1 + Math.log2(level - threshold + 1) * logScalingFactor));
+    }
+
+    return Math.round(def.baseCost * Math.pow(scaling, level));
   }
 
   // ── Purchase validation ───────────────────────────────────────────────
