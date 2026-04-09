@@ -66,7 +66,6 @@ jobs:
                   title: `[User Feedback] ${issue.title}`,
                   body: privateBody,
                   labels: privateLabels,
-                  assignees: ['Copilot'],
                 }),
               }
             );
@@ -76,6 +75,26 @@ jobs:
               core.setFailed(`Failed to create private issue: ${resp.status} ${text}`);
               return;
             }
+
+            const privateIssue = await resp.json();
+
+            // Assign to Copilot coding agent via a separate API call
+            // (assignees array in create is rejected; this endpoint works when
+            //  the Copilot coding agent is enabled on the private repo)
+            await fetch(
+              `https://api.github.com/repos/joagwa/AeonsIdle/issues/${privateIssue.number}/assignees`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${process.env.GH_PRIVATE_TOKEN}`,
+                  Accept: 'application/vnd.github+json',
+                  'Content-Type': 'application/json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+                },
+                body: JSON.stringify({ assignees: ['Copilot'] }),
+              }
+            );
+            // (ignore failure — Copilot agent may need enabling in repo settings)
 
             // Comment on the public issue to let the reporter know
             await github.rest.issues.createComment({
