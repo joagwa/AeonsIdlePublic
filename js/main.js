@@ -4,40 +4,40 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=5c7a269';
-import { LogBuffer } from './core/LogBuffer.js?v=5c7a269';
-import { EventBus } from './core/EventBus.js?v=5c7a269';
-import { GameLoop } from './core/GameLoop.js?v=5c7a269';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=5c7a269';
-import { SaveSystem } from './core/SaveSystem.js?v=5c7a269';
-import { UpdateChecker } from './core/UpdateChecker.js?v=5c7a269';
+import { ErrorReporter } from './core/ErrorReporter.js?v=d5f5ed5';
+import { LogBuffer } from './core/LogBuffer.js?v=d5f5ed5';
+import { EventBus } from './core/EventBus.js?v=d5f5ed5';
+import { GameLoop } from './core/GameLoop.js?v=d5f5ed5';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=d5f5ed5';
+import { SaveSystem } from './core/SaveSystem.js?v=d5f5ed5';
+import { UpdateChecker } from './core/UpdateChecker.js?v=d5f5ed5';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=5c7a269';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=5c7a269';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=5c7a269';
-import { StarManager } from './engine/StarManager.js?v=5c7a269';
-import { EpochSystem } from './engine/EpochSystem.js?v=5c7a269';
-import { MoteController } from './engine/MoteController.js?v=5c7a269';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=5c7a269';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=5c7a269';
+import { ResourceManager } from './engine/ResourceManager.js?v=d5f5ed5';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=d5f5ed5';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=d5f5ed5';
+import { StarManager } from './engine/StarManager.js?v=d5f5ed5';
+import { EpochSystem } from './engine/EpochSystem.js?v=d5f5ed5';
+import { MoteController } from './engine/MoteController.js?v=d5f5ed5';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=d5f5ed5';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=d5f5ed5';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=5c7a269';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=d5f5ed5';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=5c7a269';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=5c7a269';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=5c7a269';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=5c7a269';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=5c7a269';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=5c7a269';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=5c7a269';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=5c7a269';
-import { StatsPanel } from './ui/StatsPanel.js?v=5c7a269';
-import { GoalWidget } from './ui/GoalWidget.js?v=5c7a269';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=5c7a269';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=5c7a269';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=d5f5ed5';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=d5f5ed5';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=d5f5ed5';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=d5f5ed5';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=d5f5ed5';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=d5f5ed5';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=d5f5ed5';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=d5f5ed5';
+import { StatsPanel } from './ui/StatsPanel.js?v=d5f5ed5';
+import { GoalWidget } from './ui/GoalWidget.js?v=d5f5ed5';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=d5f5ed5';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=d5f5ed5';
 
 // === Game State ===
 let gameState = {
@@ -431,6 +431,9 @@ async function bootstrap() {
       const voidRegion = canvasRenderer.canvasConfig?.regions?.find(r => r.regionId === 'void');
       if (voidRegion) darkMatterSystem.setVoidBounds(voidRegion.worldBounds);
       darkMatterSystem.activate();
+      // Also restore the renderer's dark matter visual layer, which is normally
+      // activated via milestone:triggered but is not re-emitted on load.
+      canvasRenderer.setDarkMatterActive(true);
     }
   }
 
@@ -511,6 +514,7 @@ async function bootstrap() {
       canvasRenderer,
       moteController,
       proceduralMoteGenerator,
+      darkMatterSystem,
       eventBus: EventBus,
       gameState,
     };

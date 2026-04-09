@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=5c7a269';
-import { Camera } from './Camera.js?v=5c7a269';
-import { ParticleSystem } from './ParticleSystem.js?v=5c7a269';
-import { RegionManager } from './RegionManager.js?v=5c7a269';
-import { FloatingNumbers } from './FloatingNumbers.js?v=5c7a269';
+import { SpriteManager } from './SpriteManager.js?v=d5f5ed5';
+import { Camera } from './Camera.js?v=d5f5ed5';
+import { ParticleSystem } from './ParticleSystem.js?v=d5f5ed5';
+import { RegionManager } from './RegionManager.js?v=d5f5ed5';
+import { FloatingNumbers } from './FloatingNumbers.js?v=d5f5ed5';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=5c7a269').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=d5f5ed5').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -956,10 +956,26 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=5c7a269').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=d5f5ed5').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
+  }
+
+  /**
+   * Activate (or deactivate) the dark matter visual layer.
+   * Must be called when restoring a saved game where ms_gasCloud was already triggered,
+   * since milestone:triggered is not re-emitted on load.
+   * @param {boolean} active
+   */
+  setDarkMatterActive(active) {
+    this._darkMatterActive = !!active;
+    if (active && this.canvasConfig) {
+      const voidRegion = this.canvasConfig.regions?.find(r => r.regionId === 'void');
+      if (voidRegion && !voidRegion.particleTypes.includes('darkMote')) {
+        voidRegion.particleTypes.push('darkMote');
+      }
+    }
   }
 
   /**
