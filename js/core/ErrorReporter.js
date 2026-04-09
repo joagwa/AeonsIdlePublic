@@ -1,16 +1,20 @@
 /**
- * ErrorReporter — catches unhandled exceptions and promise rejections,
- * then shows a dismissible in-game banner with a "Report →" link that
- * pre-fills a GitHub issue in the public tracker.
+ * ErrorReporter — catches unhandled exceptions and promise rejections.
  *
- * No tokens are used. Secrets must never appear in client-side code
- * that is pushed to a public repository.
+ * Reporting strategy (in priority order):
+ *   1. POST to the Cloudflare Worker proxy (fully automatic, no user action).
+ *      Worker URL injected at deploy time via <meta name="error-reporter-endpoint">.
+ *   2. Fallback: show a dismissible in-game banner with a pre-filled
+ *      "Report →" GitHub issues URL for manual submission.
+ *
+ * No tokens ever appear in client-side code or committed files.
  */
 export class ErrorReporter {
-  #publicRepo = null;
-  #reported   = new Set();
-  #lastReport = 0;
-  #cooldownMs = 30_000;
+  #workerEndpoint = null;
+  #publicRepo     = null;
+  #reported       = new Set();
+  #lastReport     = 0;
+  #cooldownMs     = 30_000;
 
   static #NOISE = [
     /^Script error\.?$/i,
@@ -23,6 +27,10 @@ export class ErrorReporter {
   ];
 
   constructor() {
+    const endpointMeta = document.querySelector('meta[name="error-reporter-endpoint"]');
+    const endpoint = endpointMeta?.content?.trim();
+    this.#workerEndpoint = (endpoint && endpoint !== 'dev') ? endpoint : null;
+
     const repoMeta = document.querySelector('meta[name="feedback-repo"]');
     const repo = repoMeta?.content?.trim();
     this.#publicRepo = (repo && repo !== 'dev') ? repo : null;
@@ -32,7 +40,7 @@ export class ErrorReporter {
       return false;
     };
 
-    window.addEventListener('unhandledrejection', (ev) => {
+    window.addEventListener('unhandledrejection', ev => {
       const err = ev.reason instanceof Error
         ? ev.reason
         : new Error(String(ev.reason ?? 'Unhandled rejection'));
@@ -55,10 +63,36 @@ export class ErrorReporter {
     this.#reported.add(fingerprint);
     this.#lastReport = now;
 
-    this.#showBanner(error, context);
+    if (this.#workerEndpoint) {
+      this.#postToWorker(error, context);
+    } else {
+      this.#showBanner(error, context, /* autoReported */ false);
+    }
   }
 
-  #showBanner(error, context) {
+  async #postToWorker(error, context) {
+    const { title, issueBody } = this.#buildIssueContent(error, context);
+    try {
+      const resp = await fetch(this.#workerEndpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ title, issueBody, labels: ['bug', 'auto-error'] }),
+      });
+
+      if (resp.ok) {
+        const { url, number } = await resp.json();
+        this.#showBanner(error, context, /* autoReported */ true, url, number);
+      } else {
+        console.warn('[ErrorReporter] Worker responded', resp.status, '— falling back to URL');
+        this.#showBanner(error, context, /* autoReported */ false);
+      }
+    } catch (fetchErr) {
+      console.warn('[ErrorReporter] Worker unreachable:', fetchErr.message, '— falling back to URL');
+      this.#showBanner(error, context, /* autoReported */ false);
+    }
+  }
+
+  #showBanner(error, context, autoReported, issueUrl, issueNumber) {
     let container = document.getElementById('error-reporter-banner');
     if (!container) {
       container = document.createElement('div');
@@ -67,30 +101,34 @@ export class ErrorReporter {
     }
 
     const msg = (error.message ?? 'Unknown error').slice(0, 90);
-    const reportUrl = this.#buildReportUrl(error, context);
+    let actionHtml;
+    if (autoReported && issueUrl) {
+      actionHtml = `<a class="error-banner-link" href="${issueUrl}" target="_blank" rel="noopener">#${issueNumber} ↗</a>`;
+    } else {
+      const reportUrl = this.#buildReportUrl(error, context);
+      actionHtml = reportUrl
+        ? `<a class="error-banner-link" href="${reportUrl}" target="_blank" rel="noopener">Report →</a>`
+        : '';
+    }
 
     const item = document.createElement('div');
     item.className = 'error-banner-item';
     item.innerHTML =
-      `<span class="error-banner-msg">⚠ ${msg}</span>` +
-      (reportUrl
-        ? `<a class="error-banner-link" href="${reportUrl}" target="_blank" rel="noopener">Report →</a>`
-        : '') +
+      `<span class="error-banner-msg">${autoReported ? '✓ Reported' : '⚠'} ${msg}</span>` +
+      actionHtml +
       `<button class="error-banner-dismiss" aria-label="Dismiss">✕</button>`;
 
     item.querySelector('.error-banner-dismiss').addEventListener('click', () => item.remove());
     container.appendChild(item);
 
-    // Auto-dismiss after 20 s
-    setTimeout(() => item.remove(), 20_000);
+    setTimeout(() => item.remove(), autoReported ? 8_000 : 20_000);
   }
 
-  #buildReportUrl(error, context) {
-    if (!this.#publicRepo) return null;
+  #buildIssueContent(error, context) {
     const version = document.querySelector('meta[name="game-version"]')?.content ?? 'unknown';
+    const stack   = (error.stack ?? 'No stack trace').split('\n').slice(0, 10).join('\n');
     const title   = `[Bug] ${(error.message ?? 'Unknown error').slice(0, 80)}`;
-    const stack   = (error.stack ?? 'No stack trace').split('\n').slice(0, 8).join('\n');
-    const body = [
+    const issueBody = [
       `**Error:** \`${error.name ?? 'Error'}: ${error.message ?? ''}\``,
       '',
       '**Stack trace:**',
@@ -101,10 +139,15 @@ export class ErrorReporter {
       `**Version:** \`${version}\` | **Source:** \`${context.source ?? 'unknown'}\` line ${context.lineno ?? '?'}`,
       `**Time:** ${new Date().toISOString()} | **UA:** ${navigator.userAgent.slice(0, 80)}`,
     ].join('\n');
+    return { title, issueBody };
+  }
 
+  #buildReportUrl(error, context) {
+    if (!this.#publicRepo) return null;
+    const { title, issueBody } = this.#buildIssueContent(error, context);
     return `https://github.com/${this.#publicRepo}/issues/new`
       + `?title=${encodeURIComponent(title)}`
-      + `&body=${encodeURIComponent(body.slice(0, 4000))}`
-      + `&labels=${encodeURIComponent('bug,automated-error')}`;
+      + `&body=${encodeURIComponent(issueBody.slice(0, 4000))}`
+      + `&labels=${encodeURIComponent('bug,auto-error')}`;
   }
 }
