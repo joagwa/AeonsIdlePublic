@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=d57f9ab';
-import { Camera } from './Camera.js?v=d57f9ab';
-import { ParticleSystem } from './ParticleSystem.js?v=d57f9ab';
-import { RegionManager } from './RegionManager.js?v=d57f9ab';
-import { FloatingNumbers } from './FloatingNumbers.js?v=d57f9ab';
+import { SpriteManager } from './SpriteManager.js?v=f7d41c8';
+import { Camera } from './Camera.js?v=f7d41c8';
+import { ParticleSystem } from './ParticleSystem.js?v=f7d41c8';
+import { RegionManager } from './RegionManager.js?v=f7d41c8';
+import { FloatingNumbers } from './FloatingNumbers.js?v=f7d41c8';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=d57f9ab').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=f7d41c8').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -345,12 +345,12 @@ export class CanvasRenderer {
     // Draw region backgrounds
     this.regionManager.draw(this.mainCtx, this.camera, viewW, viewH);
 
-    // Lazy-init space dust when movement becomes available
-    if (this._moteController?.enabled && !this._dustLayers) {
+    // Lazy-init space dust on first frame (always visible, not gated on movement)
+    if (!this._dustLayers) {
       this._initSpaceDust();
     }
 
-    // Space dust parallax layers (very subtle, drawn behind everything)
+    // Space dust parallax layers (drawn behind everything)
     this._drawSpaceDust(this.mainCtx, viewW, viewH, clampedDt);
 
     // Subtle dark matter tint over the void when dark matter is active
@@ -957,20 +957,20 @@ export class CanvasRenderer {
     const rand  = this._seededRand(0xAE0E5);
     const rand2 = this._seededRand(0xBF1F6);
 
-    // Far layer: very distant, barely visible, very slow parallax
+    // Far layer: very distant, faint — clearly visible but subtle
     const farParticles = Array.from({ length: 300 }, () => ({
       nx: rand(),
       ny: rand(),
-      alpha: 0.010 + rand() * 0.025,   // 0.010–0.035 (deep background haze)
+      alpha: 0.04 + rand() * 0.06,     // 0.04–0.10 (visible background haze)
       warm: rand() < 0.12,             // mostly cool/blue at distance
       dy: 0, dvy: 0,
     }));
 
-    // Near layer: slightly closer, more visible, faster parallax
+    // Near layer: closer, brighter, faster parallax
     const nearParticles = Array.from({ length: 250 }, () => ({
       nx: rand2(),
       ny: rand2(),
-      alpha: 0.018 + rand2() * 0.038,  // 0.018–0.056
+      alpha: 0.07 + rand2() * 0.10,   // 0.07–0.17 (clearly visible)
       warm: rand2() < 0.30,            // 30% warm amber
       large: rand2() < 0.20,           // 20% are 2×2 px dots
       dy: 0, dvy: 0,
@@ -1073,7 +1073,7 @@ export class CanvasRenderer {
           }
         }
 
-        if (alpha < 0.004) continue;
+        if (alpha < 0.01) continue;
 
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.warm ? '#ffe8c0' : '#c8d8f8';
@@ -1127,7 +1127,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=d57f9ab').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=f7d41c8').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
