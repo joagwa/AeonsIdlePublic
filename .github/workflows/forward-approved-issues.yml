@@ -78,8 +78,9 @@ jobs:
 
             const privateIssue = await resp.json();
 
-            // Assign to Copilot coding agent via the assignees endpoint.
-            // Requires "Copilot coding agent" to be enabled in the private repo settings.
+            // Assign to Copilot cloud agent.
+            // Requires Cloud Agent to be enabled in the private repo settings (Settings → Copilot → Cloud Agent).
+            // Must use "copilot-swe-agent[bot]" as the assignee name + agent_assignment body.
             const assignResp = await fetch(
               `https://api.github.com/repos/joagwa/AeonsIdle/issues/${privateIssue.number}/assignees`,
               {
@@ -90,41 +91,26 @@ jobs:
                   'Content-Type': 'application/json',
                   'X-GitHub-Api-Version': '2022-11-28',
                 },
-                body: JSON.stringify({ assignees: ['Copilot'] }),
+                body: JSON.stringify({
+                  assignees: ['copilot-swe-agent[bot]'],
+                  agent_assignment: {
+                    target_repo: 'joagwa/AeonsIdle',
+                    base_branch: 'develop',
+                    custom_instructions: [
+                      'Review the feedback/bug report and implement a fix or the requested feature.',
+                      'Ensure changes do not break existing game mechanics.',
+                      'Run `npm test` to verify. Add regression tests where appropriate.',
+                      'Branch from `develop` and target `develop` in your pull request.',
+                    ].join(' '),
+                    custom_agent: '',
+                    model: '',
+                  },
+                }),
               }
             );
             const assignData = await assignResp.json();
             const copilotAssigned = assignData.assignees?.some(a => a.login === 'Copilot');
             core.info(`Copilot assignee result: ${assignResp.status}, assigned=${copilotAssigned}`);
-
-            // If assignee didn't stick, post a @copilot comment as a fallback trigger.
-            // The Copilot coding agent also listens for direct mentions in comments.
-            if (!copilotAssigned) {
-              core.warning('Copilot assignee did not stick — posting @copilot mention as fallback trigger');
-              await fetch(
-                `https://api.github.com/repos/joagwa/AeonsIdle/issues/${privateIssue.number}/comments`,
-                {
-                  method: 'POST',
-                  headers: {
-                    Authorization: `Bearer ${process.env.GH_PRIVATE_TOKEN}`,
-                    Accept: 'application/vnd.github+json',
-                    'Content-Type': 'application/json',
-                    'X-GitHub-Api-Version': '2022-11-28',
-                  },
-                  body: JSON.stringify({
-                    body: [
-                      '@copilot Please work on this issue:',
-                      '1. Review the feedback/bug report above.',
-                      '2. Implement a fix or the requested feature.',
-                      '3. Ensure changes do not break existing game mechanics.',
-                      '4. Run `npm test` to verify. Add regression tests where appropriate.',
-                      '',
-                      '_Note: If the Copilot coding agent is not yet enabled on this repo, go to Settings → Copilot → Coding agent to enable it._',
-                    ].join('\n'),
-                  }),
-                }
-              );
-            }
 
             // Comment on the public issue to let the reporter know
             await github.rest.issues.createComment({
