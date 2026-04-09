@@ -933,8 +933,13 @@ html, body {
   display: none;
 }
 
-/* --- Responsive: Mobile Tab UI (≤ 768px) --- */
-@media (max-width: 768px) {
+/* --- Responsive: Mobile Tab UI (≤ 600px)
+     600px cleanly separates:
+       • Phones (up to ~480px) → mobile layout
+       • Samsung Fold 6 outer screen (~323px) → mobile layout
+       • Samsung Fold 6 inner screen (~673px) → desktop layout
+       • Tablets, iPads, etc. → desktop layout                        --- */
+@media (max-width: 600px) {
   /* Game layout */
   #game-container {
     flex-direction: column;
@@ -947,7 +952,8 @@ html, body {
     height: calc(100% - 56px);
   }
 
-  /* Tab bar — fixed at bottom */
+  /* Tab bar — fixed at bottom; z-index 200 + translateZ(0) to create its own
+     compositing layer so it always paints above the sliding drawer */
   #mobile-tab-bar {
     display: flex;
     position: fixed;
@@ -957,8 +963,9 @@ html, body {
     height: 56px;
     background: var(--bg-panel);
     border-top: 1px solid var(--border);
-    z-index: 30;
+    z-index: 200;
     align-items: stretch;
+    transform: translateZ(0);
   }
 
   .mobile-tab {
@@ -1010,7 +1017,9 @@ html, body {
     height: 50vh;
     border-left: none;
     border-top: 1px solid var(--border);
-    transform: translateY(110%);
+    /* Use calc(100% + 56px) so the closed drawer's top edge sits exactly at the
+       viewport bottom — no overlap with the 56px tab bar regardless of screen height */
+    transform: translateY(calc(100% + 56px));
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 25;
     display: flex;

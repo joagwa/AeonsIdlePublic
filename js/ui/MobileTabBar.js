@@ -1,5 +1,5 @@
 /**
- * MobileTabBar — Bottom tab navigation for mobile (≤768px).
+ * MobileTabBar — Bottom tab navigation for mobile (≤600px).
  *
  * Renders a fixed 56px tab bar at the bottom of the screen. Tapping a tab
  * slides up a 50vh panel drawer; tapping the same tab again (or the ▼
@@ -26,7 +26,7 @@ export class MobileTabBar {
   }
 
   init() {
-    this._mq = window.matchMedia('(max-width: 768px)');
+    this._mq = window.matchMedia('(max-width: 600px)');
 
     if (this._mq.matches) {
       this._setup();
