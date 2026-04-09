@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=b7910b1';
-import { Camera } from './Camera.js?v=b7910b1';
-import { ParticleSystem } from './ParticleSystem.js?v=b7910b1';
-import { RegionManager } from './RegionManager.js?v=b7910b1';
-import { FloatingNumbers } from './FloatingNumbers.js?v=b7910b1';
+import { SpriteManager } from './SpriteManager.js?v=8f9cac5';
+import { Camera } from './Camera.js?v=8f9cac5';
+import { ParticleSystem } from './ParticleSystem.js?v=8f9cac5';
+import { RegionManager } from './RegionManager.js?v=8f9cac5';
+import { FloatingNumbers } from './FloatingNumbers.js?v=8f9cac5';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=b7910b1').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=8f9cac5').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -1046,12 +1046,12 @@ export class CanvasRenderer {
 
     // Draw each layer (far first, then near on top)
     for (const layer of this._dustLayers) {
-      const px = layer.parallax;
+      const parallaxFactor = layer.parallax;
 
       for (const p of layer.particles) {
         // Screen position for this particle
-        const sx = ((p.nx * viewW - this.camera.x * px) % viewW + viewW) % viewW;
-        let   sy = ((p.ny * viewH - this.camera.y * px) % viewH + viewH) % viewH;
+        const sx = ((p.nx * viewW - this.camera.x * parallaxFactor) % viewW + viewW) % viewW;
+        let   sy = ((p.ny * viewH - this.camera.y * parallaxFactor) % viewH + viewH) % viewH;
 
         // Apply gravity wave vertical impulse — strongest at node, tapers with distance
         for (const dm of activeWaves) {
@@ -1160,7 +1160,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=b7910b1').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=8f9cac5').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
