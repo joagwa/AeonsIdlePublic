@@ -918,6 +918,44 @@ html, body {
 .settings-feedback.success { color: var(--success); }
 .settings-feedback.error { color: var(--danger); }
 
+/* --- Changelog --- */
+.settings-changelog {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  background: var(--bg);
+  font-size: 12px;
+}
+
+.changelog-entry {
+  margin-bottom: 12px;
+}
+
+.changelog-entry:last-child {
+  margin-bottom: 0;
+}
+
+.changelog-header {
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.changelog-notes {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-muted, var(--text));
+  opacity: 0.85;
+}
+
+.changelog-notes li {
+  margin-bottom: 2px;
+  line-height: 1.4;
+}
+
 /* --- Hidden utility --- */
 .hidden {
   display: none !important;

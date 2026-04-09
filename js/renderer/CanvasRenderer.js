@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=0ceebd9';
-import { Camera } from './Camera.js?v=0ceebd9';
-import { ParticleSystem } from './ParticleSystem.js?v=0ceebd9';
-import { RegionManager } from './RegionManager.js?v=0ceebd9';
-import { FloatingNumbers } from './FloatingNumbers.js?v=0ceebd9';
+import { SpriteManager } from './SpriteManager.js?v=b57db20';
+import { Camera } from './Camera.js?v=b57db20';
+import { ParticleSystem } from './ParticleSystem.js?v=b57db20';
+import { RegionManager } from './RegionManager.js?v=b57db20';
+import { FloatingNumbers } from './FloatingNumbers.js?v=b57db20';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=0ceebd9').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=b57db20').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -85,7 +85,7 @@ export class CanvasRenderer {
 
     // Space dust parallax layer (unlocked with movement)
     this._dustParticles = null;
-    this._dustParallax = 0.07; // dust moves at 7% of camera speed
+    this._dustParallax = 0.12; // dust moves at 12% of camera speed
   }
 
   // ---------------------------------------------------------------
@@ -969,13 +969,14 @@ export class CanvasRenderer {
     };
   }
 
-  /** Initialise ~350 dust particles using a deterministic seed. */
+  /** Initialise ~600 dust particles using a deterministic seed. */
   _initSpaceDust() {
     const rand = this._seededRand(0xAE0E5);
-    this._dustParticles = Array.from({ length: 350 }, () => ({
+    this._dustParticles = Array.from({ length: 600 }, () => ({
       nx: rand(),                          // normalised x [0, 1)
       ny: rand(),                          // normalised y [0, 1)
-      alpha: 0.014 + rand() * 0.042,       // 0.014–0.056 (ultra-faint)
+      alpha: 0.07 + rand() * 0.12,         // 0.07–0.19 (clearly visible)
+      size: rand() < 0.35 ? 2 : 1,         // 35% larger 2px dots for depth
       warm: rand() < 0.28,                 // 28% warm amber, 72% cool blue-white
     }));
   }
@@ -1051,10 +1052,11 @@ export class CanvasRenderer {
         }
       }
 
-      if (alpha < 0.004) continue;
+      if (alpha < 0.01) continue;
       ctx.globalAlpha = alpha;
       ctx.fillStyle = p.warm ? '#ffe8c0' : '#c8d8f8';
-      ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+      const ps = p.size || 1;
+      ctx.fillRect(Math.round(sx), Math.round(sy), ps, ps);
     }
 
     ctx.globalAlpha = 1;
@@ -1098,7 +1100,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=0ceebd9').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=b57db20').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

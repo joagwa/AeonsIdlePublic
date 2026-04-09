@@ -1,6 +1,55 @@
 /**
- * SettingsPanel — Modal with notation, glow, save/export/import/reset controls.
+ * SettingsPanel — Modal with notation, glow, save/export/import/reset controls,
+ * changelog, and developer options.
  */
+
+const CHANGELOG = [
+  {
+    version: '0.8',
+    date: '2026-04-09',
+    notes: [
+      'Space dust parallax layer is now clearly visible after unlocking movement',
+      'Added auto-buy dev option (enable dev features, then toggle in Dev Options)',
+      'Added this Changelog section to Settings',
+    ],
+  },
+  {
+    version: '0.7',
+    date: '2026-03-28',
+    notes: [
+      'Dark matter nodes: click to collect, wave ripples disrupt space dust',
+      'Space dust background unlocked with Cosmic Drift movement upgrade',
+      'Particle storm milestone reward: triple energy absorption for 30s',
+    ],
+  },
+  {
+    version: '0.6',
+    date: '2026-03-15',
+    notes: [
+      'WASD / virtual joystick movement (Cosmic Drift upgrade)',
+      'Tractor beam pulls nearby motes (Event Horizon upgrade)',
+      'Mote quality tiers: rare and exotic motes worth more energy',
+    ],
+  },
+  {
+    version: '0.5',
+    date: '2026-03-01',
+    notes: [
+      'Star lifecycle: main sequence → red giant → supernova → neutron star',
+      'Heavy elements unlocked via supernova milestone',
+      'Energy → Mass conversion slider for fine-grained control',
+    ],
+  },
+  {
+    version: '0.4',
+    date: '2026-02-15',
+    notes: [
+      'Gravitational Pull upgrade: particles orbit and get absorbed automatically',
+      'Mass Accretion: converts energy to mass over time',
+      'Goal widget shows next milestone target',
+    ],
+  },
+];
 
 export class SettingsPanel {
   constructor(EventBus, saveSystem, gameState) {
@@ -89,8 +138,38 @@ export class SettingsPanel {
     const debugCheck = document.createElement('input');
     debugCheck.type = 'checkbox';
     debugCheck.checked = window.AEONS_DEBUG === true;
+
+    // Auto-buy sub-option (only visible when debug is enabled) — declared early
+    // so the debugCheck event listener can reference it via closure.
+    const autoBuyRow = document.createElement('div');
+    autoBuyRow.style.marginTop = '10px';
+    autoBuyRow.style.display = window.AEONS_DEBUG ? '' : 'none';
+    const autoBuyLabel = document.createElement('label');
+    autoBuyLabel.className = 'settings-checkbox-label';
+    const autoBuyCheck = document.createElement('input');
+    autoBuyCheck.type = 'checkbox';
+    autoBuyCheck.checked = window.AEONS_AUTO_BUY === true;
+    autoBuyCheck.addEventListener('change', () => {
+      window.AEONS_AUTO_BUY = autoBuyCheck.checked;
+      console.log(`🔧 Auto-buy ${autoBuyCheck.checked ? 'ON' : 'OFF'}`);
+    });
+    autoBuyLabel.appendChild(autoBuyCheck);
+    autoBuyLabel.appendChild(document.createTextNode(' Auto-buy upgrades'));
+    const autoBuyNote = document.createElement('small');
+    autoBuyNote.style.display = 'block';
+    autoBuyNote.style.marginTop = '4px';
+    autoBuyNote.style.opacity = '0.7';
+    autoBuyNote.textContent = '(purchases any affordable upgrade each tick)';
+    autoBuyRow.appendChild(autoBuyLabel);
+    autoBuyRow.appendChild(autoBuyNote);
+
     debugCheck.addEventListener('change', () => {
       window.AEONS_DEBUG = debugCheck.checked;
+      if (!debugCheck.checked) {
+        window.AEONS_AUTO_BUY = false;
+        autoBuyCheck.checked = false;
+      }
+      autoBuyRow.style.display = debugCheck.checked ? '' : 'none';
       const msg = debugCheck.checked 
         ? '🔧 Debug mode ON (5x click, +50/+10 resources)' 
         : '🔧 Debug mode OFF (production settings)';
@@ -105,8 +184,34 @@ export class SettingsPanel {
     debugNote.textContent = '(5x click, +50/+10 resources)';
     debugGroup.appendChild(debugLabel);
     debugGroup.appendChild(debugNote);
+    debugGroup.appendChild(autoBuyRow);
+
     this.body.appendChild(debugGroup);
     this._debugCheck = debugCheck;
+
+    // --- Changelog ---
+    const changelogGroup = this._group('Changelog');
+    const changelogContainer = document.createElement('div');
+    changelogContainer.className = 'settings-changelog';
+    for (const entry of CHANGELOG) {
+      const entryDiv = document.createElement('div');
+      entryDiv.className = 'changelog-entry';
+      const header = document.createElement('div');
+      header.className = 'changelog-header';
+      header.textContent = `v${entry.version} — ${entry.date}`;
+      entryDiv.appendChild(header);
+      const ul = document.createElement('ul');
+      ul.className = 'changelog-notes';
+      for (const note of entry.notes) {
+        const li = document.createElement('li');
+        li.textContent = note;
+        ul.appendChild(li);
+      }
+      entryDiv.appendChild(ul);
+      changelogContainer.appendChild(entryDiv);
+    }
+    changelogGroup.appendChild(changelogContainer);
+    this.body.appendChild(changelogGroup);
 
     // --- Save Now ---
     const saveGroup = this._group('Save');

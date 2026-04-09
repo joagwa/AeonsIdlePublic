@@ -4,40 +4,40 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=0ceebd9';
-import { LogBuffer } from './core/LogBuffer.js?v=0ceebd9';
-import { EventBus } from './core/EventBus.js?v=0ceebd9';
-import { GameLoop } from './core/GameLoop.js?v=0ceebd9';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=0ceebd9';
-import { SaveSystem } from './core/SaveSystem.js?v=0ceebd9';
-import { UpdateChecker } from './core/UpdateChecker.js?v=0ceebd9';
+import { ErrorReporter } from './core/ErrorReporter.js?v=b57db20';
+import { LogBuffer } from './core/LogBuffer.js?v=b57db20';
+import { EventBus } from './core/EventBus.js?v=b57db20';
+import { GameLoop } from './core/GameLoop.js?v=b57db20';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=b57db20';
+import { SaveSystem } from './core/SaveSystem.js?v=b57db20';
+import { UpdateChecker } from './core/UpdateChecker.js?v=b57db20';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=0ceebd9';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=0ceebd9';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=0ceebd9';
-import { StarManager } from './engine/StarManager.js?v=0ceebd9';
-import { EpochSystem } from './engine/EpochSystem.js?v=0ceebd9';
-import { MoteController } from './engine/MoteController.js?v=0ceebd9';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=0ceebd9';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=0ceebd9';
+import { ResourceManager } from './engine/ResourceManager.js?v=b57db20';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=b57db20';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=b57db20';
+import { StarManager } from './engine/StarManager.js?v=b57db20';
+import { EpochSystem } from './engine/EpochSystem.js?v=b57db20';
+import { MoteController } from './engine/MoteController.js?v=b57db20';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=b57db20';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=b57db20';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=0ceebd9';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=b57db20';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=0ceebd9';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=0ceebd9';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=0ceebd9';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=0ceebd9';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=0ceebd9';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=0ceebd9';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=0ceebd9';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=0ceebd9';
-import { StatsPanel } from './ui/StatsPanel.js?v=0ceebd9';
-import { GoalWidget } from './ui/GoalWidget.js?v=0ceebd9';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=0ceebd9';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=0ceebd9';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=b57db20';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=b57db20';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=b57db20';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=b57db20';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=b57db20';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=b57db20';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=b57db20';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=b57db20';
+import { StatsPanel } from './ui/StatsPanel.js?v=b57db20';
+import { GoalWidget } from './ui/GoalWidget.js?v=b57db20';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=b57db20';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=b57db20';
 
 // === Game State ===
 let gameState = {
@@ -387,6 +387,15 @@ async function bootstrap() {
         }
       } else {
         _conversionAccumulator = 0;
+      }
+    }
+
+    // --- Auto-buy (dev mode only) ---
+    if (window.AEONS_AUTO_BUY) {
+      for (const { definition: def } of upgradeSystem.getAll()) {
+        if (upgradeSystem.canPurchase(def.id)) {
+          upgradeSystem.purchase(def.id);
+        }
       }
     }
   });
