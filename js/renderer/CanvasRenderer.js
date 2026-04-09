@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=a2c3b17';
-import { Camera } from './Camera.js?v=a2c3b17';
-import { ParticleSystem } from './ParticleSystem.js?v=a2c3b17';
-import { RegionManager } from './RegionManager.js?v=a2c3b17';
-import { FloatingNumbers } from './FloatingNumbers.js?v=a2c3b17';
+import { SpriteManager } from './SpriteManager.js?v=d57f9ab';
+import { Camera } from './Camera.js?v=d57f9ab';
+import { ParticleSystem } from './ParticleSystem.js?v=d57f9ab';
+import { RegionManager } from './RegionManager.js?v=d57f9ab';
+import { FloatingNumbers } from './FloatingNumbers.js?v=d57f9ab';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=a2c3b17').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=d57f9ab').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -965,7 +965,6 @@ export class CanvasRenderer {
       warm: rand() < 0.12,             // mostly cool/blue at distance
       dy: 0, dvy: 0,
     }));
-    }));
 
     // Near layer: slightly closer, more visible, faster parallax
     const nearParticles = Array.from({ length: 250 }, () => ({
@@ -978,8 +977,8 @@ export class CanvasRenderer {
     }));
 
     this._dustLayers = [
-      { particles: farParticles,  parallax: 0.03 },
-      { particles: nearParticles, parallax: 0.12 },
+      { particles: farParticles,  parallax: 0.20 },
+      { particles: nearParticles, parallax: 0.50 },
     ];
   }
 
@@ -1036,15 +1035,16 @@ export class CanvasRenderer {
         const sx = ((p.nx * viewW - this.camera.x * px) % viewW + viewW) % viewW;
         let   sy = ((p.ny * viewH - this.camera.y * px) % viewH + viewH) % viewH;
 
-        // Apply gravity wave vertical impulse (invisible — pushes dust up as wave passes)
+        // Apply gravity wave vertical impulse — strongest at node, tapers with distance
         for (const dm of activeWaves) {
           const ddx = sx - dm.sx;
           const ddy = sy - dm.sy;
           const dist = Math.sqrt(ddx * ddx + ddy * ddy);
           const distFromWave = Math.abs(dist - dm.waveRadius);
           if (distFromWave < 40) {
-            const wt = (1 - distFromWave / 40) * dm.waveAlpha;
-            p.dvy -= wt * 1500 * dt;  // upward impulse in screen-space
+            const ringFactor  = (1 - distFromWave / 40) * dm.waveAlpha;  // proximity to ring front
+            const distFalloff = Math.max(0, 1 - dist / 420);              // taper with distance from node
+            p.dvy -= ringFactor * distFalloff * 5000 * dt;
           }
         }
 
@@ -1127,7 +1127,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=a2c3b17').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=d57f9ab').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

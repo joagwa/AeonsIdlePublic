@@ -994,6 +994,10 @@ const milestones = [
     conditionValue: 50000,
     regionBand: 3,
     reward: { type: 'particle_storm' },
+    isEpochTransitionTrigger: false,
+  },
+  {
+    id: 'ms_mainSequenceStar',
     epochId: 'epoch1',
     title: 'A Light in the Dark',
     flavourText:
