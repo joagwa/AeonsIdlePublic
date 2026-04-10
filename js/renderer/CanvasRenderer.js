@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=b5a5772';
-import { Camera } from './Camera.js?v=b5a5772';
-import { ParticleSystem } from './ParticleSystem.js?v=b5a5772';
-import { RegionManager } from './RegionManager.js?v=b5a5772';
-import { FloatingNumbers } from './FloatingNumbers.js?v=b5a5772';
+import { SpriteManager } from './SpriteManager.js?v=bc1646d';
+import { Camera } from './Camera.js?v=bc1646d';
+import { ParticleSystem } from './ParticleSystem.js?v=bc1646d';
+import { RegionManager } from './RegionManager.js?v=bc1646d';
+import { FloatingNumbers } from './FloatingNumbers.js?v=bc1646d';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=b5a5772').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=bc1646d').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -158,21 +158,6 @@ export class CanvasRenderer {
         }
         // Seed some dark motes immediately
         this.particleSystem?.spawnInitialParticles('void', 80);
-      }
-    });
-    this.bus.on('darkMatter:beacon', (data) => {
-      // Apply a strong radial force burst to particles
-      this.particleSystem?.applyRadialForce(data.x, data.y, data.radius, data.strength);
-      // Show a directional indicator if the node is off-screen
-      if (this.camera && !this.camera.isVisible(data.x - 1, data.y - 1, 2, 2)) {
-        this._indicators.push({
-          regionName: '\u25c8 Dark Matter',
-          worldX: data.x,
-          worldY: data.y,
-          createdAt: performance.now(),
-          duration: 5000,
-          color: '#cc44ff',
-        });
       }
     });
     this.bus.on('darkMatter:wave', (data) => {
@@ -646,43 +631,6 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
       ctx.fill();
-
-      // Faint violet ring outlining the node
-      ctx.globalAlpha = op * 1.8;
-      ctx.strokeStyle = '#7a00cc';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r + 2, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Regular gravity wave ring — expands outward from node on each pulse
-      if (node.pulsing && node.waveRadius > 0 && (node.waveAlpha || 0) > 0.002) {
-        ctx.globalAlpha = node.waveAlpha || 0;
-        ctx.strokeStyle = '#9900ff';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(sx, sy, node.waveRadius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Beacon ring — far larger, brighter pulse that reveals the node's direction
-      if (node.beaconPulsing && node.beaconWaveRadius > 0) {
-        const bwa = node.beaconWaveAlpha || 0;
-        // Outer bright ring
-        ctx.globalAlpha = bwa * 0.75;
-        ctx.strokeStyle = '#cc44ff';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(sx, sy, node.beaconWaveRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        // Inner softer halo band
-        ctx.globalAlpha = bwa * 0.35;
-        ctx.strokeStyle = '#ee88ff';
-        ctx.lineWidth = 7;
-        ctx.beginPath();
-        ctx.arc(sx, sy, node.beaconWaveRadius - 4, 0, Math.PI * 2);
-        ctx.stroke();
-      }
     }
     ctx.restore();
   }
@@ -1218,7 +1166,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=b5a5772').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=bc1646d').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

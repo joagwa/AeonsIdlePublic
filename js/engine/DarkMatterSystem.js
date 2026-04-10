@@ -6,29 +6,22 @@
  *   value_n = compoundFactor ^ totalCollected
  */
 
-// Beacon pulse constants
-const BEACON_MAX_RADIUS  = 8000;  // px — near-infinite range directional pulse
-const BEACON_WAVE_SPEED  = 1200;  // px/s — expansion rate of the beacon ring
-const BEACON_STRENGTH_MULT = 5;   // multiplier on base waveStrength for beacon force
-
-// Regular wave fade constants
-const WAVE_MAX_ALPHA      = 0.55;  // initial alpha of a freshly-emitted wave ring
-const WAVE_FADE_DISTANCE  = 260;   // px — exponential decay half-distance; barely visible by ~600 px
-const WAVE_MIN_STOP_RADIUS = 600;  // px — minimum radius before the wave can stop (even at player's feet)
-const WAVE_PLAYER_BUFFER   = 200;  // px — extra travel past the player before the wave is retired
-const WAVE_MAX_RADIUS      = 5000; // px — hard cap so distant players don't cause runaway waves
+// Wave constants — constant-height looping pulse
+const WAVE_CONSTANT_ALPHA = 0.22;  // fixed amplitude (subtle but detectable)
+const WAVE_LOOP_RADIUS    = 2200;  // px — wave resets and loops at this radius
+const WAVE_SPEED          = 280;   // px/s — expansion rate
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=b5a5772').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=b5a5772').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=bc1646d').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=bc1646d').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
     this.upgradeSystem = upgradeSystem;
 
     this.active = false;
-    /** @type {Array<{x:number, y:number, pulseTimer:number, pulseInterval:number, pulsing:boolean, waveRadius:number, waveAlpha:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean, beaconTimer:number, beaconInterval:number, beaconPulsing:boolean, beaconWaveRadius:number, beaconWaveAlpha:number}>} */
+    /** @type {Array<{x:number, y:number, pulsing:boolean, waveRadius:number, waveAlpha:number, waveStrength:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean}>} */
     this.nodes = [];
     this.totalCollected = 0;
 
@@ -53,7 +46,6 @@ export class DarkMatterSystem {
   _getParams() {
     const spawnLevel    = this.upgradeSystem.getLevel('upg_darkMatterCurrents') || 0;
     const compoundLevel = this.upgradeSystem.getLevel('upg_darkMatterAccelerant') || 0;
-    const maxNodesLevel = this.upgradeSystem.getLevel('upg_darkFlow') || 0;
     const radiusLevel   = this.upgradeSystem.getLevel('upg_darkMatterSiphon') || 0;
     const waveLevel     = this.upgradeSystem.getLevel('upg_gravityAmplifier2') || 0;
     const lensLevel     = this.upgradeSystem.getLevel('upg_gravitationalLensing') || 0;
@@ -61,8 +53,9 @@ export class DarkMatterSystem {
     return {
       // Seconds between node spawns (decreases with upgrades, min 3s)
       spawnInterval: Math.max(3, 20 - spawnLevel * 2),
-      // Max simultaneous nodes — always at least 1, capped at 3 to keep the void navigable
-      maxNodes: Math.min(3, 1 + maxNodesLevel),
+      // Max simultaneous nodes — always 1 to keep the void focused
+      // (upg_darkFlow upgrade no longer applies; one node at a time is the intended design)
+      maxNodes: 1,
       // Pixel radius within which the player absorbs a node
       collectRadius: 60 + radiusLevel * 40,
       // Exponential compound factor per collected node — base 2 means each node roughly doubles the value
@@ -86,25 +79,15 @@ export class DarkMatterSystem {
     this.nodes.push({
       x,
       y,
-      // Time until first pulse
-      pulseTimer: 4 + Math.random() * 5,
-      // Time between recurring pulses
-      pulseInterval: 5 + Math.random() * 6,
       waveStrength: params.waveStrength,
-      pulsing: false,
+      pulsing: true,
       waveRadius: 0,
-      waveAlpha: 0,
+      waveAlpha: WAVE_CONSTANT_ALPHA,
       nodeRadius: 5 + Math.random() * 4,
       // Offset flicker phase so nodes don't all pulse in sync
       flickerTimer: Math.random() * Math.PI * 2,
       displayOpacity: 0,
       collected: false,
-      // Beacon pulse: a far-stronger periodic pulse that reveals the node's direction
-      beaconTimer: 20 + Math.random() * 20,
-      beaconInterval: 30 + Math.random() * 30,
-      beaconPulsing: false,
-      beaconWaveRadius: 0,
-      beaconWaveAlpha: 0,
     });
   }
 
@@ -124,22 +107,18 @@ export class DarkMatterSystem {
     const collected = [];
 
     for (const node of this.nodes) {
-      // Pre-compute player distance (used for both wave stopping and collection)
+      // Pre-compute player offset for the squared-distance collection check
       const dx = playerX - node.x;
       const dy = playerY - node.y;
-      const playerDist = Math.sqrt(dx * dx + dy * dy);
 
       // Gentle flicker: slow sinusoidal opacity variation
       node.flickerTimer += dt * 0.7;
       node.displayOpacity = 0.10 + Math.sin(node.flickerTimer) * 0.04;
 
-      // Pulse countdown
-      node.pulseTimer -= dt;
-      if (node.pulseTimer <= 0) {
-        node.pulseTimer = node.pulseInterval;
-        node.pulsing = true;
+      // Constant looping wave — always expanding, resets when it reaches the loop radius
+      node.waveRadius += dt * WAVE_SPEED;
+      if (node.waveRadius >= WAVE_LOOP_RADIUS) {
         node.waveRadius = 0;
-        node.waveAlpha = 0.55;
         // Notify the rest of the system — ParticleSystem applies radial force
         this.bus.emit('darkMatter:wave', {
           x: node.x,
@@ -147,45 +126,6 @@ export class DarkMatterSystem {
           strength: node.waveStrength,
           radius: 420,
         });
-      }
-
-      // Expand the visual wave ring — fades exponentially but extends until it passes the player
-      if (node.pulsing) {
-        node.waveRadius += dt * 280;
-        // Exponential fade: full strength near the node, barely visible beyond ~600 px
-        node.waveAlpha = WAVE_MAX_ALPHA * Math.exp(-node.waveRadius / WAVE_FADE_DISTANCE);
-        // Stop once the wave has passed the player (with a small buffer) or at hard max
-        const stopRadius = Math.min(Math.max(WAVE_MIN_STOP_RADIUS, playerDist + WAVE_PLAYER_BUFFER), WAVE_MAX_RADIUS);
-        if (node.waveRadius >= stopRadius) {
-          node.pulsing = false;
-          node.waveAlpha = 0;
-        }
-      }
-
-      // Beacon countdown — a much stronger, far-reaching pulse to reveal direction
-      node.beaconTimer -= dt;
-      if (node.beaconTimer <= 0) {
-        node.beaconTimer = node.beaconInterval;
-        node.beaconPulsing = true;
-        node.beaconWaveRadius = 0;
-        node.beaconWaveAlpha = 0.9;
-        // Apply strong radial force over a vast radius
-        this.bus.emit('darkMatter:beacon', {
-          x: node.x,
-          y: node.y,
-          strength: node.waveStrength * BEACON_STRENGTH_MULT,
-          radius: BEACON_MAX_RADIUS,
-        });
-      }
-
-      // Expand the beacon ring
-      if (node.beaconPulsing) {
-        node.beaconWaveRadius += dt * BEACON_WAVE_SPEED;
-        node.beaconWaveAlpha = Math.max(0, 0.9 * (1 - node.beaconWaveRadius / BEACON_MAX_RADIUS));
-        if (node.beaconWaveRadius >= BEACON_MAX_RADIUS) {
-          node.beaconPulsing = false;
-          node.beaconWaveAlpha = 0;
-        }
       }
 
       // Collection: player proximity check (reuse pre-computed dx/dy)
