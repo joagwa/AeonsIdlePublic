@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=e93591d';
-import { Camera } from './Camera.js?v=e93591d';
-import { ParticleSystem } from './ParticleSystem.js?v=e93591d';
-import { RegionManager } from './RegionManager.js?v=e93591d';
-import { FloatingNumbers } from './FloatingNumbers.js?v=e93591d';
+import { SpriteManager } from './SpriteManager.js?v=90b0d0e';
+import { Camera } from './Camera.js?v=90b0d0e';
+import { ParticleSystem } from './ParticleSystem.js?v=90b0d0e';
+import { RegionManager } from './RegionManager.js?v=90b0d0e';
+import { FloatingNumbers } from './FloatingNumbers.js?v=90b0d0e';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=e93591d').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=90b0d0e').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -635,19 +635,6 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.arc(sx, sy, r + 2, 0, Math.PI * 2);
       ctx.stroke();
-      // Reflected ripple: short semi-arc facing back toward the dark matter node
-      if (node.reflWave && node.reflWave.alpha > 0.01) {
-        const rw = node.reflWave;
-        const { sx: rwsx, sy: rwsy } = this.camera.worldToScreen(rw.x, rw.y);
-        const { sx: ndsx, sy: ndsy } = this.camera.worldToScreen(rw.nodeX, rw.nodeY);
-        const angle = Math.atan2(ndsy - rwsy, ndsx - rwsx);
-        ctx.globalAlpha = rw.alpha;
-        ctx.strokeStyle = 'rgba(160, 60, 255, 1)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(rwsx, rwsy, rw.radius, angle - Math.PI * 0.55, angle + Math.PI * 0.55);
-        ctx.stroke();
-      }
     }
     ctx.restore();
   }
@@ -1015,8 +1002,8 @@ export class CanvasRenderer {
 
   /**
    * Draw both space dust parallax layers with dark matter gravity wave undulation.
-   * DM waves apply a smooth vertical spring impulse to nearby dust particles;
-   * no visible ring is drawn — the effect is purely physical.
+   * DM waves and their reflections displace dust particles as the ring passes;
+   * displacement snaps back to rest immediately once the wave moves on.
    * @param {CanvasRenderingContext2D} ctx
    * @param {number} viewW
    * @param {number} viewH
@@ -1044,6 +1031,23 @@ export class CanvasRenderer {
 
     const activeWaves = dmInfluences.filter(dm => dm.pulsing && dm.waveAlpha > 0.01 && dm.waveRadius > 0);
 
+    // Collect reflected ripples — same dust effect as main wave but weaker and smaller
+    if (this._darkMatterActive && this._darkMatterSystem) {
+      for (const node of this._darkMatterSystem.getNodes()) {
+        const rw = node.reflWave;
+        if (rw && rw.alpha > 0.01 && rw.radius > 0) {
+          const { sx: rwsx, sy: rwsy } = this.camera.worldToScreen(rw.x, rw.y);
+          activeWaves.push({
+            sx: rwsx,
+            sy: rwsy,
+            waveRadius: rw.radius,
+            waveMaxRadius: 140,
+            waveAlpha: rw.alpha * 0.5,
+          });
+        }
+      }
+    }
+
     ctx.save();
 
     // Void-clearing halo behind both dust layers
@@ -1067,30 +1071,24 @@ export class CanvasRenderer {
         const sx = ((p.nx * viewW - this.camera.x * parallaxFactor) % viewW + viewW) % viewW;
         let   sy = ((p.ny * viewH - this.camera.y * parallaxFactor) % viewH + viewH) % viewH;
 
-        // Apply gravity wave vertical impulse — strongest at node, tapers with distance
-        for (const dm of activeWaves) {
-          const ddx = sx - dm.sx;
-          const ddy = sy - dm.sy;
+        // Compute target displacement from the nearest wave front (main or reflected).
+        // Using direct lerp instead of spring physics so dust snaps back the moment the wave passes.
+        let targetDy = 0;
+        for (const wave of activeWaves) {
+          const ddx = sx - wave.sx;
+          const ddy = sy - wave.sy;
           const dist = Math.sqrt(ddx * ddx + ddy * ddy);
-          const distFromWave = Math.abs(dist - dm.waveRadius);
+          const distFromWave = Math.abs(dist - wave.waveRadius);
           if (distFromWave < 50) {
-            const ringFactor  = (1 - distFromWave / 50) * dm.waveAlpha;  // proximity to ring front
-            const distFalloff = Math.max(0, 1 - dist / dm.waveMaxRadius); // taper with distance from node
-            p.dvy -= ringFactor * distFalloff * 20000 * dt;
+            const ringFactor  = (1 - distFromWave / 50) * wave.waveAlpha;
+            const distFalloff = Math.max(0, 1 - dist / wave.waveMaxRadius);
+            targetDy = Math.min(targetDy, -ringFactor * distFalloff * 14);
           }
         }
 
-        // Spring back toward rest + velocity damping
-        if (p.dy !== 0 || p.dvy !== 0) {
-          p.dvy += -2.5 * p.dy * dt;   // restoring force toward dy=0
-          p.dvy *= (1 - 3.5 * dt);      // damping
-          p.dy  += p.dvy * dt;
-          if (Math.abs(p.dy) < 0.05 && Math.abs(p.dvy) < 0.05) {
-            p.dy = 0; p.dvy = 0;
-          } else {
-            p.dy = Math.max(-50, Math.min(50, p.dy));
-          }
-        }
+        // Fast lerp toward target — settles in ~0.15 s, restores instantly when wave moves on
+        p.dy += (targetDy - p.dy) * Math.min(1, dt * 22);
+        if (targetDy === 0 && Math.abs(p.dy) < 0.05) p.dy = 0;
 
         sy += p.dy;
 
@@ -1181,7 +1179,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=e93591d').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=90b0d0e').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

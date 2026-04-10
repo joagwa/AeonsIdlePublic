@@ -8,15 +8,15 @@
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=e93591d').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=e93591d').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=90b0d0e').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=90b0d0e').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
     this.upgradeSystem = upgradeSystem;
 
     this.active = false;
-    /** @type {Array<{x:number, y:number, pulseTimer:number, pulseInterval:number, pulsing:boolean, waveRadius:number, waveAlpha:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean, _reflTriggered:boolean, reflWave:{x:number,y:number,nodeX:number,nodeY:number,radius:number,alpha:number}|null}>} */
+    /** @type {Array<{x:number, y:number, pulseTimer:number, pulseInterval:number, pulsing:boolean, waveRadius:number, waveMaxRadius:number, waveAlpha:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean, _reflTriggered:boolean, reflWave:{x:number,y:number,radius:number,alpha:number}|null}>} */
     this.nodes = [];
     this.totalCollected = 0;
 
@@ -155,8 +155,6 @@ export class DarkMatterSystem {
         node.reflWave = {
           x: playerX,
           y: playerY,
-          nodeX: node.x,
-          nodeY: node.y,
           radius: 0,
           alpha: 0.5,
         };
