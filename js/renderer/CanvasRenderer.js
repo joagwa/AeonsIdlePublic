@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=90b0d0e';
-import { Camera } from './Camera.js?v=90b0d0e';
-import { ParticleSystem } from './ParticleSystem.js?v=90b0d0e';
-import { RegionManager } from './RegionManager.js?v=90b0d0e';
-import { FloatingNumbers } from './FloatingNumbers.js?v=90b0d0e';
+import { SpriteManager } from './SpriteManager.js?v=2aa356b';
+import { Camera } from './Camera.js?v=2aa356b';
+import { ParticleSystem } from './ParticleSystem.js?v=2aa356b';
+import { RegionManager } from './RegionManager.js?v=2aa356b';
+import { FloatingNumbers } from './FloatingNumbers.js?v=2aa356b';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -65,13 +65,12 @@ export class CanvasRenderer {
     this._visualTargetGlow = 3;
     this._visualColor = '#c8e0ff';
     this._visualFlash = 0; // 0..1, fades out
-    this._massConversionFlash = 0; // golden flash for energy→mass conversion
     this._visualThresholds = null; // loaded from epoch config
 
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=90b0d0e').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=2aa356b').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -141,11 +140,7 @@ export class CanvasRenderer {
     this.bus.on('settings:changed', (data) => {
       if (data.key === 'glowEnabled') this.setGlowEnabled(data.value);
     });
-    this.bus.on('mass:converted', () => {
-      // Trigger golden flash for energy→mass conversion
-      this._massConversionFlash = Math.min(1, this._massConversionFlash + 0.5);
-    });
-    this.bus.on('ui:mobile:drawer:state', (data) => {
+    this.bus.on('ui:mobile:drawer:state',(data) => {
       this._targetCameraOffsetY = data.open ? data.offsetY : 0;
     });
     this.bus.on('milestone:triggered', (data) => {
@@ -338,10 +333,6 @@ export class CanvasRenderer {
     if (this._visualFlash > 0) {
       this._visualFlash = Math.max(0, this._visualFlash - clampedDt * 1.5);
     }
-    // Decay mass conversion flash
-    if (this._massConversionFlash > 0) {
-      this._massConversionFlash = Math.max(0, this._massConversionFlash - clampedDt * 5);
-    }
 
     // Draw region backgrounds
     this.regionManager.draw(this.mainCtx, this.camera, viewW, viewH);
@@ -453,34 +444,6 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.arc(sx, sy, ringR, 0, Math.PI * 2);
       ctx.stroke();
-    }
-
-    // Mass conversion golden flash
-    if (this._massConversionFlash > 0.01) {
-      const flashAlpha = this._massConversionFlash * 0.7;
-      const flashR = s + 4 + this._massConversionFlash * 8;
-      ctx.globalAlpha = flashAlpha;
-      ctx.fillStyle = '#ffd700';
-      ctx.beginPath();
-      ctx.arc(sx, sy, flashR, 0, Math.PI * 2);
-      ctx.fill();
-      // Outer golden ring
-      ctx.globalAlpha = flashAlpha * 0.6;
-      ctx.strokeStyle = '#ffaa00';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(sx, sy, flashR + 4, 0, Math.PI * 2);
-      ctx.stroke();
-      // Golden glow on glow canvas
-      if (this.glowEnabled) {
-        this.glowCtx.globalAlpha = flashAlpha * 0.5;
-        this.glowCtx.fillStyle = '#ffd700';
-        const glowR = flashR + 10;
-        this.glowCtx.beginPath();
-        this.glowCtx.arc(sx, sy, glowR, 0, Math.PI * 2);
-        this.glowCtx.fill();
-        this.glowCtx.globalAlpha = 1;
-      }
     }
 
     // Storm visual: pulsing cyan ring when particle storm is active
@@ -636,6 +599,23 @@ export class CanvasRenderer {
       ctx.arc(sx, sy, r + 2, 0, Math.PI * 2);
       ctx.stroke();
     }
+
+    // Reflected ripple arc: faint off-white arc pointing from player toward DM node (30° wide)
+    for (const node of nodes) {
+      if (!node.reflWave || node.reflWave.alpha <= 0.01 || node.reflWave.radius <= 0) continue;
+      const rw = node.reflWave;
+      const { sx: rwsx, sy: rwsy } = this.camera.worldToScreen(rw.x, rw.y);
+      const { sx: nodeSx, sy: nodeSy } = this.camera.worldToScreen(node.x, node.y);
+      const angle = Math.atan2(nodeSy - rwsy, nodeSx - rwsx);
+      const arcHalf = Math.PI / 12; // ±15° = 30° total arc
+      ctx.globalAlpha = rw.alpha * 0.55;
+      ctx.strokeStyle = 'rgba(200, 220, 255, 1)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(rwsx, rwsy, rw.radius, angle - arcHalf, angle + arcHalf);
+      ctx.stroke();
+    }
+
     ctx.restore();
   }
 
@@ -908,6 +888,16 @@ export class CanvasRenderer {
         const threshold = this._visualThresholds[newLevel];
         this.bus.emit('visual:threshold:changed', threshold);
       }
+
+      // Continuously interpolate size within the current threshold band
+      const curT = this._visualThresholds[newLevel];
+      const nextT = this._visualThresholds[newLevel + 1];
+      if (nextT) {
+        const t = Math.min(1, Math.max(0, (mass - curT.minMass) / (nextT.minMass - curT.minMass)));
+        this._visualTargetSize = curT.size + (nextT.size - curT.size) * t;
+      } else {
+        this._visualTargetSize = curT.size;
+      }
     }
   }
 
@@ -1031,18 +1021,22 @@ export class CanvasRenderer {
 
     const activeWaves = dmInfluences.filter(dm => dm.pulsing && dm.waveAlpha > 0.01 && dm.waveRadius > 0);
 
-    // Collect reflected ripples — same dust effect as main wave but weaker and smaller
+    // Collect reflected ripples — constrained to 30° arc pointing back toward the DM node
+    const reflectedWaves = [];
     if (this._darkMatterActive && this._darkMatterSystem) {
       for (const node of this._darkMatterSystem.getNodes()) {
         const rw = node.reflWave;
         if (rw && rw.alpha > 0.01 && rw.radius > 0) {
           const { sx: rwsx, sy: rwsy } = this.camera.worldToScreen(rw.x, rw.y);
-          activeWaves.push({
+          const { sx: nodeSx, sy: nodeSy } = this.camera.worldToScreen(node.x, node.y);
+          reflectedWaves.push({
             sx: rwsx,
             sy: rwsy,
             waveRadius: rw.radius,
             waveMaxRadius: 140,
             waveAlpha: rw.alpha * 0.5,
+            dirAngle: Math.atan2(nodeSy - rwsy, nodeSx - rwsx),
+            arcHalfWidth: Math.PI / 12, // ±15° = 30° total arc
           });
         }
       }
@@ -1082,7 +1076,21 @@ export class CanvasRenderer {
           if (distFromWave < 50) {
             const ringFactor  = (1 - distFromWave / 50) * wave.waveAlpha;
             const distFalloff = Math.max(0, 1 - dist / wave.waveMaxRadius);
-            targetDy = Math.min(targetDy, -ringFactor * distFalloff * 14);
+            targetDy = Math.min(targetDy, -ringFactor * distFalloff * 18);
+          }
+        }
+        for (const wave of reflectedWaves) {
+          const ddx = sx - wave.sx;
+          const ddy = sy - wave.sy;
+          const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+          const distFromWave = Math.abs(dist - wave.waveRadius);
+          if (distFromWave < 50) {
+            const particleAngle = Math.atan2(ddy, ddx);
+            const angleDiff = Math.abs(((particleAngle - wave.dirAngle + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+            if (angleDiff > wave.arcHalfWidth) continue;
+            const ringFactor  = (1 - distFromWave / 50) * wave.waveAlpha;
+            const distFalloff = Math.max(0, 1 - dist / wave.waveMaxRadius);
+            targetDy = Math.min(targetDy, -ringFactor * distFalloff * 18);
           }
         }
 
@@ -1179,7 +1187,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=90b0d0e').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=2aa356b').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

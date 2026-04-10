@@ -4,41 +4,41 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=90b0d0e';
-import { LogBuffer } from './core/LogBuffer.js?v=90b0d0e';
-import { EventBus } from './core/EventBus.js?v=90b0d0e';
-import { GameLoop } from './core/GameLoop.js?v=90b0d0e';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=90b0d0e';
-import { SaveSystem } from './core/SaveSystem.js?v=90b0d0e';
-import { UpdateChecker } from './core/UpdateChecker.js?v=90b0d0e';
+import { ErrorReporter } from './core/ErrorReporter.js?v=2aa356b';
+import { LogBuffer } from './core/LogBuffer.js?v=2aa356b';
+import { EventBus } from './core/EventBus.js?v=2aa356b';
+import { GameLoop } from './core/GameLoop.js?v=2aa356b';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=2aa356b';
+import { SaveSystem } from './core/SaveSystem.js?v=2aa356b';
+import { UpdateChecker } from './core/UpdateChecker.js?v=2aa356b';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=90b0d0e';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=90b0d0e';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=90b0d0e';
-import { StarManager } from './engine/StarManager.js?v=90b0d0e';
-import { EpochSystem } from './engine/EpochSystem.js?v=90b0d0e';
-import { MoteController } from './engine/MoteController.js?v=90b0d0e';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=90b0d0e';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=90b0d0e';
-import { AutoBuySystem } from './engine/AutoBuySystem.js?v=90b0d0e';
+import { ResourceManager } from './engine/ResourceManager.js?v=2aa356b';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=2aa356b';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=2aa356b';
+import { StarManager } from './engine/StarManager.js?v=2aa356b';
+import { EpochSystem } from './engine/EpochSystem.js?v=2aa356b';
+import { MoteController } from './engine/MoteController.js?v=2aa356b';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=2aa356b';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=2aa356b';
+import { AutoBuySystem } from './engine/AutoBuySystem.js?v=2aa356b';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=90b0d0e';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=2aa356b';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=90b0d0e';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=90b0d0e';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=90b0d0e';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=90b0d0e';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=90b0d0e';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=90b0d0e';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=90b0d0e';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=90b0d0e';
-import { StatsPanel } from './ui/StatsPanel.js?v=90b0d0e';
-import { GoalWidget } from './ui/GoalWidget.js?v=90b0d0e';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=90b0d0e';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=90b0d0e';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=2aa356b';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=2aa356b';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=2aa356b';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=2aa356b';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=2aa356b';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=2aa356b';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=2aa356b';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=2aa356b';
+import { StatsPanel } from './ui/StatsPanel.js?v=2aa356b';
+import { GoalWidget } from './ui/GoalWidget.js?v=2aa356b';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=2aa356b';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=2aa356b';
 
 // === Game State ===
 let gameState = {
@@ -171,7 +171,7 @@ async function bootstrap() {
 
     // Floating number at absorption point
     const floatingText = `+${formatNumber(roundedValue * stormBonus)}`;
-    canvasRenderer.spawnFloatingNumber(floatingText, data.screenX, data.screenY - 8);
+    canvasRenderer.spawnFloatingNumber(floatingText, data.screenX, data.screenY - 40);
 
     // Mote Densification: convert absorbed motes to mass
     if (data.quality !== undefined && data.quality >= 0) {

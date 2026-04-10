@@ -8,8 +8,8 @@
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=90b0d0e').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=90b0d0e').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=2aa356b').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=2aa356b').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
@@ -74,10 +74,10 @@ export class DarkMatterSystem {
     this.nodes.push({
       x,
       y,
-      // Time until first pulse (halved for doubled frequency)
-      pulseTimer: 2 + Math.random() * 2.5,
-      // Time between recurring pulses (halved for doubled frequency)
-      pulseInterval: 2.5 + Math.random() * 3,
+      // Time until first pulse (quarter of original for 4× overall frequency)
+      pulseTimer: 1 + Math.random() * 1.25,
+      // Time between recurring pulses (quarter of original for 4× overall frequency)
+      pulseInterval: 1.25 + Math.random() * 1.5,
       waveStrength: params.waveStrength,
       pulsing: false,
       waveRadius: 0,

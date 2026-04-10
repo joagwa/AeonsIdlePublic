@@ -228,7 +228,7 @@
     <h1 id="aeons-the-grand-unfolding-game-mechanics-wiki">Aeons: The Grand Unfolding — Game Mechanics Wiki</h1>
 <blockquote>
 <p><strong>Source of Truth</strong> — This document describes all Epoch 1 mechanics and values.
-Last updated with commit <code>2061547</code>.</p>
+Last updated with commit <code>eb994a1</code>.</p>
 </blockquote>
 <hr>
 <h2 id="table-of-contents">Table of Contents</h2>
@@ -371,7 +371,7 @@ massGain    = 1 × accretionLevel × sliderRate × efficiencyMult  (per second)<
 <tr><td>5</td><td>0</td><td>50</td><td>5.0</td></tr>
 <tr><td>8</td><td>12</td><td>80</td><td>421+</td></tr>
 </tbody></table></div>
-<p>Each conversion tick triggers a <strong>golden flash</strong> on the player character.</p>
+<p>Each conversion tick is silent — the golden flash effect has been removed.</p>
 <h3 id="mote-spawning">Mote Spawning</h3>
 <p>Motes spawn procedurally across the infinite universe. Two systems feed the supply:</p>
 <ol>
@@ -435,8 +435,9 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <tr><td>Dark Matter Siphon (level N)</td><td>Collection radius = 60 + N×40 px</td></tr>
 <tr><td>Gravity Amplifier II (level N)</td><td>Wave force strength = 180 + N×80</td></tr>
 </tbody></table></div>
-<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 360 px/s. The wave radius is dynamically sized to the current player distance + 200 px, ensuring every pulse just reaches the player. Nearby energy motes are pushed outward. The wave also visibly disrupts the space dust layer.</p>
-<p><strong>Reflected ripple:</strong> When the wave front reaches the player, a short semi-circular arc ripples back toward the dark matter node (max 140 px, ~0.7 s duration). Only the half of the arc facing the dark matter source is drawn, evoking a stone-in-pond reflection.</p>
+<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 360 px/s. The wave radius is dynamically sized to the current player distance + 200 px, ensuring every pulse just reaches the player. Nearby energy motes are pushed outward. The wave also visibly disrupts the space dust layer (dust displaced up to 18 px vertically at the wave front, snapping back immediately as the wave passes).</p>
+<p><strong>Pulse frequency:</strong> Interval of 1.25–2.75 s between pulses per node.</p>
+<p><strong>Reflected ripple:</strong> When the wave front reaches the player, a 30-degree off-white arc ripples back toward the dark matter node (max 140 px, ~0.7 s duration). The arc is centred on the direction from the player toward the DM node, and dust within that 30° cone is also displaced — evoking a stone-in-pond reflection.</p>
 <hr>
 <h3 id="space-dust-background">Space Dust Background</h3>
 <blockquote>
@@ -1357,7 +1358,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <p>The player's home object evolves visually as mass increases:</p>
 <ul>
 <li><strong>Shape</strong>: Always a <strong>circle</strong> (not a square/sprite).</li>
-<li><strong>Size</strong>: Scales continuously with mass. The character noticeably grows as more mass is accumulated.</li>
+<li><strong>Size</strong>: Scales continuously with mass. The character's radius interpolates linearly between each visual threshold band as mass increases, growing smoothly rather than jumping at fixed milestones.</li>
 <li>Thresholds are defined in the epoch config's <code>visualThresholds</code> array and change the particle's appearance (colour, glow strength, base size). The rendering smoothly interpolates between threshold states.</li>
 </ul>
 <p>When the home object crosses a visual threshold, a brief <strong>white flash</strong> occurs and a particle boost may trigger.</p>
