@@ -3,7 +3,10 @@
  * Subscribes to EventBus for resource changes and epoch transitions.
  */
 
-import { formatNumber, formatRate } from '../core/NumberFormatter.js?v=0a7a1e2';
+import { formatNumber, formatRate } from '../core/NumberFormatter.js?v=68bc4b8';
+import { getPhysicalMassGrams, formatPhysicalMass } from '../core/MassFormatter.js?v=68bc4b8';
+
+const ELEMENT_IDS = new Set(['hydrogen', 'helium', 'carbon', 'oxygen', 'iron']);
 
 export class ResourcePanel {
   constructor(EventBus) {
@@ -86,6 +89,14 @@ export class ResourcePanel {
 
     const sign = ratePerSec >= 0 ? '+' : '';
     row.rateSpan.textContent = `${sign}${formatRate(ratePerSec)}/s`;
+
+    if (ELEMENT_IDS.has(resourceId) && this._resourceManager) {
+      const span = document.getElementById('phys-mass-display');
+      if (span) {
+        const g = getPhysicalMassGrams(this._resourceManager);
+        span.textContent = g > 0 ? `Physical mass: ${formatPhysicalMass(g)}` : '';
+      }
+    }
   }
 
   _createRow(resourceId, label) {
@@ -108,6 +119,13 @@ export class ResourcePanel {
     el.appendChild(labelSpan);
     el.appendChild(valueSpan);
     el.appendChild(rateSpan);
+
+    if (resourceId === 'mass') {
+      const physSpan = document.createElement('span');
+      physSpan.className = 'resource-phys-mass';
+      physSpan.id = 'phys-mass-display';
+      el.appendChild(physSpan);
+    }
 
     return { el, labelSpan, valueSpan, rateSpan };
   }

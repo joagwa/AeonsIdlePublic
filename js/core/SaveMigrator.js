@@ -28,7 +28,7 @@
  * ─────────────────────────────────────────────────────────────────────
  */
 
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 
 /**
  * Map of version → migration function.
@@ -53,6 +53,12 @@ const migrations = {
     if (data.gameState) {
       data.gameState.cosmicEchoCount = data.gameState.cosmicEchoCount ?? 0;
     }
+    return data;
+  },
+  3(data) {
+    // v2 → v3: elemental fusion update — resource schema changed fundamentally
+    // (heavyElements replaced by H/He/C/O/Fe + molecules). Save is incompatible.
+    data._breakingReset = true;
     return data;
   },
 };

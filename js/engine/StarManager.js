@@ -1,6 +1,6 @@
 /**
- * StarManager — Manages the stellar lifecycle: stage progression,
- * heavy-element yields on cycle completion, and multi-star slots.
+ * StarManager — Manages the stellar lifecycle: stage progression
+ * and multi-star slots.
  */
 
 const STAGE_DURATIONS = {
@@ -12,12 +12,10 @@ const STAGE_DURATIONS = {
 
 const STAGE_ORDER = ['main_sequence', 'red_giant', 'supernova', 'neutron_star'];
 
-const BASE_HEAVY_ELEMENTS_YIELD = 10;
-
 export class StarManager {
-  /** @type {import('../core/EventBus.js?v=0a7a1e2').EventBus} */
+  /** @type {import('../core/EventBus.js?v=68bc4b8').EventBus} */
   #eventBus;
-  /** @type {import('./ResourceManager.js?v=0a7a1e2').ResourceManager} */
+  /** @type {import('./ResourceManager.js?v=68bc4b8').ResourceManager} */
   #resourceManager;
   /** @type {object[]} active star instances */
   #stars = [];
@@ -25,8 +23,8 @@ export class StarManager {
   #starCount = 0;
 
   /**
-   * @param {import('../core/EventBus.js?v=0a7a1e2').EventBus} EventBus
-   * @param {import('./ResourceManager.js?v=0a7a1e2').ResourceManager} resourceManager
+   * @param {import('../core/EventBus.js?v=68bc4b8').EventBus} EventBus
+   * @param {import('./ResourceManager.js?v=68bc4b8').ResourceManager} resourceManager
    */
   constructor(EventBus, resourceManager) {
     this.#eventBus = EventBus;
@@ -47,7 +45,6 @@ export class StarManager {
       stageProgress: 0,
       cyclesCompleted: 0,
       durationMult: 1.0,
-      yieldMult: 1.0,
     };
 
     this.#stars.push(star);
@@ -64,9 +61,7 @@ export class StarManager {
   // ── Tick ───────────────────────────────────────────────────────────────
 
   /**
-   * Advance each star's stage timer. On expiry, transition to the next
-   * stage. When completing a full cycle (neutron_star → main_sequence),
-   * yield heavy elements.
+   * Advance each star's stage timer. On expiry, transition to the next stage.
    * @param {number} dt — seconds since last tick
    */
   tick(dt) {
@@ -82,14 +77,9 @@ export class StarManager {
         const nextIndex = (currentIndex + 1) % STAGE_ORDER.length;
         star.stage = STAGE_ORDER[nextIndex];
 
-        let heavyElementsYielded = 0;
-
         // Cycle complete: neutron_star → main_sequence
         if (previousStage === 'neutron_star' && star.stage === 'main_sequence') {
           star.cyclesCompleted++;
-          heavyElementsYielded =
-            BASE_HEAVY_ELEMENTS_YIELD * star.yieldMult * (1 + star.cyclesCompleted * 0.5);
-          this.#resourceManager.add('heavyElements', heavyElementsYielded);
         }
 
         // Reset timer for new stage
@@ -101,7 +91,6 @@ export class StarManager {
           newStage: star.stage,
           previousStage,
           cyclesCompleted: star.cyclesCompleted,
-          heavyElementsYielded,
         });
       }
     }
@@ -113,20 +102,6 @@ export class StarManager {
   setDurationMult(mult) {
     for (const star of this.#stars) {
       star.durationMult = mult;
-    }
-  }
-
-  /** Recalculate yield multiplier from purchased upgrade effects. */
-  setYieldMult(upgradeSystem) {
-    let mult = 1.0;
-    const effects = upgradeSystem.getPurchasedEffects();
-    for (const effect of effects) {
-      if (effect.effectTarget === 'heavyElements' && effect.effectType === 'rateMultiplier') {
-        mult *= effect.effectMagnitude;
-      }
-    }
-    for (const star of this.#stars) {
-      star.yieldMult = mult;
     }
   }
 

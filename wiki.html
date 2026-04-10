@@ -228,7 +228,7 @@
     <h1 id="aeons-the-grand-unfolding-game-mechanics-wiki">Aeons: The Grand Unfolding — Game Mechanics Wiki</h1>
 <blockquote>
 <p><strong>Source of Truth</strong> — This document describes all Epoch 1 mechanics and values.
-Last updated with commit <code>eb994a1</code>.</p>
+Last updated with commit <code>5dd1f8e</code>.</p>
 </blockquote>
 <hr>
 <h2 id="table-of-contents">Table of Contents</h2>
@@ -245,6 +245,9 @@ Last updated with commit <code>eb994a1</code>.</p>
 <li><a href="#dark-matter-node-system">Dark Matter Node System</a></li>
 <li><a href="#space-dust-background">Space Dust Background</a></li>
 <li><a href="#star-lifecycle">Star Lifecycle</a></li>
+<li><a href="#elemental-fusion-system">Elemental Fusion System</a></li>
+<li><a href="#molecule-synthesis">Molecule Synthesis</a></li>
+<li><a href="#physical-mass-display">Physical Mass Display</a></li>
 <li><a href="#upgrades">Upgrades</a></li>
 <li><a href="#cost-formula">Cost Formula</a></li>
 <li><a href="#effect-scaling-rules">Effect Scaling Rules</a></li>
@@ -265,14 +268,23 @@ Last updated with commit <code>eb994a1</code>.</p>
 <p>The epoch ends when you reach the <strong>"A World with Oceans"</strong> milestone (mass ≥ 10,000,000,000).</p>
 <hr>
 <h2 id="resources">Resources</h2>
+<h3 id="elements-molecules">Elements &amp; Molecules</h3>
 <div class="table-wrapper"><table>
-<thead><tr><th>Resource</th><th>Initial</th><th>Cap</th><th>Visible</th><th>Derived</th><th>Description</th></tr></thead>
+<thead><tr><th>Resource</th><th>Initial</th><th>Cap</th><th>Visible</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><strong>Energy</strong></td><td>0</td><td>500</td><td>✅</td><td>No</td><td>Raw quantum energy — earned by absorbing motes or clicking</td></tr>
-<tr><td><strong>Dark Matter</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_firstAtom)</td><td>No</td><td>Invisible scaffolding of the cosmos</td></tr>
-<tr><td><strong>Mass</strong></td><td>0</td><td>None</td><td>✅</td><td>No</td><td>Accumulated matter — the core progression metric</td></tr>
-<tr><td><strong>Gravity</strong></td><td>0</td><td>None</td><td>✅</td><td>Yes</td><td>Derived from Mass; accelerates ambient collection</td></tr>
-<tr><td><strong>Heavy Elements</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_supernova)</td><td>No</td><td>Produced by stellar cycles</td></tr>
+<tr><td><strong>Energy</strong></td><td>0</td><td>500</td><td>✅</td><td>Raw quantum energy — earned by absorbing motes or clicking</td></tr>
+<tr><td><strong>Dark Matter</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_firstAtom)</td><td>Invisible scaffolding of the cosmos</td></tr>
+<tr><td><strong>Mass</strong></td><td>0</td><td>None</td><td>✅</td><td>Accumulated matter — the core progression metric</td></tr>
+<tr><td><strong>Gravity</strong></td><td>0</td><td>None</td><td>✅ (derived)</td><td>Derived from Mass; accelerates ambient collection</td></tr>
+<tr><td><strong>Hydrogen</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_firstAtom)</td><td>First and most abundant element — fuel for stellar fusion</td></tr>
+<tr><td><strong>Helium</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first production)</td><td>Forged from hydrogen in stellar cores</td></tr>
+<tr><td><strong>Carbon</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first production)</td><td>Triple-alpha fusion product of red giant stars</td></tr>
+<tr><td><strong>Oxygen</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first production)</td><td>Helium fusion product — most abundant element in rocky planets</td></tr>
+<tr><td><strong>Iron</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_supernova)</td><td>End product of stellar nucleosynthesis — forged in supernovae</td></tr>
+<tr><td><strong>Water (H₂O)</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first synthesis)</td><td>Universal solvent</td></tr>
+<tr><td><strong>Carbon Dioxide (CO₂)</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first synthesis)</td><td>Key to planetary atmospheres</td></tr>
+<tr><td><strong>Methane (CH₄)</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first synthesis)</td><td>Found in gas giants and early atmospheres</td></tr>
+<tr><td><strong>Iron Oxide (Fe₂O₃)</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first synthesis)</td><td>Rust — iron reacting with oxygen</td></tr>
 </tbody></table></div>
 <hr>
 <h2 id="core-mechanics">Core Mechanics</h2>
@@ -456,11 +468,65 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <li>At the expanding wave front, dust is subtly brightened (no size expansion — prevents the ring-of-pixels artefact)</li>
 </ul>
 <hr>
+<h3 id="star-lifecycle">Star Lifecycle</h3>
 <p>Unlocked at <strong>ms_mainSequenceStar</strong> (mass ≥ 500,000). Stars cycle through stages:</p>
 <ol>
 <li>Main Sequence → 2. Red Giant → 3. Supernova → 4. Neutron Star → 5. Second Generation</li>
 </ol>
-<p>Each stage triggers milestones and unlocks upgrades. Heavy Elements are produced during stellar cycles.</p>
+<p>Each stage triggers milestones and unlocks upgrades. Elemental fusion runs continuously while a star is active (see <a href="#elemental-fusion-system">Elemental Fusion System</a>).</p>
+<hr>
+<h3 id="elemental-fusion-system">Elemental Fusion System</h3>
+<p>Driven by <code>FusionEngine.js</code>, which listens to <code>star:created</code> and <code>star:stage:changed</code> events and runs per-star reactions each tick.</p>
+<p><strong>Main Sequence (H → He)</strong></p>
+<pre><code>Rate: 1.0 He/s × hFusionMult  (consumes 4H per 1He)</code></pre>
+<p><strong>Red Giant (He → C and He → O)</strong></p>
+<pre><code>Carbon rate:  0.3 C/s × heFusionMult  (consumes 3He per 1C)
+Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
+<p><strong>Supernova (burst)</strong></p>
+<pre><code>On stage entry: +10 × ironYieldMult  Fe (one-time burst)</code></pre>
+<p><strong>Hydrogen bootstrap</strong> — On <code>ms_firstAtom</code> reward:</p>
+<pre><code>hydrogen += mass × 0.1,  helium += mass × 0.025</code></pre>
+<p>Every mass-conversion pulse also seeds hydrogen:</p>
+<pre><code>hydrogen += massGained × 0.1</code></pre>
+<p><strong>Fusion multiplier upgrades:</strong></p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Upgrade</th><th>Effect Type</th><th>Magnitude/level</th></tr></thead>
+<tbody>
+<tr><td>Hydrogen Fusion</td><td><code>hFusionMult</code></td><td>×1.5</td></tr>
+<tr><td>Helium Ignition</td><td><code>heFusionMult</code></td><td>×1.5</td></tr>
+<tr><td>Extended Main Sequence</td><td><code>ironYieldMult</code></td><td>×1.5</td></tr>
+</tbody></table></div>
+<p>Reactions are capped by ingredient availability. If hydrogen is scarce, helium production scales proportionally down.</p>
+<hr>
+<h3 id="molecule-synthesis">Molecule Synthesis</h3>
+<p>Driven by <code>MoleculeEngine.js</code>, which runs passively each tick once a molecule's resource is <code>visible: true</code>.</p>
+<p><strong>Recipes (rate = molecules/s, limited by ingredient availability):</strong></p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Molecule</th><th>Ingredients</th><th>Rate/s</th></tr></thead>
+<tbody>
+<tr><td>Water (H₂O)</td><td>2H + 1O</td><td>0.010</td></tr>
+<tr><td>Carbon Dioxide (CO₂)</td><td>1C + 2O</td><td>0.010</td></tr>
+<tr><td>Methane (CH₄)</td><td>1C + 4H</td><td>0.010</td></tr>
+<tr><td>Iron Oxide (Fe₂O₃)</td><td>2Fe + 3O</td><td>0.005</td></tr>
+</tbody></table></div>
+<p>Molecules become visible when first synthesised; the <code>molecule:first</code> event fires and reveals the resource in the UI.</p>
+<hr>
+<h3 id="physical-mass-display">Physical Mass Display</h3>
+<p>The Resource Panel shows a sub-label under the <strong>Mass</strong> row with the physical mass in SI units, derived from the actual atomic weights of all accumulated elements.</p>
+<p><strong>Formula:</strong></p>
+<pre><code>physicalMassGrams = Σ(element_amount × atomicWeight_amu) × 1.66054e-24 g/amu</code></pre>
+<p><strong>Atomic weights used:</strong></p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Element</th><th>amu</th></tr></thead>
+<tbody>
+<tr><td>Hydrogen</td><td>1.008</td></tr>
+<tr><td>Helium</td><td>4.003</td></tr>
+<tr><td>Carbon</td><td>12.011</td></tr>
+<tr><td>Oxygen</td><td>15.999</td></tr>
+<tr><td>Iron</td><td>55.845</td></tr>
+</tbody></table></div>
+<p><strong>SI scale (auto-ranging):</strong> ag → fg → pg → ng → µg → mg → g → kg → t → kt → Mt</p>
+<p>Early game amounts land in the attogram–femtogram range (scientifically correct for atomic-scale matter).</p>
 <hr>
 <h2 id="upgrades">Upgrades</h2>
 <h3 id="cost-formula">Cost Formula</h3>
@@ -1113,7 +1179,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <hr>
 <h4 id="extended-main-sequence">Extended Main Sequence</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>×1.5 heavy elements rate</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>×1.5 iron yield from supernova bursts per level (<code>ironYieldMult</code>)</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Gravity Amplifier II</td></tr>
@@ -1121,7 +1187,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <tr><td><strong>Max Level</strong></td><td>1</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>HE Multiplier</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Iron Burst Multiplier</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>200,000</td><td>×1.5</td></tr>
 </tbody></table></div>
@@ -1145,7 +1211,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <div class="table-wrapper"><table>
 <thead><tr><th><strong>Effect</strong></th><th>Reduces star cycle duration (×0.8/level)</th></tr></thead>
 <tbody>
-<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Cost Resource</strong></td><td>Iron</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Extended Main Sequence</td></tr>
 <tr><td><strong>Milestone</strong></td><td>ms_supernova</td></tr>
 <tr><td><strong>Max Level</strong></td><td>3</td></tr>
@@ -1153,26 +1219,26 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <div class="table-wrapper"><table>
 <thead><tr><th>Level</th><th>Cost</th><th>Cycle Duration Multiplier</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>50</td><td>×0.80 (80%)</td></tr>
-<tr><td>2</td><td>100</td><td>×0.64 (64%)</td></tr>
-<tr><td>3</td><td>200</td><td>×0.51 (51%)</td></tr>
+<tr><td>1</td><td>10</td><td>×0.80 (80%)</td></tr>
+<tr><td>2</td><td>20</td><td>×0.64 (64%)</td></tr>
+<tr><td>3</td><td>40</td><td>×0.51 (51%)</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="elemental-yield">Elemental Yield</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Multiplies heavy element output (×2.0/level)</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies iron output from fusion (×2.0/level)</th></tr></thead>
 <tbody>
-<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Cost Resource</strong></td><td>Iron</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Rapid Cycling</td></tr>
-<tr><td><strong>Milestone</strong></td><td>ms_secondGenStars (heavyElements ≥ 50)</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_secondGenStars (iron ≥ 25)</td></tr>
 <tr><td><strong>Max Level</strong></td><td>3</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>HE Multiplier</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Iron Multiplier</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>150</td><td>×2.0</td></tr>
-<tr><td>2</td><td>300</td><td>×4.0</td></tr>
-<tr><td>3</td><td>600</td><td>×8.0</td></tr>
+<tr><td>1</td><td>50</td><td>×2.0</td></tr>
+<tr><td>2</td><td>100</td><td>×4.0</td></tr>
+<tr><td>3</td><td>200</td><td>×8.0</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="event-horizon">Event Horizon</h4>
@@ -1210,27 +1276,65 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <tr><td>1</td><td>500</td><td>100 px</td></tr>
 </tbody></table></div>
 <hr>
+<h4 id="hydrogen-fusion">Hydrogen Fusion</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.5 H→He fusion rate per level (<code>hFusionMult</code>)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Protostar Ignition</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_mainSequenceStar (mass ≥ 500,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>H→He Rate Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>×1.50</td></tr>
+<tr><td>2</td><td>1,000</td><td>×2.25</td></tr>
+<tr><td>3</td><td>2,000</td><td>×3.38</td></tr>
+<tr><td>4</td><td>4,000</td><td>×5.06</td></tr>
+<tr><td>5</td><td>8,000</td><td>×7.59</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="helium-ignition">Helium Ignition</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.5 He→C/O fusion rate per level (<code>heFusionMult</code>)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Helium</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Hydrogen Fusion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_heliumAccumulated (helium ≥ 500)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>He→C/O Rate Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100</td><td>×1.50</td></tr>
+<tr><td>2</td><td>200</td><td>×2.25</td></tr>
+<tr><td>3</td><td>400</td><td>×3.38</td></tr>
+<tr><td>4</td><td>800</td><td>×5.06</td></tr>
+<tr><td>5</td><td>1,600</td><td>×7.59</td></tr>
+</tbody></table></div>
+<hr>
 <h3 id="tier-3-upgrades">Tier 3 Upgrades</h3>
 <h4 id="planetesimal-sweep">Planetesimal Sweep</h4>
 <div class="table-wrapper"><table>
 <thead><tr><th><strong>Effect</strong></th><th>×2.0 mass rate</th></tr></thead>
 <tbody>
-<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Cost Resource</strong></td><td>Iron</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Elemental Yield</td></tr>
-<tr><td><strong>Milestone</strong></td><td>ms_planetaryDisc (heavyElements ≥ 200)</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_planetaryDisc (iron ≥ 100)</td></tr>
 <tr><td><strong>Max Level</strong></td><td>1</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
 <thead><tr><th>Level</th><th>Cost</th><th>Mass Multiplier</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>500</td><td>×2.0</td></tr>
+<tr><td>1</td><td>100</td><td>×2.0</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="iron-core-development">Iron Core Development</h4>
 <div class="table-wrapper"><table>
 <thead><tr><th><strong>Effect</strong></th><th>+50.0 mass/s</th></tr></thead>
 <tbody>
-<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Cost Resource</strong></td><td>Iron</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Planetesimal Sweep</td></tr>
 <tr><td><strong>Milestone</strong></td><td>ms_planetesimals (mass ≥ 10,000,000)</td></tr>
 <tr><td><strong>Max Level</strong></td><td>1</td></tr>
@@ -1238,26 +1342,25 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <div class="table-wrapper"><table>
 <thead><tr><th>Level</th><th>Cost</th><th>Mass Rate Bonus</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>1,000</td><td>+50.0/s</td></tr>
+<tr><td>1</td><td>200</td><td>+50.0/s</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="hydrological-cycle">Hydrological Cycle</h4>
 <div class="table-wrapper"><table>
 <thead><tr><th><strong>Effect</strong></th><th>+50,000 energy cap per level</th></tr></thead>
 <tbody>
-<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Cost Resource</strong></td><td>Iron</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Iron Core Development</td></tr>
 <tr><td><strong>Milestone</strong></td><td>ms_rockyPlanet (mass ≥ 1,000,000,000)</td></tr>
-<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
 <thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th><th>Total Energy Cap (w/ Atomic Binding 5)</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>2,000</td><td>+50,000</td><td>55,500</td></tr>
-<tr><td>2</td><td>4,000</td><td>+100,000</td><td>105,500</td></tr>
-<tr><td>3</td><td>8,000</td><td>+150,000</td><td>155,500</td></tr>
-<tr><td>4</td><td>16,000</td><td>+200,000</td><td>205,500</td></tr>
-<tr><td>5</td><td>32,000</td><td>+250,000</td><td>255,500</td></tr>
+<tr><td>1</td><td>500</td><td>+50,000</td><td>55,500</td></tr>
+<tr><td>5</td><td>8,000</td><td>+250,000</td><td>255,500</td></tr>
+<tr><td>10</td><td>256,000</td><td>+500,000</td><td>505,500</td></tr>
+<tr><td>25</td><td>~8.4B</td><td>+1,250,000</td><td>1,255,500</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="cosmic-optimisation">Cosmic Optimisation</h4>
@@ -1279,7 +1382,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <div class="table-wrapper"><table>
 <thead><tr><th><strong>Effect</strong></th><th>×1.2 cosmic residue earned at epoch completion</th></tr></thead>
 <tbody>
-<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Cost Resource</strong></td><td>Iron</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Cosmic Optimisation</td></tr>
 <tr><td><strong>Milestone</strong></td><td>ms_stablePlanet (mass ≥ 10,000,000,000)</td></tr>
 <tr><td><strong>Max Level</strong></td><td>1</td></tr>
@@ -1296,7 +1399,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Dark Matter</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Dark Matter Catalysis</td></tr>
-<tr><td><strong>Milestone</strong></td><td>ms_planetaryDisc (heavyElements ≥ 200)</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_planetaryDisc (iron ≥ 100)</td></tr>
 <tr><td><strong>Max Level</strong></td><td>50</td></tr>
 </tbody></table></div>
 <pre><code>massRate *= 1.5 ^ level</code></pre>
@@ -1337,21 +1440,26 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <thead><tr><th>#</th><th>ID</th><th>Title</th><th>Condition</th><th>Reward</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>ms_subatomicParticle</td><td>The First Spark</td><td>Game start</td><td>—</td></tr>
-<tr><td>2</td><td>ms_firstAtom</td><td>Birth of Hydrogen</td><td>mass ≥ 50</td><td>Unlocks Dark Matter display</td></tr>
+<tr><td>2</td><td>ms_firstAtom</td><td>Birth of Hydrogen</td><td>mass ≥ 50</td><td>Unlocks Dark Matter + Hydrogen display</td></tr>
 <tr><td>3</td><td>ms_firstMolecule</td><td>Bonded</td><td>mass ≥ 500</td><td>+200 energy + particle storm</td></tr>
 <tr><td>4</td><td>ms_gasCloud</td><td>The Cloud Gathers</td><td>mass ≥ 5,000</td><td>Unlocks DM node generation</td></tr>
 <tr><td>5</td><td>ms_nebulaCondenses</td><td>A Nebula Is Born</td><td>darkMatter ≥ 100</td><td>+50 dark matter + cosmic echo</td></tr>
 <tr><td>6</td><td>ms_protostarIgnites</td><td>A Spark of Fire</td><td>mass ≥ 50,000</td><td>Particle storm</td></tr>
 <tr><td>7</td><td>ms_mainSequenceStar</td><td>A Light in the Dark</td><td>mass ≥ 500,000</td><td>Unlocks star lifecycle</td></tr>
 <tr><td>8</td><td>ms_redGiant</td><td>Growing Old</td><td>Star stage: red_giant</td><td>+2.0 energy rate + cosmic echo</td></tr>
-<tr><td>9</td><td>ms_supernova</td><td>The Great Explosion</td><td>1 star cycle complete</td><td>Unlocks Heavy Elements display</td></tr>
+<tr><td>9</td><td>ms_supernova</td><td>The Great Explosion</td><td>1 star cycle complete</td><td>Unlocks Iron display</td></tr>
 <tr><td>10</td><td>ms_neutronStar</td><td>Remnant of Fire</td><td>Star stage: neutron_star</td><td>Cosmic echo</td></tr>
-<tr><td>11</td><td>ms_secondGenStars</td><td>New Generations</td><td>heavyElements ≥ 50</td><td>Particle storm</td></tr>
-<tr><td>12</td><td>ms_planetaryDisc</td><td>The Disc Forms</td><td>heavyElements ≥ 200</td><td>Cosmic echo</td></tr>
-<tr><td>13</td><td>ms_planetesimals</td><td>Rocks in Space</td><td>mass ≥ 10,000,000</td><td>+5.0 mass rate + particle storm</td></tr>
-<tr><td>14</td><td>ms_protoplanet</td><td>A World Takes Shape</td><td>mass ≥ 100,000,000</td><td>Cosmic echo</td></tr>
-<tr><td>15</td><td>ms_rockyPlanet</td><td>Solid Ground</td><td>mass ≥ 1,000,000,000</td><td>+3.0 HE rate + cosmic echo</td></tr>
-<tr><td>16</td><td>ms_stablePlanet</td><td>A World with Oceans</td><td>mass ≥ 10,000,000,000</td><td><strong>Epoch transition</strong></td></tr>
+<tr><td>11</td><td>ms_heliumAccumulated</td><td>Forging Helium</td><td>helium ≥ 500</td><td>Particle storm</td></tr>
+<tr><td>12</td><td>ms_carbonForged</td><td>The Carbon Spark</td><td>carbon ≥ 50</td><td>Particle storm + cosmic echo</td></tr>
+<tr><td>13</td><td>ms_oxygenRich</td><td>Breath of the Stars</td><td>oxygen ≥ 100</td><td>Cosmic echo</td></tr>
+<tr><td>14</td><td>ms_ironPeak</td><td>The Iron Peak</td><td>iron ≥ 25</td><td>Particle storm + cosmic echo</td></tr>
+<tr><td>15</td><td>ms_firstWater</td><td>First Water</td><td>mol_h2o ≥ 1</td><td>Cosmic echo</td></tr>
+<tr><td>16</td><td>ms_secondGenStars</td><td>New Generations</td><td>iron ≥ 25</td><td>Particle storm</td></tr>
+<tr><td>17</td><td>ms_planetaryDisc</td><td>The Disc Forms</td><td>iron ≥ 100</td><td>Cosmic echo</td></tr>
+<tr><td>18</td><td>ms_planetesimals</td><td>Rocks in Space</td><td>mass ≥ 10,000,000</td><td>+5.0 mass rate + particle storm</td></tr>
+<tr><td>19</td><td>ms_protoplanet</td><td>A World Takes Shape</td><td>mass ≥ 100,000,000</td><td>Cosmic echo</td></tr>
+<tr><td>20</td><td>ms_rockyPlanet</td><td>Solid Ground</td><td>mass ≥ 1,000,000,000</td><td>+3.0 iron rate + cosmic echo</td></tr>
+<tr><td>21</td><td>ms_stablePlanet</td><td>A World with Oceans</td><td>mass ≥ 10,000,000,000</td><td><strong>Epoch transition</strong></td></tr>
 </tbody></table></div>
 <hr>
 <h2 id="visual-thresholds">Visual Thresholds</h2>
@@ -1405,7 +1513,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <pre><code>completionScore = (milestonesTriggered / 16) × 0.5 + (upgradesPurchased / totalUpgrades) × 0.5
 bonusValue = 0.05 + completionScore × 0.15</code></pre>
 <blockquote>
-<p><strong>Note</strong>: The <code>totalUpgrades</code> constant in code is currently <code>23</code> (a legacy value). The actual upgrade count has expanded to ~45. This discrepancy means the upgrade contribution is proportionally higher than intended. A future update will recalibrate this.</p>
+<p><strong>Note</strong>: <code>TOTAL_MILESTONES</code> and <code>TOTAL_UPGRADES</code> in code are legacy constants (16 and 23 respectively). The actual counts have grown to 21 milestones and ~47 upgrades. A future update will recalibrate these constants.</p>
 </blockquote>
 <div class="table-wrapper"><table>
 <thead><tr><th>Completion</th><th>Bonus</th></tr></thead>

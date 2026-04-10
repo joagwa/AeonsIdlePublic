@@ -4,41 +4,43 @@
  */
 
 // === Core Imports ===
-import { ErrorReporter } from './core/ErrorReporter.js?v=0a7a1e2';
-import { LogBuffer } from './core/LogBuffer.js?v=0a7a1e2';
-import { EventBus } from './core/EventBus.js?v=0a7a1e2';
-import { GameLoop } from './core/GameLoop.js?v=0a7a1e2';
-import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=0a7a1e2';
-import { SaveSystem } from './core/SaveSystem.js?v=0a7a1e2';
-import { UpdateChecker } from './core/UpdateChecker.js?v=0a7a1e2';
+import { ErrorReporter } from './core/ErrorReporter.js?v=68bc4b8';
+import { LogBuffer } from './core/LogBuffer.js?v=68bc4b8';
+import { EventBus } from './core/EventBus.js?v=68bc4b8';
+import { GameLoop } from './core/GameLoop.js?v=68bc4b8';
+import { formatNumber, setNotationMode, getNotationMode } from './core/NumberFormatter.js?v=68bc4b8';
+import { SaveSystem } from './core/SaveSystem.js?v=68bc4b8';
+import { UpdateChecker } from './core/UpdateChecker.js?v=68bc4b8';
 
 // === Engine Imports ===
-import { ResourceManager } from './engine/ResourceManager.js?v=0a7a1e2';
-import { UpgradeSystem } from './engine/UpgradeSystem.js?v=0a7a1e2';
-import { MilestoneSystem } from './engine/MilestoneSystem.js?v=0a7a1e2';
-import { StarManager } from './engine/StarManager.js?v=0a7a1e2';
-import { EpochSystem } from './engine/EpochSystem.js?v=0a7a1e2';
-import { MoteController } from './engine/MoteController.js?v=0a7a1e2';
-import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=0a7a1e2';
-import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=0a7a1e2';
-import { AutoBuySystem } from './engine/AutoBuySystem.js?v=0a7a1e2';
+import { ResourceManager } from './engine/ResourceManager.js?v=68bc4b8';
+import { UpgradeSystem } from './engine/UpgradeSystem.js?v=68bc4b8';
+import { MilestoneSystem } from './engine/MilestoneSystem.js?v=68bc4b8';
+import { StarManager } from './engine/StarManager.js?v=68bc4b8';
+import { EpochSystem } from './engine/EpochSystem.js?v=68bc4b8';
+import { MoteController } from './engine/MoteController.js?v=68bc4b8';
+import { ProceduralMoteGenerator } from './engine/ProceduralMoteGenerator.js?v=68bc4b8';
+import { DarkMatterSystem } from './engine/DarkMatterSystem.js?v=68bc4b8';
+import { AutoBuySystem } from './engine/AutoBuySystem.js?v=68bc4b8';
+import { FusionEngine } from './engine/FusionEngine.js?v=68bc4b8';
+import { MoleculeEngine } from './engine/MoleculeEngine.js?v=68bc4b8';
 
 // === Renderer Imports ===
-import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=0a7a1e2';
+import { CanvasRenderer } from './renderer/CanvasRenderer.js?v=68bc4b8';
 
 // === UI Imports ===
-import { ResourcePanel } from './ui/ResourcePanel.js?v=0a7a1e2';
-import { UpgradePanel } from './ui/UpgradePanel.js?v=0a7a1e2';
-import { MilestoneNotification } from './ui/MilestoneNotification.js?v=0a7a1e2';
-import { ChroniclePanel } from './ui/ChroniclePanel.js?v=0a7a1e2';
-import { SettingsPanel } from './ui/SettingsPanel.js?v=0a7a1e2';
-import { OfflineProgress } from './ui/OfflineProgress.js?v=0a7a1e2';
-import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=0a7a1e2';
-import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=0a7a1e2';
-import { StatsPanel } from './ui/StatsPanel.js?v=0a7a1e2';
-import { GoalWidget } from './ui/GoalWidget.js?v=0a7a1e2';
-import { MobileTabBar } from './ui/MobileTabBar.js?v=0a7a1e2';
-import { FeedbackPanel } from './ui/FeedbackPanel.js?v=0a7a1e2';
+import { ResourcePanel } from './ui/ResourcePanel.js?v=68bc4b8';
+import { UpgradePanel } from './ui/UpgradePanel.js?v=68bc4b8';
+import { MilestoneNotification } from './ui/MilestoneNotification.js?v=68bc4b8';
+import { ChroniclePanel } from './ui/ChroniclePanel.js?v=68bc4b8';
+import { SettingsPanel } from './ui/SettingsPanel.js?v=68bc4b8';
+import { OfflineProgress } from './ui/OfflineProgress.js?v=68bc4b8';
+import { EpochTransitionOverlay } from './ui/EpochTransitionOverlay.js?v=68bc4b8';
+import { ResidualBonusPanel } from './ui/ResidualBonusPanel.js?v=68bc4b8';
+import { StatsPanel } from './ui/StatsPanel.js?v=68bc4b8';
+import { GoalWidget } from './ui/GoalWidget.js?v=68bc4b8';
+import { MobileTabBar } from './ui/MobileTabBar.js?v=68bc4b8';
+import { FeedbackPanel } from './ui/FeedbackPanel.js?v=68bc4b8';
 
 // === Game State ===
 let gameState = {
@@ -71,6 +73,9 @@ upgradeSystem.setMilestoneSystem(milestoneSystem);
 const saveSystem = new SaveSystem(EventBus, resourceManager, upgradeSystem, milestoneSystem, starManager, epochSystem, gameState, moteController, darkMatterSystem);
 
 const autoBuySystem = new AutoBuySystem(EventBus, upgradeSystem);
+
+const fusionEngine = new FusionEngine(EventBus, resourceManager);
+const moleculeEngine = new MoleculeEngine(EventBus, resourceManager);
 
 const canvasRenderer = new CanvasRenderer(EventBus);
 const resourcePanel = new ResourcePanel(EventBus);
@@ -205,8 +210,10 @@ async function bootstrap() {
             const voidRegion = canvasRenderer.canvasConfig?.regions?.find(r => r.regionId === 'void');
             if (voidRegion) darkMatterSystem.setVoidBounds(voidRegion.worldBounds);
             darkMatterSystem.activate();
-          } else if (reward.target === 'heavyElements_display') {
-            resourceManager.setVisible('heavyElements', true);
+          } else if (reward.target === 'hydrogen_display') {
+            resourceManager.setVisible('hydrogen', true);
+          } else if (reward.target === 'iron_display') {
+            resourceManager.setVisible('iron', true);
           } else if (reward.target === 'star_lifecycle') {
             starManager.addStar();
           }
@@ -233,6 +240,13 @@ async function bootstrap() {
 
   // --- Star milestones ---
   EventBus.on('milestone:triggered', (data) => {
+    if (data.milestoneId === 'ms_firstAtom') {
+      const massState = resourceManager.get('mass');
+      if (massState) {
+        resourceManager.add('hydrogen', massState.currentValue * 0.1);
+        resourceManager.add('helium', massState.currentValue * 0.025);
+      }
+    }
     if (data.milestoneId === 'ms_mainSequenceStar') {
       if (starManager.getStates().length === 0) {
         starManager.addStar();
@@ -249,8 +263,8 @@ async function bootstrap() {
     if (data.upgradeId === 'upg_rapidCycling') {
       starManager.setDurationMult(0.8);
     }
-    if (data.upgradeId === 'upg_starLifeExtension' || data.upgradeId === 'upg_elementalYield') {
-      starManager.setYieldMult(upgradeSystem);
+    if (['upg_starLifeExtension', 'upg_elementalYield', 'upg_hydrogenFusion', 'upg_heliumIgnition'].includes(data.upgradeId)) {
+      fusionEngine.recalculateMults(upgradeSystem);
     }
     
     // Mote generation upgrades — quantity upgrades shift quality tier, not raw count
@@ -301,6 +315,16 @@ async function bootstrap() {
     }
   });
 
+  // --- Fusion element reveal ---
+  EventBus.on('fusion:element:first', ({ element }) => {
+    resourceManager.setVisible(element, true);
+  });
+
+  // --- Molecule synthesis reveal ---
+  EventBus.on('molecule:first', ({ molId }) => {
+    resourceManager.setVisible(molId, true);
+  });
+
   // --- Epoch transition ---
   EventBus.on('epoch:transition:complete', (data) => {
     if (data.canvasConfig) {
@@ -338,6 +362,8 @@ async function bootstrap() {
     resourceManager.tick(dt);
     milestoneSystem.check();
     starManager.tick(dt);
+    fusionEngine.tick(dt);
+    moleculeEngine.tick(dt);
     gameState.totalRealTime += dt;
 
     // --- Dark matter node update ---
@@ -390,6 +416,7 @@ async function bootstrap() {
 
             resourceManager.spend('energy', energyToDrain);
             resourceManager.add('mass', massGained);
+            resourceManager.add('hydrogen', massGained * 0.1);
             EventBus.emit('mass:converted', { energySpent: energyToDrain, massGained });
           }
         }
@@ -419,6 +446,39 @@ async function bootstrap() {
     }
     _lastFrameTs = ts;
     canvasRenderer.onFrame(ts);
+  });
+
+  // Handle breaking save reset (major update incompatibility)
+  EventBus.on('save:breaking_reset', () => {
+    const modal = document.getElementById('reset-notice-modal');
+    if (!modal) return;
+    modal.innerHTML = '';
+    modal.classList.remove('hidden');
+
+    const content = document.createElement('div');
+    content.className = 'modal-content offline-modal-content';
+
+    const heading = document.createElement('h2');
+    heading.textContent = '⚡ New Era — Progress Reset';
+    content.appendChild(heading);
+
+    const body = document.createElement('p');
+    body.style.cssText = 'margin: 12px 0; line-height: 1.6; color: var(--text-secondary, #aaa);';
+    body.innerHTML =
+      'A major update has arrived — <strong style="color:#c8a0ff">Elemental Fusion</strong>. ' +
+      'The universe now tracks individual elements: Hydrogen, Helium, Carbon, Oxygen, and Iron. ' +
+      '<br><br>This changes the core resource system in a way that is incompatible with your previous save. ' +
+      'Your progress has been reset so you can experience the new mechanics from the start.' +
+      '<br><br>The cosmos awaits — may your next run go further.';
+    content.appendChild(body);
+
+    const btn = document.createElement('button');
+    btn.className = 'offline-dismiss';
+    btn.textContent = 'Begin Again';
+    btn.addEventListener('click', () => modal.classList.add('hidden'));
+    content.appendChild(btn);
+
+    modal.appendChild(content);
   });
 
   // --- Attempt load or fresh start ---
@@ -453,6 +513,9 @@ async function bootstrap() {
       canvasRenderer.setDarkMatterActive(true);
     }
   }
+
+  // Sync FusionEngine star stages from loaded save
+  fusionEngine.syncFromStarManager(starManager.getStates());
 
   // Initialise mote controller with home object position from canvas config
   {
@@ -526,6 +589,8 @@ async function bootstrap() {
       upgradeSystem,
       milestoneSystem,
       starManager,
+      fusionEngine,
+      moleculeEngine,
       epochSystem,
       saveSystem,
       canvasRenderer,

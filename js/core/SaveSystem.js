@@ -3,7 +3,7 @@
  * handling for Aeons save data.
  */
 
-import { SaveMigrator } from './SaveMigrator.js?v=0a7a1e2';
+import { SaveMigrator } from './SaveMigrator.js?v=68bc4b8';
 
 const STORAGE_KEY = 'aeons_save_v1';
 const AUTO_SAVE_INTERVAL_MS = 60_000;
@@ -15,7 +15,7 @@ export class SaveSystem {
   #autoSaveTimer = null;
 
   /**
-   * @param {import('./EventBus.js?v=0a7a1e2').EventBus} eventBus
+   * @param {import('./EventBus.js?v=68bc4b8').EventBus} eventBus
    * @param {*} resourceManager
    * @param {*} upgradeSystem
    * @param {*} milestoneSystem
@@ -97,6 +97,14 @@ export class SaveSystem {
       const data = JSON.parse(raw);
       SaveMigrator.migrate(data);
 
+      // Breaking schema change: wipe and notify the player
+      if (data._breakingReset) {
+        console.warn('[SaveSystem] Breaking save incompatibility detected — resetting progress');
+        localStorage.removeItem(STORAGE_KEY);
+        this.eventBus.emit('save:breaking_reset', {});
+        return false;
+      }
+
       if (!data.gameState) {
         console.warn('[SaveSystem] Save data missing gameState');
         return false;
@@ -138,12 +146,15 @@ export class SaveSystem {
   }
 
   /**
-   * Export save data as a Base64-encoded string.
+   * Export save data as a Base64-encoded string (UTF-8 safe).
    * @returns {string}
    */
   export() {
-    const data = this.#buildSaveData();
-    return btoa(JSON.stringify(data));
+    const json = JSON.stringify(this.#buildSaveData());
+    const bytes = new TextEncoder().encode(json);
+    let binary = '';
+    bytes.forEach(b => (binary += String.fromCharCode(b)));
+    return btoa(binary);
   }
 
   /**
@@ -157,7 +168,9 @@ export class SaveSystem {
     // 1. Valid Base64
     let json;
     try {
-      json = atob(str);
+      const binary = atob(str);
+      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+      json = new TextDecoder().decode(bytes);
     } catch {
       return { success: false, error: 'Invalid base64 encoding' };
     }
