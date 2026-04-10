@@ -228,7 +228,7 @@
     <h1 id="aeons-the-grand-unfolding-game-mechanics-wiki">Aeons: The Grand Unfolding — Game Mechanics Wiki</h1>
 <blockquote>
 <p><strong>Source of Truth</strong> — This document describes all Epoch 1 mechanics and values.
-Last updated with commit <code>0dd9b30</code>.</p>
+Last updated with commit <code>28c56a2</code>.</p>
 </blockquote>
 <hr>
 <h2 id="table-of-contents">Table of Contents</h2>
@@ -409,7 +409,7 @@ massGain    = 1 × accretionLevel × sliderRate × efficiencyMult  (per second)<
 <ol>
 <li>Spawns at a random void position (margin ≥ 350 px from region edges).</li>
 <li>Flickers gently at very low opacity (barely visible in the dark void).</li>
-<li>Emits periodic gravity waves (every 5–11 s) that push nearby energy motes outward.</li>
+<li>Emits periodic gravity waves (approx. every 3.2 s) that push nearby energy motes outward.</li>
 <li>Collected when the player moves within the <strong>collection radius</strong> (default 60 px, +40 px per Dark Matter Siphon level).</li>
 <li>Value is compounded based on total nodes already collected this run.</li>
 </ol>
@@ -435,7 +435,7 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <tr><td>Dark Matter Siphon (level N)</td><td>Collection radius = 60 + N×40 px</td></tr>
 <tr><td>Gravity Amplifier II (level N)</td><td>Wave force strength = 180 + N×80</td></tr>
 </tbody></table></div>
-<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 280 px/s to radius 420 px. Nearby energy motes are pushed outward. The wave also visibly disrupts the space dust layer.</p>
+<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 280 px/s. The wave loops at 900 px radius (~3.2 s period), producing a continuous ring effect. The wave fades in linearly over the first 250 px of each cycle to avoid a near-field intensity spike on reset. Nearby energy motes are pushed outward and the wave visibly disrupts the space dust layer.</p>
 <hr>
 <h3 id="space-dust-background">Space Dust Background</h3>
 <blockquote>

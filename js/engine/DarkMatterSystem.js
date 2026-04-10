@@ -7,14 +7,15 @@
  */
 
 // Wave constants — constant-height looping pulse
-const WAVE_CONSTANT_ALPHA = 0.22;  // fixed amplitude (subtle but detectable)
-const WAVE_LOOP_RADIUS    = 2200;  // px — wave resets and loops at this radius
-const WAVE_SPEED          = 280;   // px/s — expansion rate
+const WAVE_CONSTANT_ALPHA  = 0.22;  // fixed amplitude (subtle but detectable)
+const WAVE_LOOP_RADIUS     = 900;   // px — wave resets and loops at this radius
+const WAVE_SPEED           = 280;   // px/s — expansion rate
+const WAVE_FADE_IN_RADIUS  = 250;   // px — alpha fades in over this distance to suppress near-field pre-wave
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=bc1646d').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=bc1646d').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=d436d67').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=d436d67').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
@@ -127,6 +128,11 @@ export class DarkMatterSystem {
           radius: 420,
         });
       }
+      // Fade in wave alpha over the first WAVE_FADE_IN_RADIUS px to eliminate
+      // the near-field high-intensity pre-wave visible right after a loop reset
+      node.waveAlpha = node.waveRadius < WAVE_FADE_IN_RADIUS
+        ? WAVE_CONSTANT_ALPHA * (node.waveRadius / WAVE_FADE_IN_RADIUS)
+        : WAVE_CONSTANT_ALPHA;
 
       // Collection: player proximity check (reuse pre-computed dx/dy)
       if (dx * dx + dy * dy < params.collectRadius * params.collectRadius) {
