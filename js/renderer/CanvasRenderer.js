@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=b505bb0';
-import { Camera } from './Camera.js?v=b505bb0';
-import { ParticleSystem } from './ParticleSystem.js?v=b505bb0';
-import { RegionManager } from './RegionManager.js?v=b505bb0';
-import { FloatingNumbers } from './FloatingNumbers.js?v=b505bb0';
+import { SpriteManager } from './SpriteManager.js?v=b5a5772';
+import { Camera } from './Camera.js?v=b5a5772';
+import { ParticleSystem } from './ParticleSystem.js?v=b5a5772';
+import { RegionManager } from './RegionManager.js?v=b5a5772';
+import { FloatingNumbers } from './FloatingNumbers.js?v=b5a5772';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=b505bb0').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=b5a5772').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -1107,22 +1107,22 @@ export class CanvasRenderer {
           const ddy = sy - dm.sy;
           const dist = Math.sqrt(ddx * ddx + ddy * ddy);
           const distFromWave = Math.abs(dist - dm.waveRadius);
-          if (distFromWave < 80) {
-            const ringFactor  = (1 - distFromWave / 80) * dm.waveAlpha;  // proximity to ring front
+          if (distFromWave < 40) {
+            const ringFactor  = (1 - distFromWave / 40) * dm.waveAlpha;  // proximity to ring front
             const distFalloff = Math.max(0, 1 - dist / 650);              // taper with distance from node
-            p.dvy -= ringFactor * distFalloff * 10000 * dt;
+            p.dvy -= ringFactor * distFalloff * 4000 * dt;
           }
         }
 
-        // Spring back toward rest + velocity damping
+        // Settle without spring-back: velocity damping + gentle positional decay
         if (p.dy !== 0 || p.dvy !== 0) {
-          p.dvy += -2.5 * p.dy * dt;   // restoring force toward dy=0
-          p.dvy *= (1 - 3.5 * dt);      // damping
+          p.dvy *= (1 - 4.0 * dt);     // velocity damping
           p.dy  += p.dvy * dt;
+          p.dy  *= (1 - 1.5 * dt);     // gentle positional decay (no restoring spring)
           if (Math.abs(p.dy) < 0.05 && Math.abs(p.dvy) < 0.05) {
             p.dy = 0; p.dvy = 0;
           } else {
-            p.dy = Math.max(-50, Math.min(50, p.dy));
+            p.dy = Math.max(-12, Math.min(12, p.dy));
           }
         }
 
@@ -1218,7 +1218,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=b505bb0').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=b5a5772').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

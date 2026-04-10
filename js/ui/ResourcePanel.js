@@ -3,7 +3,7 @@
  * Subscribes to EventBus for resource changes and epoch transitions.
  */
 
-import { formatNumber, formatRate } from '../core/NumberFormatter.js?v=b505bb0';
+import { formatNumber, formatRate } from '../core/NumberFormatter.js?v=b5a5772';
 
 export class ResourcePanel {
   constructor(EventBus) {
