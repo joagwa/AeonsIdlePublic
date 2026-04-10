@@ -435,9 +435,9 @@ compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLens
 <tr><td>Dark Matter Siphon (level N)</td><td>Collection radius = 60 + N×40 px</td></tr>
 <tr><td>Gravity Amplifier II (level N)</td><td>Wave force strength = 180 + N×80</td></tr>
 </tbody></table></div>
-<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 360 px/s. The wave radius is dynamically sized to the current player distance + 200 px, ensuring every pulse just reaches the player. Nearby energy motes are pushed outward. The wave also visibly disrupts the space dust layer (dust displaced up to 18 px vertically at the wave front, snapping back immediately as the wave passes).</p>
+<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 360 px/s. The wave radius is dynamically sized to the current player distance + 200 px, ensuring every pulse just reaches the player. Nearby energy motes are pushed outward. The wave also visibly disrupts the space dust layer (dust displaced up to 18 px vertically at the wave front, with a minimum falloff of 0.3 so the hit is always noticeable, snapping back immediately as the wave passes).</p>
 <p><strong>Pulse frequency:</strong> Interval of 1.25–2.75 s between pulses per node.</p>
-<p><strong>Reflected ripple:</strong> When the wave front reaches the player, a 30-degree off-white arc ripples back toward the dark matter node (max 140 px, ~0.7 s duration). The arc is centred on the direction from the player toward the DM node, and dust within that 30° cone is also displaced — evoking a stone-in-pond reflection.</p>
+<p><strong>Reflected ripple:</strong> When the wave front reaches the player, a cosmic dust wave reflects back toward the dark matter node in a 60° cone (±30°, max 140 px, ~0.7 s duration). The cone is centred on the direction from the player toward the DM node, and dust within it is displaced — evoking a stone-in-pond reflection. There is no separate visual arc ring; the effect is expressed entirely through dust displacement.</p>
 <hr>
 <h3 id="space-dust-background">Space Dust Background</h3>
 <blockquote>

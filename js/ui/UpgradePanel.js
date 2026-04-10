@@ -4,7 +4,7 @@
  * Only shows upgrades whose cost-resource has been unlocked.
  */
 
-import { formatNumber } from '../core/NumberFormatter.js?v=2aa356b';
+import { formatNumber } from '../core/NumberFormatter.js?v=0a7a1e2';
 
 const GROUP_ORDER = ['energy', 'mass', 'darkMatter', 'heavyElements'];
 const GROUP_LABELS = {

@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=2aa356b';
-import { Camera } from './Camera.js?v=2aa356b';
-import { ParticleSystem } from './ParticleSystem.js?v=2aa356b';
-import { RegionManager } from './RegionManager.js?v=2aa356b';
-import { FloatingNumbers } from './FloatingNumbers.js?v=2aa356b';
+import { SpriteManager } from './SpriteManager.js?v=0a7a1e2';
+import { Camera } from './Camera.js?v=0a7a1e2';
+import { ParticleSystem } from './ParticleSystem.js?v=0a7a1e2';
+import { RegionManager } from './RegionManager.js?v=0a7a1e2';
+import { FloatingNumbers } from './FloatingNumbers.js?v=0a7a1e2';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -70,7 +70,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=2aa356b').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=0a7a1e2').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -600,22 +600,6 @@ export class CanvasRenderer {
       ctx.stroke();
     }
 
-    // Reflected ripple arc: faint off-white arc pointing from player toward DM node (30° wide)
-    for (const node of nodes) {
-      if (!node.reflWave || node.reflWave.alpha <= 0.01 || node.reflWave.radius <= 0) continue;
-      const rw = node.reflWave;
-      const { sx: rwsx, sy: rwsy } = this.camera.worldToScreen(rw.x, rw.y);
-      const { sx: nodeSx, sy: nodeSy } = this.camera.worldToScreen(node.x, node.y);
-      const angle = Math.atan2(nodeSy - rwsy, nodeSx - rwsx);
-      const arcHalf = Math.PI / 12; // ±15° = 30° total arc
-      ctx.globalAlpha = rw.alpha * 0.55;
-      ctx.strokeStyle = 'rgba(200, 220, 255, 1)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(rwsx, rwsy, rw.radius, angle - arcHalf, angle + arcHalf);
-      ctx.stroke();
-    }
-
     ctx.restore();
   }
 
@@ -1021,7 +1005,7 @@ export class CanvasRenderer {
 
     const activeWaves = dmInfluences.filter(dm => dm.pulsing && dm.waveAlpha > 0.01 && dm.waveRadius > 0);
 
-    // Collect reflected ripples — constrained to 30° arc pointing back toward the DM node
+    // Collect reflected ripples — constrained to 60° arc pointing back toward the DM node
     const reflectedWaves = [];
     if (this._darkMatterActive && this._darkMatterSystem) {
       for (const node of this._darkMatterSystem.getNodes()) {
@@ -1036,7 +1020,7 @@ export class CanvasRenderer {
             waveMaxRadius: 140,
             waveAlpha: rw.alpha * 0.5,
             dirAngle: Math.atan2(nodeSy - rwsy, nodeSx - rwsx),
-            arcHalfWidth: Math.PI / 12, // ±15° = 30° total arc
+            arcHalfWidth: Math.PI / 6, // ±30° = 60° total arc
           });
         }
       }
@@ -1075,7 +1059,8 @@ export class CanvasRenderer {
           const distFromWave = Math.abs(dist - wave.waveRadius);
           if (distFromWave < 50) {
             const ringFactor  = (1 - distFromWave / 50) * wave.waveAlpha;
-            const distFalloff = Math.max(0, 1 - dist / wave.waveMaxRadius);
+            // Clamp falloff to a minimum so the wave always makes a noticeable hit at the player
+            const distFalloff = Math.max(0.3, 1 - dist / wave.waveMaxRadius);
             targetDy = Math.min(targetDy, -ringFactor * distFalloff * 18);
           }
         }
@@ -1187,7 +1172,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=2aa356b').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=0a7a1e2').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
