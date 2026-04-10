@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=d436d67';
-import { Camera } from './Camera.js?v=d436d67';
-import { ParticleSystem } from './ParticleSystem.js?v=d436d67';
-import { RegionManager } from './RegionManager.js?v=d436d67';
-import { FloatingNumbers } from './FloatingNumbers.js?v=d436d67';
+import { SpriteManager } from './SpriteManager.js?v=e93591d';
+import { Camera } from './Camera.js?v=e93591d';
+import { ParticleSystem } from './ParticleSystem.js?v=e93591d';
+import { RegionManager } from './RegionManager.js?v=e93591d';
+import { FloatingNumbers } from './FloatingNumbers.js?v=e93591d';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -71,7 +71,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=d436d67').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=e93591d').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -159,10 +159,6 @@ export class CanvasRenderer {
         // Seed some dark motes immediately
         this.particleSystem?.spawnInitialParticles('void', 80);
       }
-    });
-    this.bus.on('darkMatter:wave', (data) => {
-      // Apply outward radial force to nearby particles on each regular pulse
-      this.particleSystem?.applyRadialForce(data.x, data.y, data.radius, data.strength);
     });
   }
 
@@ -631,6 +627,27 @@ export class CanvasRenderer {
       ctx.beginPath();
       ctx.arc(sx, sy, r, 0, Math.PI * 2);
       ctx.fill();
+
+      // Faint violet ring outlining the node
+      ctx.globalAlpha = op * 1.8;
+      ctx.strokeStyle = '#7a00cc';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r + 2, 0, Math.PI * 2);
+      ctx.stroke();
+      // Reflected ripple: short semi-arc facing back toward the dark matter node
+      if (node.reflWave && node.reflWave.alpha > 0.01) {
+        const rw = node.reflWave;
+        const { sx: rwsx, sy: rwsy } = this.camera.worldToScreen(rw.x, rw.y);
+        const { sx: ndsx, sy: ndsy } = this.camera.worldToScreen(rw.nodeX, rw.nodeY);
+        const angle = Math.atan2(ndsy - rwsy, ndsx - rwsx);
+        ctx.globalAlpha = rw.alpha;
+        ctx.strokeStyle = 'rgba(160, 60, 255, 1)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(rwsx, rwsy, rw.radius, angle - Math.PI * 0.55, angle + Math.PI * 0.55);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -760,7 +777,7 @@ export class CanvasRenderer {
       ctx.globalAlpha = alpha * 0.8;
 
       // Draw arrow
-      ctx.fillStyle = ind.color || '#a0c4ff';
+      ctx.fillStyle = '#a0c4ff';
       ctx.beginPath();
       ctx.moveTo(10, 0);
       ctx.lineTo(-4, -5);
@@ -772,7 +789,7 @@ export class CanvasRenderer {
 
       // Label
       ctx.globalAlpha = alpha * 0.7;
-      ctx.fillStyle = ind.color || '#a0c4ff';
+      ctx.fillStyle = '#a0c4ff';
       ctx.font = '10px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(ind.regionName, edgeX, edgeY - 12);
@@ -975,7 +992,7 @@ export class CanvasRenderer {
     //   shape 1 = 2×2 dot (15%)
     //   shape 2 = horizontal needle 3×1 (15%)
     //   shape 3 = plus cross (10%)
-    const nearParticles = Array.from({ length: 300 }, () => {
+    const nearParticles = Array.from({ length: 600 }, () => {
       const r = rand2();
       const shape = r < 0.60 ? 0 : r < 0.75 ? 1 : r < 0.90 ? 2 : 3;
       return {
@@ -1018,6 +1035,7 @@ export class CanvasRenderer {
           sy,
           clearRadius: 55 + (node.nodeRadius || 6) * 7,
           waveRadius: node.waveRadius || 0,
+          waveMaxRadius: node.waveMaxRadius || 900,
           waveAlpha: node.waveAlpha || 0,
           pulsing: node.pulsing || false,
         });
@@ -1055,22 +1073,22 @@ export class CanvasRenderer {
           const ddy = sy - dm.sy;
           const dist = Math.sqrt(ddx * ddx + ddy * ddy);
           const distFromWave = Math.abs(dist - dm.waveRadius);
-          if (distFromWave < 40) {
-            const ringFactor  = (1 - distFromWave / 40) * dm.waveAlpha;  // proximity to ring front
-            const distFalloff = Math.max(0, 1 - dist / 650);              // taper with distance from node
-            p.dvy -= ringFactor * distFalloff * 4000 * dt;
+          if (distFromWave < 50) {
+            const ringFactor  = (1 - distFromWave / 50) * dm.waveAlpha;  // proximity to ring front
+            const distFalloff = Math.max(0, 1 - dist / dm.waveMaxRadius); // taper with distance from node
+            p.dvy -= ringFactor * distFalloff * 20000 * dt;
           }
         }
 
-        // Settle without spring-back: velocity damping + gentle positional decay
+        // Spring back toward rest + velocity damping
         if (p.dy !== 0 || p.dvy !== 0) {
-          p.dvy *= (1 - 4.0 * dt);     // velocity damping
+          p.dvy += -2.5 * p.dy * dt;   // restoring force toward dy=0
+          p.dvy *= (1 - 3.5 * dt);      // damping
           p.dy  += p.dvy * dt;
-          p.dy  *= (1 - 1.5 * dt);     // gentle positional decay (no restoring spring)
           if (Math.abs(p.dy) < 0.05 && Math.abs(p.dvy) < 0.05) {
             p.dy = 0; p.dvy = 0;
           } else {
-            p.dy = Math.max(-12, Math.min(12, p.dy));
+            p.dy = Math.max(-50, Math.min(50, p.dy));
           }
         }
 
@@ -1091,13 +1109,11 @@ export class CanvasRenderer {
 
         if (alpha < 0.01) continue;
 
-        // Gravity wave displacement: boost brightness and expand size
+        // Gravity wave displacement: subtle brightness boost only (no size expansion)
         const dispAbs = Math.abs(p.dy);
-        let extra = 0;
         if (dispAbs > 0.5) {
-          const dispBoost = Math.min(3.0, 1 + dispAbs / 16);
+          const dispBoost = Math.min(2.0, 1 + dispAbs / 24);
           alpha = Math.min(1.0, alpha * dispBoost);
-          extra = Math.min(2, Math.round(dispAbs / 18));
         }
 
         const px = Math.round(sx);
@@ -1106,20 +1122,19 @@ export class CanvasRenderer {
         ctx.fillStyle = p.color;
 
         // Shape: 0=1×1, 1=2×2, 2=horizontal needle, 3=plus cross
-        // extra pixels expand each shape when pushed by a gravity wave
         switch (p.shape) {
           case 1:  // 2×2 dot
-            ctx.fillRect(px - 1 - extra, py - 1 - extra, 2 + extra * 2, 2 + extra * 2);
+            ctx.fillRect(px - 1, py - 1, 2, 2);
             break;
           case 2:  // horizontal needle 3×1
-            ctx.fillRect(px - 1 - extra, py - extra, 3 + extra * 2, 1 + extra * 2);
+            ctx.fillRect(px - 1, py, 3, 1);
             break;
           case 3:  // plus cross
-            ctx.fillRect(px - 1 - extra, py - extra, 3 + extra * 2, 1 + extra * 2);
-            ctx.fillRect(px - extra, py - 1 - extra, 1 + extra * 2, 3 + extra * 2);
+            ctx.fillRect(px - 1, py, 3, 1);
+            ctx.fillRect(px, py - 1, 1, 3);
             break;
-          default: // 1×1 dot → expands to (1+extra*2)×(1+extra*2)
-            ctx.fillRect(px - extra, py - extra, 1 + extra * 2, 1 + extra * 2);
+          default: // 1×1 dot
+            ctx.fillRect(px, py, 1, 1);
         }
       }
 
@@ -1166,7 +1181,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=d436d67').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=e93591d').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;

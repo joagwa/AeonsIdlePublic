@@ -6,23 +6,17 @@
  *   value_n = compoundFactor ^ totalCollected
  */
 
-// Wave constants — constant-height looping pulse
-const WAVE_CONSTANT_ALPHA  = 0.22;  // fixed amplitude (subtle but detectable)
-const WAVE_LOOP_RADIUS     = 900;   // px — wave resets and loops at this radius
-const WAVE_SPEED           = 280;   // px/s — expansion rate
-const WAVE_FADE_IN_RADIUS  = 250;   // px — alpha fades in over this distance to suppress near-field pre-wave
-
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=d436d67').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=d436d67').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=e93591d').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=e93591d').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;
     this.upgradeSystem = upgradeSystem;
 
     this.active = false;
-    /** @type {Array<{x:number, y:number, pulsing:boolean, waveRadius:number, waveAlpha:number, waveStrength:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean}>} */
+    /** @type {Array<{x:number, y:number, pulseTimer:number, pulseInterval:number, pulsing:boolean, waveRadius:number, waveAlpha:number, nodeRadius:number, flickerTimer:number, displayOpacity:number, collected:boolean, _reflTriggered:boolean, reflWave:{x:number,y:number,nodeX:number,nodeY:number,radius:number,alpha:number}|null}>} */
     this.nodes = [];
     this.totalCollected = 0;
 
@@ -47,6 +41,7 @@ export class DarkMatterSystem {
   _getParams() {
     const spawnLevel    = this.upgradeSystem.getLevel('upg_darkMatterCurrents') || 0;
     const compoundLevel = this.upgradeSystem.getLevel('upg_darkMatterAccelerant') || 0;
+    const maxNodesLevel = this.upgradeSystem.getLevel('upg_darkFlow') || 0;
     const radiusLevel   = this.upgradeSystem.getLevel('upg_darkMatterSiphon') || 0;
     const waveLevel     = this.upgradeSystem.getLevel('upg_gravityAmplifier2') || 0;
     const lensLevel     = this.upgradeSystem.getLevel('upg_gravitationalLensing') || 0;
@@ -54,9 +49,8 @@ export class DarkMatterSystem {
     return {
       // Seconds between node spawns (decreases with upgrades, min 3s)
       spawnInterval: Math.max(3, 20 - spawnLevel * 2),
-      // Max simultaneous nodes — always 1 to keep the void focused
-      // (upg_darkFlow upgrade no longer applies; one node at a time is the intended design)
-      maxNodes: 1,
+      // Max simultaneous nodes in the void
+      maxNodes: 1 + maxNodesLevel,
       // Pixel radius within which the player absorbs a node
       collectRadius: 60 + radiusLevel * 40,
       // Exponential compound factor per collected node — base 2 means each node roughly doubles the value
@@ -80,15 +74,23 @@ export class DarkMatterSystem {
     this.nodes.push({
       x,
       y,
+      // Time until first pulse (halved for doubled frequency)
+      pulseTimer: 2 + Math.random() * 2.5,
+      // Time between recurring pulses (halved for doubled frequency)
+      pulseInterval: 2.5 + Math.random() * 3,
       waveStrength: params.waveStrength,
-      pulsing: true,
+      pulsing: false,
       waveRadius: 0,
-      waveAlpha: WAVE_CONSTANT_ALPHA,
+      waveMaxRadius: 0,
+      waveAlpha: 0,
       nodeRadius: 5 + Math.random() * 4,
       // Offset flicker phase so nodes don't all pulse in sync
       flickerTimer: Math.random() * Math.PI * 2,
       displayOpacity: 0,
       collected: false,
+      // Reflected ripple state — spawned when wave front crosses player position
+      reflWave: null,
+      _reflTriggered: false,
     });
   }
 
@@ -108,33 +110,68 @@ export class DarkMatterSystem {
     const collected = [];
 
     for (const node of this.nodes) {
-      // Pre-compute player offset for the squared-distance collection check
-      const dx = playerX - node.x;
-      const dy = playerY - node.y;
-
       // Gentle flicker: slow sinusoidal opacity variation
       node.flickerTimer += dt * 0.7;
       node.displayOpacity = 0.10 + Math.sin(node.flickerTimer) * 0.04;
 
-      // Constant looping wave — always expanding, resets when it reaches the loop radius
-      node.waveRadius += dt * WAVE_SPEED;
-      if (node.waveRadius >= WAVE_LOOP_RADIUS) {
+      // Distance to player — computed once, used for pulse sizing, ripple trigger, and collection
+      const dx = playerX - node.x;
+      const dy = playerY - node.y;
+      const distToPlayer = Math.sqrt(dx * dx + dy * dy);
+
+      // Pulse countdown — wave max radius = player distance + 200 px so it just passes them
+      node.pulseTimer -= dt;
+      if (node.pulseTimer <= 0) {
+        const waveMaxRadius = distToPlayer + 200;
+        node.pulseTimer = node.pulseInterval;
+        node.pulsing = true;
         node.waveRadius = 0;
+        node.waveMaxRadius = waveMaxRadius;
+        node.waveAlpha = 0.55;
+        node._reflTriggered = false;
+        node.reflWave = null;
         // Notify the rest of the system — ParticleSystem applies radial force
         this.bus.emit('darkMatter:wave', {
           x: node.x,
           y: node.y,
           strength: node.waveStrength,
-          radius: 420,
+          radius: waveMaxRadius,
         });
       }
-      // Fade in wave alpha over the first WAVE_FADE_IN_RADIUS px to eliminate
-      // the near-field high-intensity pre-wave visible right after a loop reset
-      node.waveAlpha = node.waveRadius < WAVE_FADE_IN_RADIUS
-        ? WAVE_CONSTANT_ALPHA * (node.waveRadius / WAVE_FADE_IN_RADIUS)
-        : WAVE_CONSTANT_ALPHA;
 
-      // Collection: player proximity check (reuse pre-computed dx/dy)
+      // Expand the visual wave ring
+      if (node.pulsing) {
+        node.waveRadius += dt * 360;
+        node.waveAlpha = Math.max(0, 0.55 * (1 - node.waveRadius / node.waveMaxRadius));
+        if (node.waveRadius >= node.waveMaxRadius) {
+          node.pulsing = false;
+          node.waveAlpha = 0;
+        }
+      }
+
+      // Reflected ripple: trigger once when wave front crosses player position
+      if (node.pulsing && !node._reflTriggered && node.waveRadius >= distToPlayer) {
+        node._reflTriggered = true;
+        node.reflWave = {
+          x: playerX,
+          y: playerY,
+          nodeX: node.x,
+          nodeY: node.y,
+          radius: 0,
+          alpha: 0.5,
+        };
+      }
+
+      // Advance the reflected ripple
+      if (node.reflWave) {
+        node.reflWave.radius += dt * 200;
+        node.reflWave.alpha = 0.5 * (1 - node.reflWave.radius / 140);
+        if (node.reflWave.radius >= 140) {
+          node.reflWave = null;
+        }
+      }
+
+      // Collection: player proximity check
       if (dx * dx + dy * dy < params.collectRadius * params.collectRadius) {
         const value = Math.pow(params.compoundFactor, this.totalCollected);
         this.totalCollected++;
