@@ -20,8 +20,8 @@ const WAVE_MAX_RADIUS      = 5000; // px — hard cap so distant players don't c
 
 export class DarkMatterSystem {
   /**
-   * @param {import('../core/EventBus.js?v=70c84f6').EventBus} eventBus
-   * @param {import('./UpgradeSystem.js?v=70c84f6').UpgradeSystem} upgradeSystem
+   * @param {import('../core/EventBus.js?v=b505bb0').EventBus} eventBus
+   * @param {import('./UpgradeSystem.js?v=b505bb0').UpgradeSystem} upgradeSystem
    */
   constructor(eventBus, upgradeSystem) {
     this.bus = eventBus;

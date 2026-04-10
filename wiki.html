@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aeons: The Grand Unfolding — Game Wiki</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg-panel: #12121a;
+      --bg-panel-alt: #1a1a2e;
+      --accent: #a0c4ff;
+      --accent2: #ffffff;
+      --text: #e0e0e8;
+      --text-dim: #8888a0;
+      --text-bright: #ffffff;
+      --border: #2a2a3e;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --font-mono: 'Courier New', Courier, monospace;
+      --font-main: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; color: var(--accent2); }
+
+    /* ── Layout ── */
+    .page-wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+    nav#sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    nav#sidebar .nav-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    nav#sidebar ul { list-style: none; }
+    nav#sidebar > ul { padding-left: 0; }
+    nav#sidebar ul li { margin: 3px 0; }
+    nav#sidebar ul li a {
+      display: block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-size: 13px;
+      transition: color 0.15s, background 0.15s;
+    }
+    nav#sidebar ul li a:hover { color: var(--text); background: var(--bg-panel-alt); text-decoration: none; }
+    nav#sidebar ul li.indent a { padding-left: 20px; font-size: 12px; }
+    nav#sidebar .nav-back {
+      margin-bottom: 16px;
+    }
+    nav#sidebar .nav-back a {
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      max-width: 860px;
+      padding: 40px 48px;
+      min-width: 0;
+    }
+
+    /* ── Headings ── */
+    h1 {
+      font-size: 2rem;
+      color: var(--accent2);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 1.5rem;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      margin: 36px 0 16px;
+    }
+    h3 {
+      font-size: 1.15rem;
+      color: var(--text-bright);
+      margin: 24px 0 10px;
+    }
+    h4 {
+      font-size: 1rem;
+      color: var(--accent);
+      margin: 20px 0 8px;
+    }
+    h5, h6 {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin: 16px 0 6px;
+    }
+
+    /* ── Paragraphs & text ── */
+    p { margin: 10px 0; }
+    strong { color: var(--text-bright); }
+    em { color: var(--text-dim); font-style: italic; }
+
+    /* ── Horizontal rule ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    /* ── Code ── */
+    code {
+      background: var(--bg-panel-alt);
+      color: var(--accent);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+    }
+    pre {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--accent2);
+      font-size: 0.85em;
+    }
+
+    /* ── Tables ── */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.9em;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      text-align: left;
+    }
+    th {
+      background: var(--bg-panel-alt);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+    /* ── Lists ── */
+    ul, ol {
+      margin: 10px 0 10px 24px;
+    }
+    li { margin: 4px 0; }
+
+    /* ── Blockquotes ── */
+    blockquote {
+      border-left: 3px solid var(--accent);
+      background: var(--bg-panel);
+      padding: 12px 16px;
+      margin: 12px 0;
+      border-radius: 0 4px 4px 0;
+      color: var(--text-dim);
+    }
+    blockquote strong { color: var(--accent2); }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      nav#sidebar { display: none; }
+      main { padding: 20px 16px; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+  <nav id="sidebar">
+    <div class="nav-back"><a href="./index.html">← Back to Game</a></div>
+    <div class="nav-title">Aeons Wiki</div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#resources">Resources</a></li>
+      <li><a href="#core-mechanics">Core Mechanics</a></li>
+      <li class="indent"><a href="#mote-absorption-energy-generation">Mote Absorption</a></li>
+      <li class="indent"><a href="#clicking">Clicking</a></li>
+      <li class="indent"><a href="#gravity-system">Gravity System</a></li>
+      <li class="indent"><a href="#energy--mass-conversion">Energy → Mass</a></li>
+      <li class="indent"><a href="#dark-matter-node-system">Dark Matter Nodes</a></li>
+      <li class="indent"><a href="#star-lifecycle">Star Lifecycle</a></li>
+      <li><a href="#upgrades">Upgrades</a></li>
+      <li class="indent"><a href="#tier-1-upgrades">Tier 1</a></li>
+      <li class="indent"><a href="#mote-upgrades">Mote Upgrades</a></li>
+      <li class="indent"><a href="#tier-2-upgrades">Tier 2</a></li>
+      <li class="indent"><a href="#tier-3-upgrades">Tier 3</a></li>
+      <li><a href="#milestones">Milestones</a></li>
+      <li><a href="#formulas-reference">Formulas</a></li>
+    </ul>
+  </nav>
+  <main>
+    <h1 id="aeons-the-grand-unfolding-game-mechanics-wiki">Aeons: The Grand Unfolding — Game Mechanics Wiki</h1>
+<blockquote>
+<p><strong>Source of Truth</strong> — This document describes all Epoch 1 mechanics and values.
+Last updated with commit <code>0dd9b30</code>.</p>
+</blockquote>
+<hr>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#resources">Resources</a></li>
+<li><a href="#core-mechanics">Core Mechanics</a></li>
+<li><a href="#mote-absorption-energy-generation">Mote Absorption (Energy Generation)</a></li>
+<li><a href="#clicking">Clicking</a></li>
+<li><a href="#gravity-system">Gravity System</a></li>
+<li><a href="#energy--mass-conversion">Energy → Mass Conversion</a></li>
+<li><a href="#mote-spawning">Mote Spawning</a></li>
+<li><a href="#movement">Movement</a></li>
+<li><a href="#dark-matter-node-system">Dark Matter Node System</a></li>
+<li><a href="#space-dust-background">Space Dust Background</a></li>
+<li><a href="#star-lifecycle">Star Lifecycle</a></li>
+<li><a href="#upgrades">Upgrades</a></li>
+<li><a href="#cost-formula">Cost Formula</a></li>
+<li><a href="#effect-scaling-rules">Effect Scaling Rules</a></li>
+<li><a href="#tier-1-upgrades">Tier 1 Upgrades</a></li>
+<li><a href="#mote-upgrades">Mote Upgrades</a></li>
+<li><a href="#tier-2-upgrades">Tier 2 Upgrades</a></li>
+<li><a href="#tier-3-upgrades">Tier 3 Upgrades</a></li>
+<li><a href="#goal-widget">Goal Widget</a></li>
+<li><a href="#milestones">Milestones</a></li>
+<li><a href="#visual-thresholds">Visual Thresholds</a></li>
+<li><a href="#mobile-ux">Mobile UX</a></li>
+<li><a href="#residual-bonus-epoch-completion">Residual Bonus (Epoch Completion)</a></li>
+<li><a href="#formulas-reference">Formulas Reference</a></li>
+</ul>
+<hr>
+<h2 id="overview">Overview</h2>
+<p><strong>Epoch 1: The Primordial Universe</strong> — You begin as a lone particle of mass in an empty void. Through absorbing energy motes, converting energy to mass, and unlocking gravity, you progress through the formation of atoms, gas clouds, nebulae, stars, and eventually planets.</p>
+<p>The epoch ends when you reach the <strong>"A World with Oceans"</strong> milestone (mass ≥ 10,000,000,000).</p>
+<hr>
+<h2 id="resources">Resources</h2>
+<div class="table-wrapper"><table>
+<thead><tr><th>Resource</th><th>Initial</th><th>Cap</th><th>Visible</th><th>Derived</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><strong>Energy</strong></td><td>0</td><td>500</td><td>✅</td><td>No</td><td>Raw quantum energy — earned by absorbing motes or clicking</td></tr>
+<tr><td><strong>Dark Matter</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_firstAtom)</td><td>No</td><td>Invisible scaffolding of the cosmos</td></tr>
+<tr><td><strong>Mass</strong></td><td>0</td><td>None</td><td>✅</td><td>No</td><td>Accumulated matter — the core progression metric</td></tr>
+<tr><td><strong>Gravity</strong></td><td>0</td><td>None</td><td>✅</td><td>Yes</td><td>Derived from Mass; accelerates ambient collection</td></tr>
+<tr><td><strong>Heavy Elements</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_supernova)</td><td>No</td><td>Produced by stellar cycles</td></tr>
+</tbody></table></div>
+<hr>
+<h2 id="core-mechanics">Core Mechanics</h2>
+<h3 id="mote-absorption-energy-generation">Mote Absorption (Energy Generation)</h3>
+<p>Energy is <strong>not</strong> generated passively. Every point of energy comes from absorbing a visible mote particle on screen.</p>
+<p><strong>Base energy per mote</strong> depends on quality tier:</p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Quality</th><th>Name</th><th>Base Value</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Common</td><td>1</td></tr>
+<tr><td>1</td><td>Uncommon</td><td>1.5</td></tr>
+<tr><td>2</td><td>Rare</td><td>2.5</td></tr>
+<tr><td>3</td><td>Epic</td><td>5</td></tr>
+<tr><td>4</td><td>Legendary</td><td>10</td></tr>
+</tbody></table></div>
+<p><strong>Absorption multipliers</strong> stack multiplicatively:</p>
+<pre><code>finalEnergy = qualityBase × (quantumFluctuation^level) × (vacuumHarvesting^level)
+            = qualityBase × 1.5^qfLevel × 1.3^vhLevel</code></pre>
+<p>Result is rounded up to a minimum of 1.</p>
+<h3 id="clicking">Clicking</h3>
+<p>Clicking on the game canvas generates energy directly.</p>
+<ul>
+<li><strong>Base click value</strong>: 1 energy (5 in dev mode)</li>
+<li><strong>Click Amplifier</strong> multiplies: <code>base × 2.0^level</code></li>
+</ul>
+<div class="table-wrapper"><table>
+<thead><tr><th>Click Amp Level</th><th>Click Value</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>1</td></tr>
+<tr><td>1</td><td>2</td></tr>
+<tr><td>2</td><td>4</td></tr>
+<tr><td>3</td><td>8</td></tr>
+</tbody></table></div>
+<h3 id="gravity-system">Gravity System</h3>
+<p>Gravity pulls nearby motes toward your particle. It is unlocked by purchasing <strong>Gravitational Pull</strong>.</p>
+<p><strong>Gravity radius by upgrade level:</strong></p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Grav Pull Level</th><th>Base Radius (px)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>200</td></tr>
+<tr><td>2</td><td>400</td></tr>
+<tr><td>3</td><td>700</td></tr>
+<tr><td>4</td><td>1,000</td></tr>
+<tr><td>5</td><td>1,400</td></tr>
+</tbody></table></div>
+<p><strong>Mass-based radius scaling:</strong></p>
+<pre><code>effectiveRadius = (baseRadius + tractorRange) × (1 + log₁₀(1 + mass) × 0.4)</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Mass</th><th>Radius Multiplier</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>×1.0</td></tr>
+<tr><td>10</td><td>×1.42</td></tr>
+<tr><td>100</td><td>×1.82</td></tr>
+<tr><td>1,000</td><td>×2.20</td></tr>
+<tr><td>10,000</td><td>×2.60</td></tr>
+<tr><td>100,000</td><td>×3.00</td></tr>
+<tr><td>1,000,000</td><td>×3.40</td></tr>
+</tbody></table></div>
+<p><strong>Speed falloff formula</strong> (cubic):</p>
+<pre><code>t = max(0, 1 - distance / gravRadius)
+speed = (2 + 178 × t³) × speedMult × massMult</code></pre>
+<ul>
+<li>At the edge (t=0): 2 px/s (barely drifting)</li>
+<li>At center (t=1): 180 px/s (strong pull)</li>
+<li>Falloff is cubic (t³), creating a sharp inner zone and gentle outer drift</li>
+</ul>
+<p><strong>Mass-based speed scaling:</strong></p>
+<pre><code>massSpeedMult = 1 + log₁₀(1 + mass) × 0.1</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Mass</th><th>Speed Multiplier</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>×1.0</td></tr>
+<tr><td>100</td><td>×1.20</td></tr>
+<tr><td>10,000</td><td>×1.40</td></tr>
+<tr><td>1,000,000</td><td>×1.60</td></tr>
+</tbody></table></div>
+<h3 id="energy-mass-conversion">Energy → Mass Conversion</h3>
+<p>Unlocked by <strong>Mass Accretion</strong>. A slider (0–100%) controls the conversion rate.</p>
+<p><strong>Base rates per level:</strong></p>
+<pre><code>energyDrain = 10 × accretionLevel × sliderRate  (per second)
+massGain    = 1 × accretionLevel × sliderRate × efficiencyMult  (per second)</code></pre>
+<p>Where <code>efficiencyMult = 1.4^primalSynthesisLevel</code>.</p>
+<p><strong>Pulse interval</strong> can be reduced by <strong>Rapid Accretion</strong> (×0.8/level) and <strong>Singularity Engine</strong> (×0.7/level, stacks multiplicatively):</p>
+<pre><code>pulseInterval = 2.0s × 0.8^rapidLevel × 0.7^singularityLevel</code></pre>
+<p><strong>Bulk output</strong> per pulse is multiplied by <strong>Mass Forge</strong> (×1.5/level):</p>
+<pre><code>massPerPulse = base × 1.4^synthLevel × 1.5^forgeLevel</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Accretion Lvl</th><th>Synth Lvl</th><th>Drain/s (100%)</th><th>Mass/s (100%)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>0</td><td>10</td><td>1.0</td></tr>
+<tr><td>1</td><td>1</td><td>10</td><td>1.4</td></tr>
+<tr><td>1</td><td>3</td><td>10</td><td>2.74</td></tr>
+<tr><td>2</td><td>0</td><td>20</td><td>2.0</td></tr>
+<tr><td>3</td><td>0</td><td>30</td><td>3.0</td></tr>
+<tr><td>3</td><td>3</td><td>30</td><td>8.23</td></tr>
+<tr><td>5</td><td>0</td><td>50</td><td>5.0</td></tr>
+<tr><td>8</td><td>12</td><td>80</td><td>421+</td></tr>
+</tbody></table></div>
+<p>Each conversion tick triggers a <strong>golden flash</strong> on the player character.</p>
+<h3 id="mote-spawning">Mote Spawning</h3>
+<p>Motes spawn procedurally across the infinite universe. Two systems feed the supply:</p>
+<ol>
+<li><strong><code>spawnParticle()</code></strong> — Random spawns with 60% weighted inside 2× gravity radius (sqrt distribution for uniform area coverage). 40% spawn randomly across the viewport.</li>
+</ol>
+<ol>
+<li><strong><code>_spawnEdgeParticle()</code></strong> — Edge spawns with 50% chance between 0.8× and 2.5× gravity radius.</li>
+</ol>
+<p><strong>Spawn flash</strong>: Each new mote shows a tiny white flash (0.3s fade) at its spawn location.</p>
+<p><strong>Mote Genesis</strong> upgrade increases spawn rate:</p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Spawn Rate Multiplier</th><th>Approx. Spawns/s</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>×1.0</td><td>~5%</td></tr>
+<tr><td>1</td><td>×1.5</td><td>~7.5%</td></tr>
+<tr><td>2</td><td>×2.25</td><td>~11%</td></tr>
+<tr><td>3</td><td>×3.375</td><td>~17%</td></tr>
+<tr><td>4</td><td>×5.06</td><td>~25%</td></tr>
+<tr><td>5</td><td>×7.59</td><td>~38%</td></tr>
+</tbody></table></div>
+<h3 id="movement">Movement</h3>
+<p>Unlocked by <strong>Cosmic Drift</strong> (requires ms_firstAtom + Mass Accretion).</p>
+<p><strong>Desktop:</strong> WASD or arrow keys to navigate. <strong>Mobile / touch:</strong> Touch-drag anywhere on the canvas to move the character toward the drag point. The character follows the touch position smoothly.</p>
+<ul>
+<li><strong>Ion Thrust</strong>: +20 speed per level (max 5 levels)</li>
+<li><strong>Manoeuvring Jets</strong>: +0.8 turn rate per level (max 3 levels)</li>
+</ul>
+<p>Once movement is unlocked, the <strong>Space Dust</strong> parallax layer becomes visible (see below).</p>
+<h3 id="dark-matter-node-system">Dark Matter Node System</h3>
+<blockquote>
+<p>Activated at <strong>ms_gasCloud</strong> (mass ≥ 5,000). Requires <strong>Dark Matter Currents</strong> purchased.</p>
+</blockquote>
+<p>Dark matter is collected by navigating to <strong>nodes</strong> that spawn in the void — there is no passive rate. Each node must be physically reached.</p>
+<p><strong>Node lifecycle:</strong></p>
+<ol>
+<li>Spawns at a random void position (margin ≥ 350 px from region edges).</li>
+<li>Flickers gently at very low opacity (barely visible in the dark void).</li>
+<li>Emits periodic gravity waves (every 5–11 s) that push nearby energy motes outward.</li>
+<li>Collected when the player moves within the <strong>collection radius</strong> (default 60 px, +40 px per Dark Matter Siphon level).</li>
+<li>Value is compounded based on total nodes already collected this run.</li>
+</ol>
+<p><strong>Node value formula:</strong></p>
+<pre><code>value = compoundFactor ^ totalCollected
+compoundFactor = 1.05 + (darkMatterAccelerantLevel × 0.03) + (gravitationalLensingLevel × 0.05)</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Total Collected</th><th>compoundFactor 1.05</th><th>compoundFactor 1.14</th><th>compoundFactor 1.20</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>1.00</td><td>1.00</td><td>1.00</td></tr>
+<tr><td>10</td><td>1.63</td><td>3.71</td><td>6.19</td></tr>
+<tr><td>20</td><td>2.65</td><td>13.74</td><td>38.34</td></tr>
+<tr><td>50</td><td>11.47</td><td>700+</td><td>9,100+</td></tr>
+</tbody></table></div>
+<p><strong>Upgrade interactions:</strong></p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Upgrade</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td>Dark Matter Currents (level N)</td><td>Spawn interval = max(3, 20 − N×2) seconds</td></tr>
+<tr><td>Dark Flow (level N)</td><td>Max simultaneous nodes = 1 + N</td></tr>
+<tr><td>Dark Matter Accelerant (level N)</td><td>+N×0.03 to compoundFactor</td></tr>
+<tr><td>Gravitational Lensing (level N)</td><td>+N×0.05 to compoundFactor</td></tr>
+<tr><td>Dark Matter Siphon (level N)</td><td>Collection radius = 60 + N×40 px</td></tr>
+<tr><td>Gravity Amplifier II (level N)</td><td>Wave force strength = 180 + N×80</td></tr>
+</tbody></table></div>
+<p><strong>Gravity wave:</strong> Each pulse emits a circular force wave expanding at 280 px/s to radius 420 px. Nearby energy motes are pushed outward. The wave also visibly disrupts the space dust layer.</p>
+<hr>
+<h3 id="space-dust-background">Space Dust Background</h3>
+<blockquote>
+<p>Unlocks lazily the first frame after <strong>Cosmic Drift</strong> is active (movement enabled).</p>
+</blockquote>
+<p>350 dust particles are seeded with a deterministic random seed and drawn at ultra-low opacity (0.014–0.056 alpha), providing a subtle spatial reference as the player moves.</p>
+<ul>
+<li><strong>Parallax factor</strong>: 0.07 (dust moves at 7% of camera velocity → near-stationary)</li>
+<li><strong>Colour palette</strong>: 72% cool blue-white (<code>#c8d8f8</code>), 28% warm amber (<code>#ffe8c0</code>)</li>
+<li><strong>Tiling</strong>: normalised coordinates tile seamlessly across the viewport</li>
+</ul>
+<p><strong>Dark matter disruption:</strong> When a dark matter node is active, its vicinity is visually cleared:</p>
+<ul>
+<li>A radial dark halo (radius ~55–95 px) darkens the immediate area around the node</li>
+<li>Dust particles near the node are pushed outward (max 38 px displacement)</li>
+<li>At the expanding wave front, dust is compressed and briefly brightened ahead of the ring</li>
+</ul>
+<hr>
+<p>Unlocked at <strong>ms_mainSequenceStar</strong> (mass ≥ 500,000). Stars cycle through stages:</p>
+<ol>
+<li>Main Sequence → 2. Red Giant → 3. Supernova → 4. Neutron Star → 5. Second Generation</li>
+</ol>
+<p>Each stage triggers milestones and unlocks upgrades. Heavy Elements are produced during stellar cycles.</p>
+<hr>
+<h2 id="upgrades">Upgrades</h2>
+<h3 id="cost-formula">Cost Formula</h3>
+<p>For multi-level upgrades:</p>
+<pre><code>cost(level) = baseCost × costScaling^(level - 1)</code></pre>
+<p>For single-level upgrades: cost is simply <code>baseCost</code>.</p>
+<h3 id="effect-scaling-rules">Effect Scaling Rules</h3>
+<div class="table-wrapper"><table>
+<thead><tr><th>Effect Type</th><th>Scaling</th><th>Formula at Level N</th></tr></thead>
+<tbody>
+<tr><td><code>rateAdditive</code></td><td>Linear</td><td><code>magnitude × N</code></td></tr>
+<tr><td><code>capIncrease</code></td><td>Linear</td><td><code>magnitude × N</code></td></tr>
+<tr><td><code>rateMultiplier</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
+<tr><td><code>clickMultiplier</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
+<tr><td><code>absorptionMultiplier</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
+<tr><td><code>conversionEfficiency</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
+<tr><td><code>unlock</code></td><td>Binary</td><td>Unlocks at level 1, may scale radius/feature</td></tr>
+</tbody></table></div>
+<hr>
+<h3 id="tier-1-upgrades">Tier 1 Upgrades</h3>
+<h4 id="gravitational-pull">Gravitational Pull</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Unlocks gravity attraction. Radius increases per level.</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>None</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Gravity Radius</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>15</td><td>200 px</td></tr>
+<tr><td>2</td><td>33</td><td>400 px</td></tr>
+<tr><td>3</td><td>73</td><td>700 px</td></tr>
+<tr><td>4</td><td>160</td><td>1,000 px</td></tr>
+<tr><td>5</td><td>351</td><td>1,400 px</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="quantum-fluctuation">Quantum Fluctuation</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies energy gained per absorbed mote (×1.5/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Gravitational Pull</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>20</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Absorption Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50</td><td>×1.50</td></tr>
+<tr><td>2</td><td>75</td><td>×2.25</td></tr>
+<tr><td>3</td><td>113</td><td>×3.38</td></tr>
+<tr><td>4</td><td>169</td><td>×5.06</td></tr>
+<tr><td>5</td><td>253</td><td>×7.59</td></tr>
+<tr><td>10</td><td>1,924</td><td>×57.67</td></tr>
+<tr><td>20</td><td>111,232</td><td>×3,325</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="mass-accretion">Mass Accretion</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Unlocks energy→mass auto-conversion. Slider appears.</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Gravitational Pull</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>8</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Energy Drain/s</th><th>Mass Produced/s</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100</td><td>10</td><td>1.0</td></tr>
+<tr><td>2</td><td>200</td><td>20</td><td>2.0</td></tr>
+<tr><td>3</td><td>400</td><td>30</td><td>3.0</td></tr>
+<tr><td>4</td><td>800</td><td>40</td><td>4.0</td></tr>
+<tr><td>5</td><td>1,600</td><td>50</td><td>5.0</td></tr>
+<tr><td>6</td><td>3,200</td><td>60</td><td>6.0</td></tr>
+<tr><td>7</td><td>6,400</td><td>70</td><td>7.0</td></tr>
+<tr><td>8</td><td>12,800</td><td>80</td><td>8.0</td></tr>
+</tbody></table></div>
+<p><em>Mass output scales further with Primal Synthesis, Rapid Accretion, and Mass Forge.</em></p>
+<hr>
+<h4 id="dark-matter-currents">Dark Matter Currents</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Activates the dark matter node system; reduces spawn interval by 2 s/level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_gasCloud (mass ≥ 5,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1 (base activation only)</td></tr>
+</tbody></table></div>
+<p>Purchasing this upgrade enables dark matter nodes to appear in the void. The spawn interval formula is:</p>
+<pre><code>spawnInterval = max(3, 20 − level × 2) seconds</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Spawn Interval</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>300</td><td>18 s</td></tr>
+</tbody></table></div>
+<p><em>Higher levels reduce the interval further; the Dark Flow upgrade adds extra simultaneous node slots.</em></p>
+<hr>
+<h4 id="dark-matter-accelerant">Dark Matter Accelerant</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+0.03 to the node compound factor per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Dark Matter</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Dark Matter Currents</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_gasCloud</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<pre><code>compoundFactor += level × 0.03</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Compound Factor Bonus</th><th>Total Factor (base)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>25</td><td>+0.03</td><td>1.08</td></tr>
+<tr><td>2</td><td>40</td><td>+0.06</td><td>1.11</td></tr>
+<tr><td>3</td><td>64</td><td>+0.09</td><td>1.14</td></tr>
+<tr><td>4</td><td>102</td><td>+0.12</td><td>1.17</td></tr>
+<tr><td>5</td><td>164</td><td>+0.15</td><td>1.20</td></tr>
+</tbody></table></div>
+<p><em>Stacks additively with Gravitational Lensing bonus.</em></p>
+<hr>
+<h4 id="vacuum-harvesting">Vacuum Harvesting</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies energy per absorbed mote (×1.3/level, stacks with Quantum Fluctuation)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Quantum Fluctuation</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>20</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Absorption Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>200</td><td>×1.30</td></tr>
+<tr><td>2</td><td>300</td><td>×1.69</td></tr>
+<tr><td>3</td><td>450</td><td>×2.20</td></tr>
+<tr><td>5</td><td>1,012</td><td>×3.71</td></tr>
+<tr><td>10</td><td>7,688</td><td>×13.79</td></tr>
+<tr><td>20</td><td>443,734</td><td>×190</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="click-amplifier">Click Amplifier</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies click energy value (×2.0/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>None</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>3</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Click Multiplier</th><th>Click Energy</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>75</td><td>×2.0</td><td>2</td></tr>
+<tr><td>2</td><td>225</td><td>×4.0</td><td>4</td></tr>
+<tr><td>3</td><td>675</td><td>×8.0</td><td>8</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="mote-resonance">Mote Resonance</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies energy per absorbed mote (×1.5/level, stacks with QF and VH)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Vacuum Harvesting</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>15</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Multiplier this upgrade alone</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1,000</td><td>×1.50</td></tr>
+<tr><td>5</td><td>6,554</td><td>×7.59</td></tr>
+<tr><td>10</td><td>154,839</td><td>×57.67</td></tr>
+<tr><td>15</td><td>~3.6M</td><td>×437.9</td></tr>
+</tbody></table></div>
+<p><em>At max, the combined absorption multiplier from QF20 + VH20 + MR15 is enormous.</em></p>
+<hr>
+<h4 id="mote-amplification">Mote Amplification</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies energy per absorbed mote (×2.0/level, top of absorption chain)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mote Resonance</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstMolecule (mass ≥ 500)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>12</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Multiplier this upgrade alone</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>5,000</td><td>×2.0</td></tr>
+<tr><td>6</td><td>160,000</td><td>×64</td></tr>
+<tr><td>12</td><td>~10.2M</td><td>×4,096</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="atomic-binding">Atomic Binding</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +1,000 per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th><th>Total Energy Cap</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50</td><td>+1,000</td><td>1,500</td></tr>
+<tr><td>5</td><td>800</td><td>+5,000</td><td>5,500</td></tr>
+<tr><td>10</td><td>25,600</td><td>+10,000</td><td>10,500</td></tr>
+<tr><td>25</td><td>~215M</td><td>+25,000</td><td>25,500</td></tr>
+</tbody></table></div>
+<p><em>The energy cap chain continues through Quantum Reservoir → Molecular Condenser → Stellar Matrix → Nova Capacitor → Singularity Vault.</em></p>
+<hr>
+<h4 id="quantum-reservoir">Quantum Reservoir</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +5,000 per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Atomic Binding</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th><th>Cumulative cap added</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>200</td><td>+5,000</td><td>+5,000</td></tr>
+<tr><td>5</td><td>4,882</td><td>+25,000</td><td>+25,000</td></tr>
+<tr><td>25</td><td>~4.2B</td><td>+125,000</td><td>+125,000</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="molecular-condenser">Molecular Condenser</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +10,000 per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Quantum Reservoir</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstMolecule (mass ≥ 500)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1,000</td><td>+10,000</td></tr>
+<tr><td>25</td><td>~847B</td><td>+250,000</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="stellar-matrix">Stellar Matrix</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +100,000 per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Molecular Condenser</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_gasCloud (mass ≥ 5,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>5,000</td><td>+100,000</td></tr>
+<tr><td>25</td><td>~6.5T</td><td>+2,500,000</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="nova-capacitor">Nova Capacitor</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +1,000,000 per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Stellar Matrix</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_protostarIgnites (mass ≥ 50,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50,000</td><td>+1,000,000</td></tr>
+<tr><td>25</td><td>~65T</td><td>+25,000,000</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="singularity-vault">Singularity Vault</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +10,000,000 per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Nova Capacitor</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_neutronStar</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500,000</td><td>+10,000,000</td></tr>
+<tr><td>25</td><td>~647T</td><td>+250,000,000</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="dark-flow">Dark Flow</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+1 maximum simultaneous dark matter node per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Dark Matter</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Dark Matter Currents</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_nebulaCondenses (darkMatter ≥ 100)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<pre><code>maxNodes = 1 + level</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Max Simultaneous Nodes</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100</td><td>2</td></tr>
+<tr><td>2</td><td>180</td><td>3</td></tr>
+<tr><td>3</td><td>324</td><td>4</td></tr>
+<tr><td>4</td><td>583</td><td>5</td></tr>
+<tr><td>5</td><td>1,050</td><td>6</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="cosmic-drift">Cosmic Drift</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Unlocks WASD/arrow movement</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>150</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="ion-thrust">Ion Thrust</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+20 movement speed per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Cosmic Drift</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Speed Bonus</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>75</td><td>+20</td></tr>
+<tr><td>2</td><td>150</td><td>+40</td></tr>
+<tr><td>3</td><td>300</td><td>+60</td></tr>
+<tr><td>4</td><td>600</td><td>+80</td></tr>
+<tr><td>5</td><td>1,200</td><td>+100</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="manoeuvring-jets">Manoeuvring Jets</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+0.8 turn rate per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Cosmic Drift</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>3</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Turn Bonus</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>60</td><td>+0.8</td></tr>
+<tr><td>2</td><td>120</td><td>+1.6</td></tr>
+<tr><td>3</td><td>240</td><td>+2.4</td></tr>
+</tbody></table></div>
+<hr>
+<h3 id="mote-upgrades">Mote Upgrades</h3>
+<h4 id="mote-genesis">Mote Genesis</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mote spawn rate (×1.5/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>None</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Spawn Multiplier</th><th>Approx Rate</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>25</td><td>×1.50</td><td>~7.5%/s</td></tr>
+<tr><td>5</td><td>84</td><td>×7.59</td><td>~38%/s</td></tr>
+<tr><td>10</td><td>637</td><td>×57.67</td><td>~high</td></tr>
+<tr><td>25</td><td>~87K</td><td>×25,251</td><td>saturated</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="particle-refinement">Particle Refinement</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Unlocks higher-quality mote tiers</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>8</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Quality Unlocked</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100</td><td>Common (×1.5 energy)</td></tr>
+<tr><td>2</td><td>200</td><td>Rare (×2.5 energy)</td></tr>
+<tr><td>3</td><td>400</td><td>Epic (×5 energy)</td></tr>
+<tr><td>4</td><td>800</td><td>Legendary (×10 energy)</td></tr>
+<tr><td>5–8</td><td>1,600+</td><td>Improved quality distribution</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="quantum-flood">Quantum Flood</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mote spawn rate (×2.0/level, stacks with Mote Genesis)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mote Genesis</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>15</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Spawn Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>×2.0</td></tr>
+<tr><td>5</td><td>8,000</td><td>×32</td></tr>
+<tr><td>15</td><td>~524K</td><td>×32,768</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="void-saturation">Void Saturation</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mote spawn rate (×3.0/level, top of spawn chain)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Quantum Flood</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstMolecule (mass ≥ 500)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>10</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Spawn Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>10,000</td><td>×3.0</td></tr>
+<tr><td>5</td><td>781,250</td><td>×243</td></tr>
+<tr><td>10</td><td>~244M</td><td>×59,049</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="primal-synthesis">Primal Synthesis</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mass conversion efficiency (×1.4/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>12</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Efficiency Multiplier</th><th>Mass/s (at Accretion 1)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>250</td><td>×1.40</td><td>1.40</td></tr>
+<tr><td>3</td><td>1,000</td><td>×2.74</td><td>2.74</td></tr>
+<tr><td>6</td><td>8,000</td><td>×7.53</td><td>7.53</td></tr>
+<tr><td>12</td><td>512,000</td><td>×56.7</td><td>56.7</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="rapid-accretion">Rapid Accretion</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×0.8 pulse interval per level (conversion fires more frequently)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Energy</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>12</td></tr>
+</tbody></table></div>
+<pre><code>pulseInterval = 2.0 × 0.8^level   (seconds)</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Pulse Interval</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>300</td><td>1.60 s</td></tr>
+<tr><td>4</td><td>2,400</td><td>0.82 s</td></tr>
+<tr><td>8</td><td>38,400</td><td>0.34 s</td></tr>
+<tr><td>12</td><td>614,400</td><td>0.14 s</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="mass-forge">Mass Forge</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.5 mass output per conversion pulse per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Rapid Accretion + Primal Synthesis</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>8</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Bulk Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50</td><td>×1.5</td></tr>
+<tr><td>4</td><td>400</td><td>×5.06</td></tr>
+<tr><td>8</td><td>6,400</td><td>×25.6</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="singularity-engine">Singularity Engine</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×0.7 pulse interval per level (further reduces conversion interval, stacks with Rapid Accretion)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Forge</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstMolecule (mass ≥ 500)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>6</td></tr>
+</tbody></table></div>
+<pre><code>pulseInterval = base × 0.8^rapidLevel × 0.7^singularityLevel</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Additional Interval Factor</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>×0.70</td></tr>
+<tr><td>3</td><td>3,125</td><td>×0.343</td></tr>
+<tr><td>6</td><td>96,875</td><td>×0.118</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="mote-densification">Mote Densification</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Absorbed motes also grant mass (×1.5/level on base 0.1)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Mass Per Mote (base quality)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50</td><td>0.15</td></tr>
+<tr><td>2</td><td>100</td><td>0.23</td></tr>
+<tr><td>3</td><td>200</td><td>0.34</td></tr>
+<tr><td>4</td><td>400</td><td>0.51</td></tr>
+<tr><td>5</td><td>800</td><td>0.76</td></tr>
+</tbody></table></div>
+<p><em>Higher quality motes multiply this by the quality multiplier (×1, ×1.5, ×2.5, ×5, ×10).</em></p>
+<hr>
+<h3 id="tier-2-upgrades">Tier 2 Upgrades</h3>
+<h4 id="nebula-condenser">Nebula Condenser</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mass rate (×1.5/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Dark Matter</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Dark Flow</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_nebulaCondenses</td></tr>
+<tr><td><strong>Max Level</strong></td><td>3</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Mass Rate Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>×1.50</td></tr>
+<tr><td>2</td><td>1,000</td><td>×2.25</td></tr>
+<tr><td>3</td><td>2,000</td><td>×3.38</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="dark-matter-catalysis">Dark Matter Catalysis</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mass rate (×1.5/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Dark Matter</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Nebula Condenser</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_nebulaCondenses</td></tr>
+<tr><td><strong>Max Level</strong></td><td>25</td></tr>
+</tbody></table></div>
+<pre><code>massRate *= 1.5 ^ level</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost (DM)</th><th>Mass Rate Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1,000</td><td>×1.50</td></tr>
+<tr><td>5</td><td>81,000</td><td>×7.59</td></tr>
+<tr><td>10</td><td>59,049,000</td><td>×57.67</td></tr>
+<tr><td>15</td><td>4.3e10</td><td>×438</td></tr>
+<tr><td>20</td><td>3.1e13</td><td>×3,325</td></tr>
+<tr><td>25</td><td>2.8e14</td><td>×25,251</td></tr>
+</tbody></table></div>
+<p><em>Provides a significant dark matter sink for mid-to-late game, converting excess dark matter into accelerated mass growth.</em></p>
+<hr>
+<h4 id="gravitational-lensing">Gravitational Lensing</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+0.05 to the dark matter node compound factor</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Nebula Condenser</td></tr>
+<tr><td><strong>Milestone</strong></td><td>None</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Compound Factor Bonus</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>5,000</td><td>+0.05</td></tr>
+</tbody></table></div>
+<p><em>Stacks additively with Dark Matter Accelerant bonus.</em></p>
+<hr>
+<h4 id="stellar-nursery">Stellar Nursery</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+5.0 mass/s per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Nebula Condenser</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_protostarIgnites (mass ≥ 50,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>3</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Mass Rate Bonus</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>10,000</td><td>+5.0/s</td></tr>
+<tr><td>2</td><td>20,000</td><td>+10.0/s</td></tr>
+<tr><td>3</td><td>40,000</td><td>+15.0/s</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="protostar-ignition">Protostar Ignition</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×2.0 mass rate</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Stellar Nursery</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_protostarIgnites</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Mass Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>25,000</td><td>×2.0</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="gravity-amplifier">Gravity Amplifier</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.5 energy rate</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Protostar Ignition</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_mainSequenceStar (mass ≥ 500,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Energy Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50,000</td><td>×1.5</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="gravity-amplifier-ii">Gravity Amplifier II</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+80 to dark matter wave force strength per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Gravity Amplifier</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_mainSequenceStar</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<pre><code>waveStrength = 180 + level × 80</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Wave Strength</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>100,000</td><td>260</td></tr>
+</tbody></table></div>
+<p><em>Higher wave strength pushes motes further when a dark matter node pulses.</em></p>
+<hr>
+<h4 id="extended-main-sequence">Extended Main Sequence</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.5 heavy elements rate</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Gravity Amplifier II</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_supernova</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>HE Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>200,000</td><td>×1.5</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="twin-stellar-cores">Twin Stellar Cores</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Unlocks a second star slot</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Extended Main Sequence</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_supernova</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500,000</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="rapid-cycling">Rapid Cycling</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Reduces star cycle duration (×0.8/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Extended Main Sequence</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_supernova</td></tr>
+<tr><td><strong>Max Level</strong></td><td>3</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cycle Duration Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>50</td><td>×0.80 (80%)</td></tr>
+<tr><td>2</td><td>100</td><td>×0.64 (64%)</td></tr>
+<tr><td>3</td><td>200</td><td>×0.51 (51%)</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="elemental-yield">Elemental Yield</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies heavy element output (×2.0/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Rapid Cycling</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_secondGenStars (heavyElements ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>3</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>HE Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>150</td><td>×2.0</td></tr>
+<tr><td>2</td><td>300</td><td>×4.0</td></tr>
+<tr><td>3</td><td>600</td><td>×8.0</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="event-horizon">Event Horizon</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Unlocks tractor beam (+60 px range/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Gravitational Pull, Cosmic Drift</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_firstAtom (mass ≥ 50)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Tractor Range</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>200</td><td>60 px</td></tr>
+<tr><td>2</td><td>400</td><td>120 px</td></tr>
+<tr><td>3</td><td>800</td><td>180 px</td></tr>
+<tr><td>4</td><td>1,600</td><td>240 px</td></tr>
+<tr><td>5</td><td>3,200</td><td>300 px</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="dark-matter-siphon">Dark Matter Siphon</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+40 px to the dark matter node collection radius per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Event Horizon</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_gasCloud (mass ≥ 5,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<pre><code>collectRadius = 60 + level × 40   (pixels)</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Collection Radius</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>100 px</td></tr>
+</tbody></table></div>
+<hr>
+<h3 id="tier-3-upgrades">Tier 3 Upgrades</h3>
+<h4 id="planetesimal-sweep">Planetesimal Sweep</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×2.0 mass rate</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Elemental Yield</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_planetaryDisc (heavyElements ≥ 200)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Mass Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>500</td><td>×2.0</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="iron-core-development">Iron Core Development</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+50.0 mass/s</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Planetesimal Sweep</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_planetesimals (mass ≥ 10,000,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Mass Rate Bonus</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1,000</td><td>+50.0/s</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="hydrological-cycle">Hydrological Cycle</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>+50,000 energy cap per level</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Iron Core Development</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_rockyPlanet (mass ≥ 1,000,000,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>5</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th><th>Total Energy Cap (w/ Atomic Binding 5)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2,000</td><td>+50,000</td><td>55,500</td></tr>
+<tr><td>2</td><td>4,000</td><td>+100,000</td><td>105,500</td></tr>
+<tr><td>3</td><td>8,000</td><td>+150,000</td><td>155,500</td></tr>
+<tr><td>4</td><td>16,000</td><td>+200,000</td><td>205,500</td></tr>
+<tr><td>5</td><td>32,000</td><td>+250,000</td><td>255,500</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="cosmic-optimisation">Cosmic Optimisation</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.2 ALL resource rates</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Hydrological Cycle</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_rockyPlanet (mass ≥ 1,000,000,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>All Rates Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>5,000,000</td><td>×1.2</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="deep-time-patience">Deep-Time Patience</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>×1.2 cosmic residue earned at epoch completion</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Heavy Elements</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Cosmic Optimisation</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_stablePlanet (mass ≥ 10,000,000,000)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>1</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost</th><th>Residue Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>5,000</td><td>×1.2</td></tr>
+</tbody></table></div>
+<hr>
+<h4 id="void-mass-crystallisation">Void Mass Crystallisation</h4>
+<div class="table-wrapper"><table>
+<thead><tr><th><strong>Effect</strong></th><th>Multiplies mass rate (×1.5/level)</th></tr></thead>
+<tbody>
+<tr><td><strong>Cost Resource</strong></td><td>Dark Matter</td></tr>
+<tr><td><strong>Prerequisites</strong></td><td>Dark Matter Catalysis</td></tr>
+<tr><td><strong>Milestone</strong></td><td>ms_planetaryDisc (heavyElements ≥ 200)</td></tr>
+<tr><td><strong>Max Level</strong></td><td>50</td></tr>
+</tbody></table></div>
+<pre><code>massRate *= 1.5 ^ level</code></pre>
+<div class="table-wrapper"><table>
+<thead><tr><th>Level</th><th>Cost (DM)</th><th>Mass Rate Multiplier</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>1e8</td><td>×1.50</td></tr>
+<tr><td>10</td><td>1e17</td><td>×57.67</td></tr>
+<tr><td>20</td><td>1e27</td><td>×3,325</td></tr>
+<tr><td>30</td><td>1e37</td><td>×191,751</td></tr>
+<tr><td>50</td><td>1e57</td><td>×6.4e8</td></tr>
+</tbody></table></div>
+<p><em>End-game dark matter sink. Requires Dark Matter Catalysis first. Both upgrades use the same <code>rateMultiplier</code> for mass, so their bonuses compound multiplicatively: combined multiplier = 1.5^(catalysisLevel + crystallisationLevel).</em></p>
+<hr>
+<hr>
+<h2 id="goal-widget">Goal Widget</h2>
+<p>A persistent goal bar is displayed at the top of the Resource panel. It tracks the <strong>next upcoming milestone</strong> and shows live progress.</p>
+<ul>
+<li><strong>Title</strong>: The milestone name (e.g. "Birth of Hydrogen")</li>
+<li><strong>Progress bar</strong>: Fills proportionally from 0 → 100% as the tracked resource approaches its target</li>
+<li><strong>Label</strong>: Shows <code>ResourceName: current / target</code> (formatted numbers)</li>
+</ul>
+<p>For non-resource milestones (star cycle stages), the label shows the required condition; the bar shows 0% since progress cannot be quantified.</p>
+<p>The widget auto-refreshes on every <code>resource:updated</code> event and immediately on <code>milestone:triggered</code>.</p>
+<hr>
+<h2 id="milestones">Milestones</h2>
+<p>Milestone rewards are now richer:</p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Reward Type</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>resource_grant</code></td><td>Immediately adds the specified amount to a resource</td></tr>
+<tr><td><code>unlock_mechanic</code></td><td>Activates a game system (DM display, star lifecycle, etc.)</td></tr>
+<tr><td><code>rate_bonus</code></td><td>Permanently adds a flat rate bonus to a resource</td></tr>
+<tr><td><code>particle_storm</code></td><td>10-second mote storm (greatly increased gravity for 10 s)</td></tr>
+<tr><td><code>cosmic_echo</code></td><td>Visual pulse + brief XP-style flash effect</td></tr>
+</tbody></table></div>
+<div class="table-wrapper"><table>
+<thead><tr><th>#</th><th>ID</th><th>Title</th><th>Condition</th><th>Reward</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ms_subatomicParticle</td><td>The First Spark</td><td>Game start</td><td>—</td></tr>
+<tr><td>2</td><td>ms_firstAtom</td><td>Birth of Hydrogen</td><td>mass ≥ 50</td><td>Unlocks Dark Matter display</td></tr>
+<tr><td>3</td><td>ms_firstMolecule</td><td>Bonded</td><td>mass ≥ 500</td><td>+200 energy + particle storm</td></tr>
+<tr><td>4</td><td>ms_gasCloud</td><td>The Cloud Gathers</td><td>mass ≥ 5,000</td><td>Unlocks DM node generation</td></tr>
+<tr><td>5</td><td>ms_nebulaCondenses</td><td>A Nebula Is Born</td><td>darkMatter ≥ 100</td><td>+50 dark matter + cosmic echo</td></tr>
+<tr><td>6</td><td>ms_protostarIgnites</td><td>A Spark of Fire</td><td>mass ≥ 50,000</td><td>Particle storm</td></tr>
+<tr><td>7</td><td>ms_mainSequenceStar</td><td>A Light in the Dark</td><td>mass ≥ 500,000</td><td>Unlocks star lifecycle</td></tr>
+<tr><td>8</td><td>ms_redGiant</td><td>Growing Old</td><td>Star stage: red_giant</td><td>+2.0 energy rate + cosmic echo</td></tr>
+<tr><td>9</td><td>ms_supernova</td><td>The Great Explosion</td><td>1 star cycle complete</td><td>Unlocks Heavy Elements display</td></tr>
+<tr><td>10</td><td>ms_neutronStar</td><td>Remnant of Fire</td><td>Star stage: neutron_star</td><td>Cosmic echo</td></tr>
+<tr><td>11</td><td>ms_secondGenStars</td><td>New Generations</td><td>heavyElements ≥ 50</td><td>Particle storm</td></tr>
+<tr><td>12</td><td>ms_planetaryDisc</td><td>The Disc Forms</td><td>heavyElements ≥ 200</td><td>Cosmic echo</td></tr>
+<tr><td>13</td><td>ms_planetesimals</td><td>Rocks in Space</td><td>mass ≥ 10,000,000</td><td>+5.0 mass rate + particle storm</td></tr>
+<tr><td>14</td><td>ms_protoplanet</td><td>A World Takes Shape</td><td>mass ≥ 100,000,000</td><td>Cosmic echo</td></tr>
+<tr><td>15</td><td>ms_rockyPlanet</td><td>Solid Ground</td><td>mass ≥ 1,000,000,000</td><td>+3.0 HE rate + cosmic echo</td></tr>
+<tr><td>16</td><td>ms_stablePlanet</td><td>A World with Oceans</td><td>mass ≥ 10,000,000,000</td><td><strong>Epoch transition</strong></td></tr>
+</tbody></table></div>
+<hr>
+<h2 id="visual-thresholds">Visual Thresholds</h2>
+<p>The player's home object evolves visually as mass increases:</p>
+<ul>
+<li><strong>Shape</strong>: Always a <strong>circle</strong> (not a square/sprite).</li>
+<li><strong>Size</strong>: Scales continuously with mass. The character noticeably grows as more mass is accumulated.</li>
+<li>Thresholds are defined in the epoch config's <code>visualThresholds</code> array and change the particle's appearance (colour, glow strength, base size). The rendering smoothly interpolates between threshold states.</li>
+</ul>
+<p>When the home object crosses a visual threshold, a brief <strong>white flash</strong> occurs and a particle boost may trigger.</p>
+<hr>
+<h2 id="mobile-ux">Mobile UX</h2>
+<p>The game supports two distinct layouts:</p>
+<h3 id="responsive-breakpoint">Responsive Breakpoint</h3>
+<div class="table-wrapper"><table>
+<thead><tr><th>Viewport Width</th><th>Layout</th></tr></thead>
+<tbody>
+<tr><td>≤ 600px</td><td><strong>Mobile</strong> (bottom tab bar + drawer)</td></tr>
+<tr><td>&gt; 600px</td><td><strong>Desktop</strong> (sidebar panels)</td></tr>
+</tbody></table></div>
+<p>This breakpoint correctly handles the <strong>Samsung Galaxy Z Fold 6</strong>:</p>
+<ul>
+<li>Phone mode (outer screen, ~323px CSS width) → mobile layout ✓</li>
+<li>Tablet mode (inner screen, ~673px CSS width) → desktop layout ✓</li>
+</ul>
+<p>Layout switches live on resize (no page reload) via <code>window.matchMedia</code> change listener.</p>
+<h3 id="mobile-tab-bar">Mobile Tab Bar</h3>
+<p>A fixed 56 px tab bar sits at the bottom of the screen on mobile. Five tabs:</p>
+<div class="table-wrapper"><table>
+<thead><tr><th>Tab</th><th>Panel</th></tr></thead>
+<tbody>
+<tr><td>📊 Stats</td><td>Stats panel</td></tr>
+<tr><td>⚡ Resources</td><td>Resource panel (with Goal widget)</td></tr>
+<tr><td>🔬 Upgrades</td><td>Upgrade panel</td></tr>
+<tr><td>📜 Chronicle</td><td>Chronicle / log panel</td></tr>
+<tr><td>✨ Legacy</td><td>Residual bonus panel</td></tr>
+</tbody></table></div>
+<p>Tapping a tab slides up a 50vh drawer from the bottom. Tapping again (or the ▼ button) collapses it.</p>
+<p>When the drawer is open, the canvas <strong>camera shifts upward</strong> by ~40% of the drawer height so the player character remains centred in the visible viewport.</p>
+<p>The tab bar uses <code>z-index: 200</code> with <code>transform: translateZ(0)</code> to guarantee it stays above the drawer during GPU compositing.</p>
+<h3 id="touch-drag-movement">Touch / Drag Movement</h3>
+<p>Once <strong>Cosmic Drift</strong> is purchased:</p>
+<ul>
+<li><strong>Mobile/touch</strong>: Touch-drag on the canvas to steer. The character moves toward the drag point.</li>
+<li><strong>Desktop</strong>: Same drag works with mouse click-and-hold.</li>
+<li><strong>Keyboard</strong>: WASD / arrow keys (desktop only).</li>
+</ul>
+<hr>
+<h2 id="residual-bonus-epoch-completion">Residual Bonus (Epoch Completion)</h2>
+<p>Upon completing Epoch 1 (reaching ms_stablePlanet), a <strong>Cosmic Residue</strong> bonus is calculated:</p>
+<pre><code>completionScore = (milestonesTriggered / 16) × 0.5 + (upgradesPurchased / totalUpgrades) × 0.5
+bonusValue = 0.05 + completionScore × 0.15</code></pre>
+<blockquote>
+<p><strong>Note</strong>: The <code>totalUpgrades</code> constant in code is currently <code>23</code> (a legacy value). The actual upgrade count has expanded to ~45. This discrepancy means the upgrade contribution is proportionally higher than intended. A future update will recalibrate this.</p>
+</blockquote>
+<div class="table-wrapper"><table>
+<thead><tr><th>Completion</th><th>Bonus</th></tr></thead>
+<tbody>
+<tr><td>0%</td><td>+5% all rates</td></tr>
+<tr><td>50%</td><td>+12.5% all rates</td></tr>
+<tr><td>100%</td><td>+20% all rates</td></tr>
+</tbody></table></div>
+<p>This bonus carries into future epochs as a permanent meta-progression boost.</p>
+<hr>
+<h2 id="formulas-reference">Formulas Reference</h2>
+<h3 id="upgrade-cost-at-level-n">Upgrade Cost at Level N</h3>
+<pre><code>cost(N) = baseCost × costScaling^(N - 1)</code></pre>
+<h3 id="absorption-energy-value">Absorption Energy Value</h3>
+<pre><code>energy = ceil(qualityBase × 1.5^qfLevel × 1.3^vhLevel × 1.5^mrLevel × 2.0^maLevel)</code></pre>
+<p>Where:</p>
+<ul>
+<li><code>qfLevel</code> = Quantum Fluctuation level (max 20)</li>
+<li><code>vhLevel</code> = Vacuum Harvesting level (max 20)</li>
+<li><code>mrLevel</code> = Mote Resonance level (max 15)</li>
+<li><code>maLevel</code> = Mote Amplification level (max 12)</li>
+</ul>
+<h3 id="mass-conversion-rate">Mass Conversion Rate</h3>
+<pre><code>massPerSec = accretionLevel × sliderRate × 1.4^synthLevel × 1.5^forgeLevel
+energyDrainPerSec = 10 × accretionLevel × sliderRate
+pulseInterval = 2.0 × 0.8^rapidLevel × 0.7^singularityLevel   (seconds)</code></pre>
+<h3 id="gravity-effective-radius">Gravity Effective Radius</h3>
+<pre><code>effectiveRadius = (gravityRadiusByLevel[level] + tractorRange) × (1 + log₁₀(1 + mass) × 0.4)</code></pre>
+<h3 id="gravity-pull-speed">Gravity Pull Speed</h3>
+<pre><code>t = max(0, 1 - distance / effectiveRadius)
+speed = (2 + 178 × t³) × tractorSpeedMult × massSpeedMult
+massSpeedMult = 1 + log₁₀(1 + mass) × 0.1</code></pre>
+<h3 id="dark-matter-node-value">Dark Matter Node Value</h3>
+<pre><code>compoundFactor = 1.05 + (accelerantLevel × 0.03) + (lensingLevel × 0.05)
+nodeValue = compoundFactor ^ totalCollected
+spawnInterval = max(3, 20 − currentsLevel × 2)   (seconds)
+collectRadius = 60 + siphonLevel × 40   (pixels)
+maxNodes = 1 + darkFlowLevel
+waveStrength = 180 + amplifier2Level × 80</code></pre>
+<h3 id="mote-densification-mass">Mote Densification Mass</h3>
+<pre><code>massPerMote = 0.1 × qualityMult × 1.5^densLevel</code></pre>
+<h3 id="residual-bonus">Residual Bonus</h3>
+<pre><code>bonus = 0.05 + ((triggered/16) × 0.5 + (purchased/totalUpgrades) × 0.5) × 0.15</code></pre>
+
+  </main>
+</div>
+</body>
+</html>

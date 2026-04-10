@@ -885,6 +885,17 @@ html, body {
   border-color: var(--accent);
 }
 
+.settings-btn-link {
+  text-decoration: none;
+  text-align: center;
+  color: var(--accent);
+}
+
+.settings-btn-link:hover {
+  background: var(--btn-hover);
+  color: var(--accent2);
+}
+
 .settings-btn.danger {
   border-color: var(--danger);
   color: var(--danger);

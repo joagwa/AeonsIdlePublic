@@ -94,6 +94,17 @@ export class SettingsPanel {
   _buildUI() {
     this.body.innerHTML = '';
 
+    // --- Wiki link ---
+    const wikiGroup = this._group('Resources');
+    const wikiLink = document.createElement('a');
+    wikiLink.href = './wiki.html';
+    wikiLink.target = '_blank';
+    wikiLink.rel = 'noopener';
+    wikiLink.className = 'settings-btn settings-btn-link';
+    wikiLink.textContent = '📖 Game Wiki';
+    wikiGroup.appendChild(wikiLink);
+    this.body.appendChild(wikiGroup);
+
     // --- Notation selector ---
     const notationGroup = this._group('Notation');
     const notationSelect = document.createElement('select');
