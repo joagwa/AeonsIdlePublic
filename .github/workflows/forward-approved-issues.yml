@@ -95,12 +95,12 @@ jobs:
                   assignees: ['copilot-swe-agent[bot]'],
                   agent_assignment: {
                     target_repo: 'joagwa/AeonsIdle',
-                    base_branch: 'develop',
+                    base_branch: 'beta',
                     custom_instructions: [
                       'Review the feedback/bug report and implement a fix or the requested feature.',
                       'Ensure changes do not break existing game mechanics.',
                       'Run `npm test` to verify. Add regression tests where appropriate.',
-                      'Branch from `develop` and target `develop` in your pull request.',
+                      'Branch from `beta` and target `beta` in your pull request.',
                     ].join(' '),
                     custom_agent: '',
                     model: '',

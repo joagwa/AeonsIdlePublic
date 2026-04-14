@@ -3,11 +3,11 @@
  * Owns the main and glow canvas contexts and drives per-frame updates.
  */
 
-import { SpriteManager } from './SpriteManager.js?v=68bc4b8';
-import { Camera } from './Camera.js?v=68bc4b8';
-import { ParticleSystem } from './ParticleSystem.js?v=68bc4b8';
-import { RegionManager } from './RegionManager.js?v=68bc4b8';
-import { FloatingNumbers } from './FloatingNumbers.js?v=68bc4b8';
+import { SpriteManager } from './SpriteManager.js?v=45c16a8';
+import { Camera } from './Camera.js?v=45c16a8';
+import { ParticleSystem } from './ParticleSystem.js?v=45c16a8';
+import { RegionManager } from './RegionManager.js?v=45c16a8';
+import { FloatingNumbers } from './FloatingNumbers.js?v=45c16a8';
 
 // Star visual definitions by stage
 const STAR_VISUALS = {
@@ -70,7 +70,7 @@ export class CanvasRenderer {
     this._resizeObserver = null;
     this._darkMatterActive = false;
 
-    /** @type {import('../engine/DarkMatterSystem.js?v=68bc4b8').DarkMatterSystem|null} */
+    /** @type {import('../engine/DarkMatterSystem.js?v=45c16a8').DarkMatterSystem|null} */
     this._darkMatterSystem = null;
 
     // Particle storm (temporary boost from milestone reward)
@@ -896,7 +896,7 @@ export class CanvasRenderer {
       }
       try {
         // Gravity radius scales with upgrade level — much larger with steep falloff
-        const gravityRadiusByLevel = [0, 200, 400, 700, 1000, 1400];
+        const gravityRadiusByLevel = [0, 250, 450, 750, 1050, 1450];
         const level = data.level || 1;
         const radius = gravityRadiusByLevel[Math.min(level, gravityRadiusByLevel.length - 1)];
 
@@ -1172,7 +1172,7 @@ export class CanvasRenderer {
 
   /**
    * Attach a DarkMatterSystem for node rendering and wave dispatch.
-   * @param {import('../engine/DarkMatterSystem.js?v=68bc4b8').DarkMatterSystem} sys
+   * @param {import('../engine/DarkMatterSystem.js?v=45c16a8').DarkMatterSystem} sys
    */
   setDarkMatterSystem(sys) {
     this._darkMatterSystem = sys;
