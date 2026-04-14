@@ -9,9 +9,9 @@
  */
 
 export class FusionEngine {
-  /** @type {import('../core/EventBus.js?v=45c16a8').EventBus} */
+  /** @type {import('../core/EventBus.js?v=2e4f878').EventBus} */
   #eventBus;
-  /** @type {import('./ResourceManager.js?v=45c16a8').ResourceManager} */
+  /** @type {import('./ResourceManager.js?v=2e4f878').ResourceManager} */
   #resourceManager;
   /** @type {Map<string, string>} starId → current stage */
   #starStages = new Map();
@@ -127,7 +127,7 @@ export class FusionEngine {
 
   /**
    * Re-read all fusion-related upgrade effects and update multipliers.
-   * @param {import('./UpgradeSystem.js?v=45c16a8').UpgradeSystem} upgradeSystem
+   * @param {import('./UpgradeSystem.js?v=2e4f878').UpgradeSystem} upgradeSystem
    */
   recalculateMults(upgradeSystem) {
     let hMult = 1.0;

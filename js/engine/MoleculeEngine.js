@@ -6,11 +6,11 @@
  */
 
 export class MoleculeEngine {
-  /** @type {import('./ResourceManager.js?v=45c16a8').ResourceManager} */
+  /** @type {import('./ResourceManager.js?v=2e4f878').ResourceManager} */
   #resourceManager;
   /** @type {Set<string>} molecule IDs produced at least once */
   #firstProduced = new Set();
-  /** @type {import('../core/EventBus.js?v=45c16a8').EventBus} */
+  /** @type {import('../core/EventBus.js?v=2e4f878').EventBus} */
   #eventBus;
 
   static RECIPES = {

@@ -354,7 +354,7 @@ const tier1Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 1000,
     requiresMilestone: 'ms_firstAtom',
-    mechanic: '⚙ +1,000 energy cap per level (25 levels: up to +25,000)',
+    mechanic: '⚙ Energy cap: +1,000 × level² (level 10: +100,000 | level 25: +625,000)',
   },
   {
     id: 'upg_quantumReservoir',
@@ -373,7 +373,7 @@ const tier1Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 5000,
     requiresMilestone: 'ms_firstAtom',
-    mechanic: '⚙ +5,000 energy cap per level (25 levels: up to +125,000)',
+    mechanic: '⚙ Energy cap: +5,000 × level² (level 10: +500,000 | level 25: +3,125,000)',
   },
   {
     id: 'upg_molecularCondenser',
@@ -392,7 +392,7 @@ const tier1Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 10000,
     requiresMilestone: 'ms_firstMolecule',
-    mechanic: '⚙ +10,000 energy cap per level (25 levels: up to +250,000)',
+    mechanic: '⚙ Energy cap: +10,000 × level² (level 10: +1,000,000 | level 25: +6,250,000)',
   },
   {
     id: 'upg_stellarMatrix',
@@ -411,7 +411,7 @@ const tier1Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 100000,
     requiresMilestone: 'ms_gasCloud',
-    mechanic: '⚙ +100,000 energy cap per level (25 levels: up to +2,500,000)',
+    mechanic: '⚙ Energy cap: +100,000 × level² (level 10: +10,000,000 | level 25: +62,500,000)',
   },
   {
     id: 'upg_novaCapacitor',
@@ -430,7 +430,7 @@ const tier1Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 1000000,
     requiresMilestone: 'ms_protostarIgnites',
-    mechanic: '⚙ +1,000,000 energy cap per level (25 levels: up to +25,000,000)',
+    mechanic: '⚙ Energy cap: +1,000,000 × level² (level 10: +100,000,000 | level 25: +625,000,000)',
   },
   {
     id: 'upg_singularityVault',
@@ -449,7 +449,7 @@ const tier1Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 10000000,
     requiresMilestone: 'ms_neutronStar',
-    mechanic: '⚙ +10,000,000 energy cap per level (25 levels: up to +250,000,000)',
+    mechanic: '⚙ Energy cap: +10,000,000 × level² (level 10: +1,000,000,000 | level 25: +6,250,000,000)',
   },
   {
     id: 'upg_darkFlow',
@@ -1024,7 +1024,7 @@ const tier3Upgrades = [
     effectTarget: 'energy',
     effectMagnitude: 50000,
     requiresMilestone: 'ms_rockyPlanet',
-    mechanic: '⚙ +50,000 energy cap per level (25 levels: up to +1,250,000)',
+    mechanic: '⚙ Energy cap: +50,000 × level² (level 10: +5,000,000 | level 25: +31,250,000)',
   },
   {
     id: 'upg_cosmicOptimisation',
@@ -1109,7 +1109,6 @@ const milestones = [
     regionBand: 2,
     reward: [
       { type: 'unlock_mechanic', target: 'darkMatter_display', amount: null },
-      { type: 'unlock_mechanic', target: 'hydrogen_display', amount: null },
     ],
     isEpochTransitionTrigger: false,
   },
@@ -1127,6 +1126,19 @@ const milestones = [
       { type: 'resource_grant', target: 'energy', amount: 200 },
       { type: 'particle_storm' },
     ],
+    isEpochTransitionTrigger: false,
+  },
+  {
+    id: 'ms_hydrogenAge',
+    epochId: 'epoch1',
+    title: 'The Hydrogen Phase',
+    flavourText:
+      'Energy surges through the cosmos in torrents, ionising the nascent gas and driving the first true stellar chemistry. Hydrogen — the most abundant element in the universe — reveals itself, ready to fuel the next great ascent.',
+    conditionType: 'resource_threshold',
+    conditionTarget: 'energy',
+    conditionValue: 10000,
+    regionBand: 2,
+    reward: [{ type: 'unlock_mechanic', target: 'hydrogen_display', amount: null }],
     isEpochTransitionTrigger: false,
   },
   {

@@ -276,7 +276,7 @@ Last updated with commit <code>5dd1f8e</code>.</p>
 <tr><td><strong>Dark Matter</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_firstAtom)</td><td>Invisible scaffolding of the cosmos</td></tr>
 <tr><td><strong>Mass</strong></td><td>0</td><td>None</td><td>✅</td><td>Accumulated matter — the core progression metric</td></tr>
 <tr><td><strong>Gravity</strong></td><td>0</td><td>None</td><td>✅ (derived)</td><td>Derived from Mass; accelerates ambient collection</td></tr>
-<tr><td><strong>Hydrogen</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_firstAtom)</td><td>First and most abundant element — fuel for stellar fusion</td></tr>
+<tr><td><strong>Hydrogen</strong></td><td>0</td><td>None</td><td>❌ (unlocked at ms_hydrogenAge — energy ≥ 10,000)</td><td>First and most abundant element — fuel for stellar fusion</td></tr>
 <tr><td><strong>Helium</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first production)</td><td>Forged from hydrogen in stellar cores</td></tr>
 <tr><td><strong>Carbon</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first production)</td><td>Triple-alpha fusion product of red giant stars</td></tr>
 <tr><td><strong>Oxygen</strong></td><td>0</td><td>None</td><td>❌ (unlocked on first production)</td><td>Helium fusion product — most abundant element in rocky planets</td></tr>
@@ -538,7 +538,7 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <thead><tr><th>Effect Type</th><th>Scaling</th><th>Formula at Level N</th></tr></thead>
 <tbody>
 <tr><td><code>rateAdditive</code></td><td>Linear</td><td><code>magnitude × N</code></td></tr>
-<tr><td><code>capIncrease</code></td><td>Linear</td><td><code>magnitude × N</code></td></tr>
+<tr><td><code>capIncrease</code></td><td>Quadratic</td><td><code>magnitude × N²</code></td></tr>
 <tr><td><code>rateMultiplier</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
 <tr><td><code>clickMultiplier</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
 <tr><td><code>absorptionMultiplier</code></td><td>Exponential</td><td><code>magnitude^N</code></td></tr>
@@ -724,7 +724,7 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <hr>
 <h4 id="atomic-binding">Atomic Binding</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +1,000 per level</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +1,000 × level²</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Mass Accretion</td></tr>
@@ -732,18 +732,18 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th><th>Total Energy Cap</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Total (this upgrade)</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>50</td><td>+1,000</td><td>1,500</td></tr>
-<tr><td>5</td><td>800</td><td>+5,000</td><td>5,500</td></tr>
-<tr><td>10</td><td>25,600</td><td>+10,000</td><td>10,500</td></tr>
-<tr><td>25</td><td>~215M</td><td>+25,000</td><td>25,500</td></tr>
+<tr><td>1</td><td>50</td><td>+1,000</td></tr>
+<tr><td>5</td><td>800</td><td>+25,000</td></tr>
+<tr><td>10</td><td>25,600</td><td>+100,000</td></tr>
+<tr><td>25</td><td>~215M</td><td>+625,000</td></tr>
 </tbody></table></div>
 <p><em>The energy cap chain continues through Quantum Reservoir → Molecular Condenser → Stellar Matrix → Nova Capacitor → Singularity Vault.</em></p>
 <hr>
 <h4 id="quantum-reservoir">Quantum Reservoir</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +5,000 per level</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +5,000 × level²</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Atomic Binding</td></tr>
@@ -751,16 +751,16 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th><th>Cumulative cap added</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Total (this upgrade)</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>200</td><td>+5,000</td><td>+5,000</td></tr>
-<tr><td>5</td><td>4,882</td><td>+25,000</td><td>+25,000</td></tr>
-<tr><td>25</td><td>~4.2B</td><td>+125,000</td><td>+125,000</td></tr>
+<tr><td>1</td><td>200</td><td>+5,000</td></tr>
+<tr><td>5</td><td>4,882</td><td>+125,000</td></tr>
+<tr><td>25</td><td>~4.2B</td><td>+3,125,000</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="molecular-condenser">Molecular Condenser</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +10,000 per level</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +10,000 × level²</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Quantum Reservoir</td></tr>
@@ -768,15 +768,15 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Total (this upgrade)</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>1,000</td><td>+10,000</td></tr>
-<tr><td>25</td><td>~847B</td><td>+250,000</td></tr>
+<tr><td>25</td><td>~847B</td><td>+6,250,000</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="stellar-matrix">Stellar Matrix</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +100,000 per level</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +100,000 × level²</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Molecular Condenser</td></tr>
@@ -784,15 +784,15 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Total (this upgrade)</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>5,000</td><td>+100,000</td></tr>
-<tr><td>25</td><td>~6.5T</td><td>+2,500,000</td></tr>
+<tr><td>25</td><td>~6.5T</td><td>+62,500,000</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="nova-capacitor">Nova Capacitor</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +1,000,000 per level</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +1,000,000 × level²</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Stellar Matrix</td></tr>
@@ -800,15 +800,15 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Total (this upgrade)</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>50,000</td><td>+1,000,000</td></tr>
-<tr><td>25</td><td>~65T</td><td>+25,000,000</td></tr>
+<tr><td>25</td><td>~65T</td><td>+625,000,000</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="singularity-vault">Singularity Vault</h4>
 <div class="table-wrapper"><table>
-<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +10,000,000 per level</th></tr></thead>
+<thead><tr><th><strong>Effect</strong></th><th>Increases energy cap by +10,000,000 × level²</th></tr></thead>
 <tbody>
 <tr><td><strong>Cost Resource</strong></td><td>Mass</td></tr>
 <tr><td><strong>Prerequisites</strong></td><td>Nova Capacitor</td></tr>
@@ -816,10 +816,10 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <tr><td><strong>Max Level</strong></td><td>25</td></tr>
 </tbody></table></div>
 <div class="table-wrapper"><table>
-<thead><tr><th>Level</th><th>Cost</th><th>Cap Increase</th></tr></thead>
+<thead><tr><th>Level</th><th>Cost</th><th>Cap Total (this upgrade)</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>500,000</td><td>+10,000,000</td></tr>
-<tr><td>25</td><td>~647T</td><td>+250,000,000</td></tr>
+<tr><td>25</td><td>~647T</td><td>+6,250,000,000</td></tr>
 </tbody></table></div>
 <hr>
 <h4 id="dark-flow">Dark Flow</h4>
@@ -1440,8 +1440,9 @@ Oxygen rate:  0.3 O/s × heFusionMult  (consumes 4He per 1O)</code></pre>
 <thead><tr><th>#</th><th>ID</th><th>Title</th><th>Condition</th><th>Reward</th></tr></thead>
 <tbody>
 <tr><td>1</td><td>ms_subatomicParticle</td><td>The First Spark</td><td>Game start</td><td>—</td></tr>
-<tr><td>2</td><td>ms_firstAtom</td><td>Birth of Hydrogen</td><td>mass ≥ 50</td><td>Unlocks Dark Matter + Hydrogen display</td></tr>
+<tr><td>2</td><td>ms_firstAtom</td><td>Birth of Hydrogen</td><td>mass ≥ 50</td><td>Unlocks Dark Matter display</td></tr>
 <tr><td>3</td><td>ms_firstMolecule</td><td>Bonded</td><td>mass ≥ 500</td><td>+200 energy + particle storm</td></tr>
+<tr><td>3.5</td><td>ms_hydrogenAge</td><td>The Hydrogen Phase</td><td>energy ≥ 10,000</td><td>Unlocks Hydrogen display</td></tr>
 <tr><td>4</td><td>ms_gasCloud</td><td>The Cloud Gathers</td><td>mass ≥ 5,000</td><td>Unlocks DM node generation</td></tr>
 <tr><td>5</td><td>ms_nebulaCondenses</td><td>A Nebula Is Born</td><td>darkMatter ≥ 100</td><td>+50 dark matter + cosmic echo</td></tr>
 <tr><td>6</td><td>ms_protostarIgnites</td><td>A Spark of Fire</td><td>mass ≥ 50,000</td><td>Particle storm</td></tr>
